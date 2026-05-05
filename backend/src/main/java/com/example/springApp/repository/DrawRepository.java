@@ -11,8 +11,10 @@ import java.util.Optional;
 public interface DrawRepository extends JpaRepository<Draw, Long> {
 
     List<Draw> findByGrupoId(Long grupoId);
+    void deleteByGrupoId(Long grupoId);
 
     // Para o usuario ver quem ele tirou em um grupo especifico
-    Optional<Draw> findByGroupIdAndRemetenteId(Long groupId, Long giverId);
+    Optional<Draw> findByGrupo_IdAndRemetente_Id(Long groupId, Long giverId);
+    Optional<Draw> findByGrupo_IdAndDestinatario_Id(Long groupId, Long receiverId);
 
 }

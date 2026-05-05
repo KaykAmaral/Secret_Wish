@@ -33,4 +33,11 @@ public class Notification {
 
     private boolean lida = false;
 
+    @PrePersist
+    void prePersist() {
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
+    }
+
 }

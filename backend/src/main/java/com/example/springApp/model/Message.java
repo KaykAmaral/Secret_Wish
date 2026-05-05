@@ -41,4 +41,11 @@ public class Message {
     @Column(name = "anonima")
     private boolean anonima = true;
 
+    @PrePersist
+    void prePersist() {
+        if (dataEnvio == null) {
+            dataEnvio = LocalDateTime.now();
+        }
+    }
+
 }
