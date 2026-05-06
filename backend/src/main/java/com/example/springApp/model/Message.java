@@ -41,6 +41,9 @@ public class Message {
     @Column(name = "anonima")
     private boolean anonima = true;
 
+    @Column(name = "is_anonimo", nullable = false)
+    private boolean isAnonimo = false;
+
     @PrePersist
     void prePersist() {
         if (dataEnvio == null) {

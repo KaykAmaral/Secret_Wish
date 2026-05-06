@@ -27,4 +27,6 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             @Param("otherUserId") Long otherUserId
     );
 
+    List<Message> findByGrupo_IdOrderByDataEnvioAsc(Long grupoId);
+
 }
