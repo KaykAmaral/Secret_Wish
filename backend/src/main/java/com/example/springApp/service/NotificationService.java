@@ -1,5 +1,6 @@
 package com.example.springApp.service;
 
+import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Notification;
 import com.example.springApp.model.User;
 import com.example.springApp.repository.NotificationRepository;
@@ -23,7 +24,7 @@ public class NotificationService {
     @Transactional
     public Notification createNotification(Long userId, String content) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado para envio de notificação."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado para envio de notificacao"));
 
         Notification notification = new Notification();
         notification.setUsuario(user);
@@ -36,4 +37,5 @@ public class NotificationService {
     public List<Notification> getUserNotifications(Long userId) {
         return notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(userId);
     }
+
 }

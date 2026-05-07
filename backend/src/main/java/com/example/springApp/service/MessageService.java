@@ -1,5 +1,7 @@
 package com.example.springApp.service;
 
+import com.example.springApp.exception.ForbiddenException;
+import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Group;
 import com.example.springApp.model.Message;
 import com.example.springApp.model.User;
@@ -28,14 +30,13 @@ public class MessageService {
     @Transactional
     public Message sendMessage(Long groupId, Long senderId, String content, boolean isAnonymous) {
         Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Grupo não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
 
         User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("Remetente não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Remetente nao encontrado"));
 
-        // Validação: Só quem está no grupo pode mandar mensagem
         if (!group.getMembros().contains(sender)) {
-            throw new RuntimeException("Acesso negado: Você não faz parte deste grupo.");
+            throw new ForbiddenException("Voce nao faz parte deste grupo");
         }
 
         Message message = new Message();
@@ -43,8 +44,6 @@ public class MessageService {
         message.setRemetente(sender);
         message.setConteudo(content);
         message.setDataEnvio(LocalDateTime.now());
-
-        // Se a sua entidade Message tiver um campo boolean para anonimato, você seta aqui:
         message.setAnonimo(isAnonymous);
 
         return messageRepository.save(message);
@@ -53,4 +52,5 @@ public class MessageService {
     public List<Message> getGroupMessages(Long groupId) {
         return messageRepository.findByGrupo_IdOrderByDataEnvioAsc(groupId);
     }
+
 }

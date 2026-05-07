@@ -1,5 +1,7 @@
 package com.example.springApp.service;
 
+import com.example.springApp.exception.BusinessException;
+import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Draw;
 import com.example.springApp.model.Group;
 import com.example.springApp.model.User;
@@ -25,22 +27,20 @@ public class DrawService {
     @Transactional
     public void performDraw(Long groupId) {
         Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new RuntimeException("Grupo não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
 
         List<User> members = new ArrayList<>(group.getMembros());
 
         if (members.size() < 3) {
-            throw new RuntimeException("O grupo precisa ter pelo menos 3 participantes para o sorteio.");
+            throw new BusinessException("O grupo precisa ter pelo menos 3 participantes para o sorteio");
         }
 
         Collections.shuffle(members);
 
         List<Draw> sorteios = new ArrayList<>();
 
-        // Cria a lógica circular (O atual tira o próximo. O último tira o primeiro).
         for (int i = 0; i < members.size(); i++) {
             User remetente = members.get(i);
-            // Operador módulo (%) garante que o último aponte de volta para o índice 0
             User destinatario = members.get((i + 1) % members.size());
 
             Draw draw = new Draw();
@@ -56,6 +56,7 @@ public class DrawService {
 
     public Draw getMeuAmigoSecreto(Long grupoId, Long remetenteId) {
         return drawRepository.findByGrupo_IdAndRemetente_Id(grupoId, remetenteId)
-                .orElseThrow(() -> new RuntimeException("Sorteio não encontrado para este usuário."));
+                .orElseThrow(() -> new ResourceNotFoundException("Sorteio nao encontrado para este usuario"));
     }
+
 }

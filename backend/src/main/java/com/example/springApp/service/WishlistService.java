@@ -1,5 +1,7 @@
 package com.example.springApp.service;
 
+import com.example.springApp.exception.ForbiddenException;
+import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.User;
 import com.example.springApp.model.WishList;
 import com.example.springApp.model.WishlistItem;
@@ -25,7 +27,7 @@ public class WishlistService {
     @Transactional
     public WishList getOrCreateWishlist(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
         return wishlistRepository.findByUsuarioId(userId)
                 .orElseGet(() -> {
@@ -48,13 +50,13 @@ public class WishlistService {
     @Transactional
     public void removeItemFromWishlist(Long itemId, Long userId) {
         WishlistItem item = wishlistItemRepository.findById(itemId)
-                .orElseThrow(() -> new RuntimeException("Item não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Item nao encontrado"));
 
-        // Validação de segurança: garantir que o usuário só apague itens da própria lista
         if (!item.getWishlist().getUsuario().getId().equals(userId)) {
-            throw new RuntimeException("Acesso negado: você não pode deletar um item de outra pessoa.");
+            throw new ForbiddenException("Voce nao pode deletar um item de outra pessoa");
         }
 
         wishlistItemRepository.delete(item);
     }
+
 }
