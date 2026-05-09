@@ -22,12 +22,13 @@ public class NotificationService {
     private UserRepository userRepository;
 
     @Transactional
-    public Notification createNotification(Long userId, String content) {
+    public Notification createNotification(Long userId, String title, String content) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado para envio de notificacao"));
 
         Notification notification = new Notification();
         notification.setUsuario(user);
+        notification.setTitulo(title);
         notification.setMensagem(content);
         notification.setDataCriacao(LocalDateTime.now());
 

@@ -13,6 +13,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
 
     List<Message> findByGrupoIdAndDestinatarioId(Long groupId, Long receiverId);
     Long countByDestinatarioIdAndLidaFalse(Long userId);
+    void deleteByGrupoId(Long groupId);
 
     @Query("""
             select m from Message m

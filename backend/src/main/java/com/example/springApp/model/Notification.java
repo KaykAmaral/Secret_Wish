@@ -31,6 +31,7 @@ public class Notification {
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;
 
+    @Builder.Default
     private boolean lida = false;
 
     @PrePersist

@@ -35,14 +35,13 @@ public class Message {
     @Column(name = "data_envio")
     private LocalDateTime dataEnvio;
 
-    @Column(name = "lida")
+    @Column(name = "lida", nullable = false)
+    @Builder.Default
     private boolean lida = false;
 
-    @Column(name = "anonima")
+    @Column(name = "anonima", nullable = false)
+    @Builder.Default
     private boolean anonima = true;
-
-    @Column(name = "is_anonimo", nullable = false)
-    private boolean isAnonimo = false;
 
     @PrePersist
     void prePersist() {
