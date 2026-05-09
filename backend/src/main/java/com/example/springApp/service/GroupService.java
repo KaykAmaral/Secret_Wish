@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.util.List;
 
 @Service
 public class GroupService {
@@ -65,6 +66,10 @@ public class GroupService {
         group.getMembros().add(user);
 
         return groupRepository.save(group);
+    }
+
+    public List<Group> getUserGroups(Long userId) {
+        return groupRepository.findByMembros_Id(userId);
     }
 
     @Transactional

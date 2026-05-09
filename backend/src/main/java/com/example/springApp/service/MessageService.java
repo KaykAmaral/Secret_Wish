@@ -82,6 +82,10 @@ public class MessageService {
         messageRepository.saveAll(messages);
     }
 
+    public Long countUnreadMessages(Long userId) {
+        return messageRepository.countByDestinatarioIdAndLidaFalse(userId);
+    }
+
     private boolean canExchangeMessages(Long groupId, Long userId, Long otherUserId) {
         return drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, userId, otherUserId)
                 || drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, otherUserId, userId);
