@@ -1,0 +1,267 @@
+package com.example.springApp;
+
+import com.example.springApp.exception.BusinessException;
+import com.example.springApp.exception.ConflictException;
+import com.example.springApp.exception.ForbiddenException;
+import com.example.springApp.model.Draw;
+import com.example.springApp.model.Group;
+import com.example.springApp.model.Message;
+import com.example.springApp.model.User;
+import com.example.springApp.model.WishList;
+import com.example.springApp.model.WishlistItem;
+import com.example.springApp.repository.DrawRepository;
+import com.example.springApp.repository.GroupRepository;
+import com.example.springApp.repository.MessageRepository;
+import com.example.springApp.repository.UserRepository;
+import com.example.springApp.repository.WishlistItemRepository;
+import com.example.springApp.repository.WishlistRepository;
+import com.example.springApp.service.DrawService;
+import com.example.springApp.service.GroupService;
+import com.example.springApp.service.MessageService;
+import com.example.springApp.service.WishlistService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+@SpringBootTest
+class ServiceRulesIntegrationTest {
+
+    @Autowired
+    private GroupService groupService;
+
+    @Autowired
+    private DrawService drawService;
+
+    @Autowired
+    private MessageService messageService;
+
+    @Autowired
+    private WishlistService wishlistService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private GroupRepository groupRepository;
+
+    @Autowired
+    private DrawRepository drawRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
+
+    @Autowired
+    private WishlistRepository wishlistRepository;
+
+    @Autowired
+    private WishlistItemRepository wishlistItemRepository;
+
+    @BeforeEach
+    void cleanDatabase() {
+        messageRepository.deleteAll();
+        drawRepository.deleteAll();
+        groupRepository.deleteAll();
+        wishlistItemRepository.deleteAll();
+        wishlistRepository.deleteAll();
+        userRepository.deleteAll();
+    }
+
+    @Test
+    void userCannotCreateMoreThanOneGroup() {
+        User owner = createUser("Owner");
+
+        groupService.createGroup(newGroup("Grupo 1"), owner.getId());
+
+        assertThatThrownBy(() -> groupService.createGroup(newGroup("Grupo 2"), owner.getId()))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("ja possui um grupo");
+    }
+
+    @Test
+    void groupCodeIsGeneratedByBackendAndOwnerBecomesMember() {
+        User owner = createUser("Owner");
+
+        Group group = groupService.createGroup(newGroup("Grupo"), owner.getId());
+
+        assertThat(group.getCodigoUnico()).matches("^[A-Z0-9]{4}-[A-Z0-9]{4}$");
+        assertThat(group.getMembros()).extracting(User::getId).containsExactly(owner.getId());
+    }
+
+    @Test
+    void drawRequiresAtLeastThreeMembers() {
+        User owner = createUser("Owner");
+        User member = createUser("Member");
+        Group group = groupService.createGroup(newGroup("Grupo"), owner.getId());
+        groupService.joinGroup(group.getCodigoUnico(), member.getId());
+
+        assertThatThrownBy(() -> drawService.performDraw(group.getId(), owner.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("pelo menos 3 participantes");
+    }
+
+    @Test
+    void onlyOwnerCanPerformDraw() {
+        Scenario scenario = createGroupWithThreeMembers();
+
+        assertThatThrownBy(() -> drawService.performDraw(scenario.group().getId(), scenario.memberA().getId()))
+                .isInstanceOf(ForbiddenException.class)
+                .hasMessageContaining("Apenas o dono");
+    }
+
+    @Test
+    void performingDrawCreatesCycleAndMarksDrawDate() {
+        Scenario scenario = createGroupWithThreeMembers();
+
+        List<Draw> draws = drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+
+        assertThat(draws).hasSize(3);
+        assertThat(draws).allSatisfy(draw -> assertThat(draw.getRemetente().getId())
+                .isNotEqualTo(draw.getDestinatario().getId()));
+        assertThat(groupRepository.findById(scenario.group().getId()).orElseThrow().getDataSorteio()).isNotNull();
+    }
+
+    @Test
+    void redoingDrawDeletesPreviousDrawsAndGroupMessages() {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw firstDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        messageService.sendMessage(
+                scenario.group().getId(),
+                firstDraw.getRemetente().getId(),
+                firstDraw.getDestinatario().getId(),
+                "Mensagem antiga"
+        );
+
+        List<Draw> newDraws = drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+
+        assertThat(newDraws).hasSize(3);
+        assertThat(drawRepository.findByGrupoId(scenario.group().getId())).hasSize(3);
+        assertThat(messageRepository.findByGrupo_IdOrderByDataEnvioAsc(scenario.group().getId())).isEmpty();
+    }
+
+    @Test
+    void participantCannotLeaveAfterDraw() {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+
+        assertThatThrownBy(() -> groupService.leaveGroup(scenario.group().getId(), scenario.memberA().getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("sair depois do sorteio");
+    }
+
+    @Test
+    void ownerCanRemoveMemberBeforeDraw() {
+        Scenario scenario = createGroupWithThreeMembers();
+
+        Group group = groupService.removeMember(
+                scenario.group().getId(),
+                scenario.owner().getId(),
+                scenario.memberA().getId()
+        );
+
+        assertThat(group.getMembros()).extracting(User::getId).doesNotContain(scenario.memberA().getId());
+    }
+
+    @Test
+    void messagesCanOnlyBeExchangedBetweenDrawPairs() {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw allowedPair = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        User outsider = createUser("Outsider");
+
+        Message message = messageService.sendMessage(
+                scenario.group().getId(),
+                allowedPair.getRemetente().getId(),
+                allowedPair.getDestinatario().getId(),
+                "Oi"
+        );
+
+        assertThat(message.getId()).isNotNull();
+        assertThatThrownBy(() -> messageService.sendMessage(
+                scenario.group().getId(),
+                scenario.owner().getId(),
+                outsider.getId(),
+                "Nao pode"
+        )).isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void wishlistIsVisibleOnlyToWhoDrewTheUser() {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        User notAllowedViewer = List.of(scenario.owner(), scenario.memberA(), scenario.memberB()).stream()
+                .filter(user -> !user.getId().equals(ownerDraw.getRemetente().getId()))
+                .filter(user -> !user.getId().equals(ownerDraw.getDestinatario().getId()))
+                .findFirst()
+                .orElseThrow();
+
+        WishList visibleWishlist = wishlistService.getVisibleWishlist(
+                scenario.group().getId(),
+                scenario.owner().getId(),
+                ownerDraw.getDestinatario().getId()
+        );
+
+        assertThat(visibleWishlist.getUsuario().getId()).isEqualTo(ownerDraw.getDestinatario().getId());
+        assertThatThrownBy(() -> wishlistService.getVisibleWishlist(
+                scenario.group().getId(),
+                notAllowedViewer.getId(),
+                ownerDraw.getDestinatario().getId()
+        )).isInstanceOf(ForbiddenException.class);
+    }
+
+    @Test
+    void userCanUpdateAndRemoveOwnWishlistItems() {
+        User user = createUser("User");
+        WishlistItem item = wishlistService.addItemToWishlist(
+                user.getId(),
+                WishlistItem.builder().nomeProduto("Livro").link("https://example.com/livro").build()
+        );
+
+        WishlistItem updated = wishlistService.updateItem(
+                item.getId(),
+                user.getId(),
+                WishlistItem.builder().nomeProduto("Livro 2").link("https://example.com/livro-2").build()
+        );
+        wishlistService.removeItemFromWishlist(updated.getId(), user.getId());
+
+        assertThat(updated.getNomeProduto()).isEqualTo("Livro 2");
+        assertThat(wishlistItemRepository.findById(updated.getId())).isEmpty();
+    }
+
+    private Scenario createGroupWithThreeMembers() {
+        User owner = createUser("Owner");
+        User memberA = createUser("Member A");
+        User memberB = createUser("Member B");
+        Group group = groupService.createGroup(newGroup("Grupo"), owner.getId());
+        groupService.joinGroup(group.getCodigoUnico(), memberA.getId());
+        groupService.joinGroup(group.getCodigoUnico(), memberB.getId());
+        return new Scenario(owner, memberA, memberB, group);
+    }
+
+    private User createUser(String name) {
+        String normalized = name.toLowerCase().replace(" ", ".");
+        return userRepository.save(User.builder()
+                .nome(name)
+                .email(normalized + "@example.com")
+                .oauthId("oauth-" + normalized)
+                .build());
+    }
+
+    private Group newGroup(String name) {
+        return Group.builder()
+                .nome(name)
+                .dataEvento(LocalDateTime.now().plusDays(30))
+                .build();
+    }
+
+    private record Scenario(User owner, User memberA, User memberB, Group group) {
+    }
+}

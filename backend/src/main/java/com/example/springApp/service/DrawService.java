@@ -47,6 +47,7 @@ public class DrawService {
 
         messageRepository.deleteByGrupoId(groupId);
         drawRepository.deleteByGrupoId(groupId);
+        drawRepository.flush();
 
         Collections.shuffle(members);
 
