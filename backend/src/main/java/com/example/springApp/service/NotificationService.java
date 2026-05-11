@@ -39,4 +39,35 @@ public class NotificationService {
         return notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(userId);
     }
 
+    public long countUnreadNotifications(Long userId) {
+        return notificationRepository.countByUsuarioIdAndLidaFalse(userId);
+    }
+
+    @Transactional
+    public Notification markAsRead(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findByIdAndUsuarioId(notificationId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notificacao nao encontrada"));
+        notification.setLida(true);
+        return notificationRepository.save(notification);
+    }
+
+    @Transactional
+    public void markAllAsRead(Long userId) {
+        List<Notification> notifications = notificationRepository.findByUsuarioIdAndLidaFalse(userId);
+        notifications.forEach(notification -> notification.setLida(true));
+        notificationRepository.saveAll(notifications);
+    }
+
+    @Transactional
+    public void deleteNotification(Long notificationId, Long userId) {
+        Notification notification = notificationRepository.findByIdAndUsuarioId(notificationId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notificacao nao encontrada"));
+        notificationRepository.delete(notification);
+    }
+
+    @Transactional
+    public void deleteUserNotifications(Long userId) {
+        notificationRepository.deleteByUsuarioId(userId);
+    }
+
 }

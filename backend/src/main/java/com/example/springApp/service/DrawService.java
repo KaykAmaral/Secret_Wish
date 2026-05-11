@@ -35,6 +35,9 @@ public class DrawService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public List<Draw> performDraw(Long groupId, Long donoId) {
         Group group = groupRepository.findById(groupId)
@@ -74,6 +77,11 @@ public class DrawService {
         groupRepository.save(group);
 
         List<Draw> savedDraws = drawRepository.saveAll(sorteios);
+        savedDraws.forEach(draw -> notificationService.createNotification(
+                draw.getRemetente().getId(),
+                "Sorteio realizado",
+                "Voce tirou " + draw.getDestinatario().getNome() + " no amigo secreto."
+        ));
         List<EmailService.DrawResultEmail> emailResults = emailService.toDrawResultEmails(savedDraws);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override

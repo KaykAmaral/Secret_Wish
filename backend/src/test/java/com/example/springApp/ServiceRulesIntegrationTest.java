@@ -3,21 +3,25 @@ package com.example.springApp;
 import com.example.springApp.exception.BusinessException;
 import com.example.springApp.exception.ConflictException;
 import com.example.springApp.exception.ForbiddenException;
+import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Draw;
 import com.example.springApp.model.Group;
 import com.example.springApp.model.Message;
+import com.example.springApp.model.Notification;
 import com.example.springApp.model.User;
 import com.example.springApp.model.WishList;
 import com.example.springApp.model.WishlistItem;
 import com.example.springApp.repository.DrawRepository;
 import com.example.springApp.repository.GroupRepository;
 import com.example.springApp.repository.MessageRepository;
+import com.example.springApp.repository.NotificationRepository;
 import com.example.springApp.repository.UserRepository;
 import com.example.springApp.repository.WishlistItemRepository;
 import com.example.springApp.repository.WishlistRepository;
 import com.example.springApp.service.DrawService;
 import com.example.springApp.service.GroupService;
 import com.example.springApp.service.MessageService;
+import com.example.springApp.service.NotificationService;
 import com.example.springApp.service.WishlistService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +47,9 @@ class ServiceRulesIntegrationTest {
     private MessageService messageService;
 
     @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
     private WishlistService wishlistService;
 
     @Autowired
@@ -58,6 +65,9 @@ class ServiceRulesIntegrationTest {
     private MessageRepository messageRepository;
 
     @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
     private WishlistRepository wishlistRepository;
 
     @Autowired
@@ -66,6 +76,7 @@ class ServiceRulesIntegrationTest {
     @BeforeEach
     void cleanDatabase() {
         messageRepository.deleteAll();
+        notificationRepository.deleteAll();
         drawRepository.deleteAll();
         groupRepository.deleteAll();
         wishlistItemRepository.deleteAll();
@@ -125,6 +136,22 @@ class ServiceRulesIntegrationTest {
         assertThat(draws).allSatisfy(draw -> assertThat(draw.getRemetente().getId())
                 .isNotEqualTo(draw.getDestinatario().getId()));
         assertThat(groupRepository.findById(scenario.group().getId()).orElseThrow().getDataSorteio()).isNotNull();
+    }
+
+    @Test
+    void performingDrawCreatesNotificationsForParticipants() {
+        Scenario scenario = createGroupWithThreeMembers();
+
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+
+        assertThat(notificationService.getUserNotifications(scenario.owner().getId()))
+                .hasSize(1)
+                .first()
+                .satisfies(notification -> {
+                    assertThat(notification.getTitulo()).isEqualTo("Sorteio realizado");
+                    assertThat(notification.isLida()).isFalse();
+                });
+        assertThat(notificationService.countUnreadNotifications(scenario.owner().getId())).isEqualTo(1);
     }
 
     @Test
@@ -245,6 +272,24 @@ class ServiceRulesIntegrationTest {
 
         assertThat(updated.getNomeProduto()).isEqualTo("Livro 2");
         assertThat(wishlistItemRepository.findById(updated.getId())).isEmpty();
+    }
+
+    @Test
+    void userCanReadAndDeleteOwnNotificationsOnly() {
+        User user = createUser("User");
+        User otherUser = createUser("Other User");
+        Notification notification = notificationService.createNotification(user.getId(), "Titulo", "Mensagem");
+
+        Notification readNotification = notificationService.markAsRead(notification.getId(), user.getId());
+
+        assertThat(readNotification.isLida()).isTrue();
+        assertThat(notificationService.countUnreadNotifications(user.getId())).isZero();
+        assertThatThrownBy(() -> notificationService.markAsRead(notification.getId(), otherUser.getId()))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        notificationService.deleteNotification(notification.getId(), user.getId());
+
+        assertThat(notificationRepository.findById(notification.getId())).isEmpty();
     }
 
     private Scenario createGroupWithThreeMembers() {
