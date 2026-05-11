@@ -1,5 +1,6 @@
 package com.example.springApp.service;
 
+import com.example.springApp.dto.RealtimeMessageNotification;
 import com.example.springApp.exception.ForbiddenException;
 import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Group;
@@ -12,6 +13,8 @@ import com.example.springApp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +33,9 @@ public class MessageService {
 
     @Autowired
     private DrawRepository drawRepository;
+
+    @Autowired
+    private RealtimeNotificationService realtimeNotificationService;
 
     @Transactional
     public Message sendMessage(Long groupId, Long senderId, Long receiverId, String content) {
@@ -62,7 +68,25 @@ public class MessageService {
         message.setDataEnvio(LocalDateTime.now());
         message.setAnonima(true);
 
-        return messageRepository.save(message);
+        Message savedMessage = messageRepository.save(message);
+        Long unreadCount = countUnreadMessages(receiverId);
+        RealtimeMessageNotification notification = new RealtimeMessageNotification(
+                group.getId(),
+                savedMessage.getId(),
+                sender.getId(),
+                "amigo secreto",
+                savedMessage.getConteudo(),
+                savedMessage.getDataEnvio(),
+                unreadCount
+        );
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                realtimeNotificationService.notifyNewMessage(notification, receiverId);
+            }
+        });
+
+        return savedMessage;
     }
 
     public List<Message> getConversation(Long groupId, Long userId, Long otherUserId) {
@@ -80,6 +104,13 @@ public class MessageService {
                 .filter(message -> message.getDestinatario().getId().equals(userId))
                 .forEach(message -> message.setLida(true));
         messageRepository.saveAll(messages);
+        Long unreadCount = countUnreadMessages(userId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                realtimeNotificationService.notifyUnreadCount(userId, unreadCount);
+            }
+        });
     }
 
     public Long countUnreadMessages(Long userId) {

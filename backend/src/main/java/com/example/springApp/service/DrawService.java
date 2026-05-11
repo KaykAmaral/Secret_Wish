@@ -11,6 +11,8 @@ import com.example.springApp.repository.GroupRepository;
 import com.example.springApp.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -29,6 +31,9 @@ public class DrawService {
 
     @Autowired
     private MessageRepository messageRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Transactional
     public List<Draw> performDraw(Long groupId, Long donoId) {
@@ -68,7 +73,15 @@ public class DrawService {
         group.setDataSorteio(LocalDateTime.now());
         groupRepository.save(group);
 
-        return drawRepository.saveAll(sorteios);
+        List<Draw> savedDraws = drawRepository.saveAll(sorteios);
+        List<EmailService.DrawResultEmail> emailResults = emailService.toDrawResultEmails(savedDraws);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                emailService.sendDrawResults(emailResults);
+            }
+        });
+        return savedDraws;
     }
 
     public Draw getMeuAmigoSecreto(Long grupoId, Long remetenteId) {
