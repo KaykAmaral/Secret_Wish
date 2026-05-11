@@ -23,7 +23,6 @@ public class RealtimeNotificationService {
         notifyNewMessage(new RealtimeMessageNotification(
                         message.getGrupo().getId(),
                         message.getId(),
-                        message.getRemetente().getId(),
                         "amigo secreto",
                         message.getConteudo(),
                         message.getDataEnvio(),

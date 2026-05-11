@@ -157,6 +157,17 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void participantCannotJoinAfterDraw() {
+        Scenario scenario = createGroupWithThreeMembers();
+        User lateMember = createUser("Late Member");
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+
+        assertThatThrownBy(() -> groupService.joinGroup(scenario.group().getCodigoUnico(), lateMember.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("entrar depois do sorteio");
+    }
+
+    @Test
     void ownerCanRemoveMemberBeforeDraw() {
         Scenario scenario = createGroupWithThreeMembers();
 

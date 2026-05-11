@@ -5,6 +5,8 @@ import com.example.springApp.repository.UserRepository;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.Duration;
 
 @Component
 public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler {
@@ -44,6 +47,11 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String oauthId = oauthUser.getAttribute("sub");
         String email = oauthUser.getAttribute("email");
         String name = oauthUser.getAttribute("name");
+        Boolean emailVerified = oauthUser.getAttribute("email_verified");
+
+        if (oauthId == null || email == null || !Boolean.TRUE.equals(emailVerified)) {
+            throw new ServletException("Conta Google sem email verificado");
+        }
 
         User user = userRepository.findByOauthId(oauthId)
                 .or(() -> userRepository.findByEmail(email))
@@ -51,12 +59,19 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                 .orElseGet(() -> createUser(oauthId, email, name));
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
+        ResponseCookie authCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(request.isSecure())
+                .sameSite("Lax")
+                .path("/")
+                .maxAge(Duration.ofHours(1))
+                .build();
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendOrigin)
                 .path("/oauth2/callback")
-                .queryParam("token", token)
                 .build()
                 .toUriString();
 
+        response.addHeader(HttpHeaders.SET_COOKIE, authCookie.toString());
         response.sendRedirect(redirectUrl);
     }
 

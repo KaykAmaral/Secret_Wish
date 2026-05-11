@@ -5,6 +5,7 @@ import com.example.springApp.mapper.ResponseMapper;
 import com.example.springApp.model.User;
 import com.example.springApp.repository.UserRepository;
 import com.example.springApp.security.JwtService;
+import jakarta.transaction.Transactional;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/dev")
 @ConditionalOnProperty(prefix = "app.dev-auth", name = "enabled", havingValue = "true")
+@Transactional
 public class DevAuthController {
 
     private final UserRepository userRepository;
@@ -58,11 +60,13 @@ public class DevAuthController {
     }
 
     private AuthTokenResponse issueToken(String nome, String email) {
-        User user = userRepository.findByEmail(email)
+        String normalizedEmail = email.trim().toLowerCase();
+        String normalizedName = nome == null || nome.isBlank() ? "Dev User" : nome.trim();
+        User user = userRepository.findByEmail(normalizedEmail)
                 .orElseGet(() -> userRepository.save(User.builder()
-                        .nome(nome)
-                        .email(email)
-                        .oauthId("dev-" + email)
+                        .nome(normalizedName)
+                        .email(normalizedEmail)
+                        .oauthId("dev-" + normalizedEmail)
                         .build()));
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());

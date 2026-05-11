@@ -59,7 +59,11 @@ public class GroupService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
-        if (group.getMembros().contains(user)) {
+        if (drawRepository.existsByGrupoId(group.getId())) {
+            throw new BusinessException("Participantes nao podem entrar depois do sorteio");
+        }
+
+        if (isMember(group, userId)) {
             throw new ConflictException("Usuario ja esta no grupo");
         }
 
@@ -149,6 +153,11 @@ public class GroupService {
             builder.append(CODE_ALPHABET.charAt(RANDOM.nextInt(CODE_ALPHABET.length())));
         }
         return builder.toString();
+    }
+
+    private boolean isMember(Group group, Long userId) {
+        return group.getMembros().stream()
+                .anyMatch(member -> member.getId().equals(userId));
     }
 
 }

@@ -48,11 +48,11 @@ public class MessageService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Destinatario nao encontrado"));
 
-        if (!group.getMembros().contains(sender)) {
+        if (!isMember(group, senderId)) {
             throw new ForbiddenException("Voce nao faz parte deste grupo");
         }
 
-        if (!group.getMembros().contains(receiver)) {
+        if (!isMember(group, receiverId)) {
             throw new ForbiddenException("Destinatario nao faz parte deste grupo");
         }
 
@@ -73,7 +73,6 @@ public class MessageService {
         RealtimeMessageNotification notification = new RealtimeMessageNotification(
                 group.getId(),
                 savedMessage.getId(),
-                sender.getId(),
                 "amigo secreto",
                 savedMessage.getConteudo(),
                 savedMessage.getDataEnvio(),
@@ -120,6 +119,11 @@ public class MessageService {
     private boolean canExchangeMessages(Long groupId, Long userId, Long otherUserId) {
         return drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, userId, otherUserId)
                 || drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, otherUserId, userId);
+    }
+
+    private boolean isMember(Group group, Long userId) {
+        return group.getMembros().stream()
+                .anyMatch(member -> member.getId().equals(userId));
     }
 
 }

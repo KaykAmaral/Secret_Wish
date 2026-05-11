@@ -1,6 +1,6 @@
 package com.example.springApp.controller;
 
-import com.example.springApp.dto.DrawResponse;
+import com.example.springApp.dto.PerformDrawResponse;
 import com.example.springApp.dto.SecretFriendResponse;
 import com.example.springApp.mapper.ResponseMapper;
 import com.example.springApp.model.Draw;
@@ -38,14 +38,17 @@ public class DrawController {
     }
 
     @PostMapping
-    public List<DrawResponse> perform(
+    public PerformDrawResponse perform(
             @PathVariable Long groupId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
-        return drawService.performDraw(groupId, userId).stream()
-                .map(responseMapper::toDrawResponse)
-                .toList();
+        List<Draw> draws = drawService.performDraw(groupId, userId);
+        return new PerformDrawResponse(
+                groupId,
+                draws.size(),
+                draws.isEmpty() ? null : draws.getFirst().getGrupo().getDataSorteio()
+        );
     }
 
     @GetMapping("/me")
