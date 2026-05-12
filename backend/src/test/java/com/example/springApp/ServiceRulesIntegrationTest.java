@@ -23,9 +23,12 @@ import com.example.springApp.service.GroupService;
 import com.example.springApp.service.MessageService;
 import com.example.springApp.service.NotificationService;
 import com.example.springApp.service.AiSuggestionService;
+import com.example.springApp.service.EmailService;
 import com.example.springApp.service.WishlistService;
 import com.example.springApp.security.JwtService;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +41,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -435,6 +441,34 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void testEmailFailsGracefullyWhenMailIsDisabled() {
+        EmailService disabledEmailService = new EmailService(unavailableMailProvider(), false, "");
+
+        assertThatThrownBy(() -> disabledEmailService.sendTestEmail("user@example.com"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("desabilitado");
+    }
+
+    @Test
+    void testEmailRejectsInvalidRecipient() {
+        EmailService disabledEmailService = new EmailService(unavailableMailProvider(), false, "");
+
+        assertThatThrownBy(() -> disabledEmailService.sendTestEmail("email-invalido"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("invalido");
+    }
+
+    @Test
+    void testEmailUsesConfiguredMailSender() {
+        JavaMailSender mailSender = mock(JavaMailSender.class);
+        EmailService enabledEmailService = new EmailService(availableMailProvider(mailSender), true, "sender@example.com");
+
+        enabledEmailService.sendTestEmail("user@example.com");
+
+        verify(mailSender).send(any(SimpleMailMessage.class));
+    }
+
+    @Test
     void protectedEndpointRequiresJwt() throws Exception {
         mockMvc.perform(get("/api/groups"))
                 .andExpect(status().isUnauthorized());
@@ -627,6 +661,54 @@ class ServiceRulesIntegrationTest {
             @Override
             public org.springframework.ai.chat.client.ChatClient.Builder getObject() {
                 return null;
+            }
+        };
+    }
+
+    private ObjectProvider<JavaMailSender> unavailableMailProvider() {
+        return new ObjectProvider<>() {
+            @Override
+            public JavaMailSender getObject(Object... args) {
+                return null;
+            }
+
+            @Override
+            public JavaMailSender getIfAvailable() {
+                return null;
+            }
+
+            @Override
+            public JavaMailSender getIfUnique() {
+                return null;
+            }
+
+            @Override
+            public JavaMailSender getObject() {
+                return null;
+            }
+        };
+    }
+
+    private ObjectProvider<JavaMailSender> availableMailProvider(JavaMailSender mailSender) {
+        return new ObjectProvider<>() {
+            @Override
+            public JavaMailSender getObject(Object... args) {
+                return mailSender;
+            }
+
+            @Override
+            public JavaMailSender getIfAvailable() {
+                return mailSender;
+            }
+
+            @Override
+            public JavaMailSender getIfUnique() {
+                return mailSender;
+            }
+
+            @Override
+            public JavaMailSender getObject() {
+                return mailSender;
             }
         };
     }
