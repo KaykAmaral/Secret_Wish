@@ -39,6 +39,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -433,6 +435,114 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void protectedEndpointRequiresJwt() throws Exception {
+        mockMvc.perform(get("/api/groups"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void drawEndpointDoesNotExposePairings() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+
+        mockMvc.perform(post("/api/groups/{groupId}/draw", scenario.group().getId())
+                        .header("Authorization", bearerToken(scenario.owner())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupId").value(scenario.group().getId()))
+                .andExpect(jsonPath("$.participantCount").value(3))
+                .andExpect(jsonPath("$.remetente").doesNotExist())
+                .andExpect(jsonPath("$.destinatario").doesNotExist())
+                .andExpect(jsonPath("$[0]").doesNotExist());
+    }
+
+    @Test
+    void wishlistEndpointRejectsUserWhoCannotSeeWishlist() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        User notAllowedViewer = List.of(scenario.owner(), scenario.memberA(), scenario.memberB()).stream()
+                .filter(user -> !user.getId().equals(ownerDraw.getRemetente().getId()))
+                .filter(user -> !user.getId().equals(ownerDraw.getDestinatario().getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(get("/api/groups/{groupId}/users/{ownerId}/wishlist",
+                        scenario.group().getId(),
+                        ownerDraw.getDestinatario().getId()
+                )
+                        .header("Authorization", bearerToken(notAllowedViewer)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Voce nao pode visualizar esta wishlist"));
+    }
+
+    @Test
+    void messageConversationHidesSenderFromRecipient() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        messageService.sendMessage(
+                scenario.group().getId(),
+                ownerDraw.getRemetente().getId(),
+                ownerDraw.getDestinatario().getId(),
+                "Mensagem anonima"
+        );
+
+        mockMvc.perform(get("/api/groups/{groupId}/messages/{otherUserId}",
+                        scenario.group().getId(),
+                        ownerDraw.getRemetente().getId()
+                )
+                        .header("Authorization", bearerToken(ownerDraw.getDestinatario())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].remetente").doesNotExist())
+                .andExpect(jsonPath("$[0].nomeRemetenteExibicao").value("amigo secreto"))
+                .andExpect(jsonPath("$[0].conteudo").value("Mensagem anonima"));
+    }
+
+    @Test
+    void messageEndpointRejectsUsersOutsideDrawPair() throws Exception {
+        ScenarioWithFourMembers scenario = createGroupWithFourMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        User notAllowedViewer = List.of(scenario.owner(), scenario.memberA(), scenario.memberB(), scenario.memberC()).stream()
+                .filter(user -> !canExchangeMessages(scenario.group().getId(), user.getId(), ownerDraw.getDestinatario().getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(get("/api/groups/{groupId}/messages/{otherUserId}",
+                        scenario.group().getId(),
+                        ownerDraw.getDestinatario().getId()
+                )
+                        .header("Authorization", bearerToken(notAllowedViewer)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Voce nao pode acessar esta conversa"));
+    }
+
+    @Test
+    void notificationEndpointReturnsOnlyAuthenticatedUserNotifications() throws Exception {
+        User user = createUser("User");
+        User otherUser = createUser("Other User");
+        notificationService.createNotification(user.getId(), "Minha notificacao", "Mensagem");
+        notificationService.createNotification(otherUser.getId(), "Outra notificacao", "Mensagem");
+
+        mockMvc.perform(get("/api/notifications")
+                        .header("Authorization", bearerToken(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].titulo").value("Minha notificacao"));
+    }
+
+    @Test
+    void notificationEndpointRejectsMarkingAnotherUsersNotificationAsRead() throws Exception {
+        User user = createUser("User");
+        User otherUser = createUser("Other User");
+        Notification notification = notificationService.createNotification(otherUser.getId(), "Outra notificacao", "Mensagem");
+
+        mockMvc.perform(patch("/api/notifications/{notificationId}/read", notification.getId())
+                        .header("Authorization", bearerToken(user)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Notificacao nao encontrada"));
+    }
+
+    @Test
     void userCanReadAndDeleteOwnNotificationsOnly() {
         User user = createUser("User");
         User otherUser = createUser("Other User");
@@ -458,6 +568,23 @@ class ServiceRulesIntegrationTest {
         groupService.joinGroup(group.getCodigoUnico(), memberA.getId());
         groupService.joinGroup(group.getCodigoUnico(), memberB.getId());
         return new Scenario(owner, memberA, memberB, group);
+    }
+
+    private ScenarioWithFourMembers createGroupWithFourMembers() {
+        User owner = createUser("Owner");
+        User memberA = createUser("Member A");
+        User memberB = createUser("Member B");
+        User memberC = createUser("Member C");
+        Group group = groupService.createGroup(newGroup("Grupo"), owner.getId());
+        groupService.joinGroup(group.getCodigoUnico(), memberA.getId());
+        groupService.joinGroup(group.getCodigoUnico(), memberB.getId());
+        groupService.joinGroup(group.getCodigoUnico(), memberC.getId());
+        return new ScenarioWithFourMembers(owner, memberA, memberB, memberC, group);
+    }
+
+    private boolean canExchangeMessages(Long groupId, Long userId, Long otherUserId) {
+        return drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, userId, otherUserId)
+                || drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, otherUserId, userId);
     }
 
     private User createUser(String name) {
@@ -505,5 +632,8 @@ class ServiceRulesIntegrationTest {
     }
 
     private record Scenario(User owner, User memberA, User memberB, Group group) {
+    }
+
+    private record ScenarioWithFourMembers(User owner, User memberA, User memberB, User memberC, Group group) {
     }
 }
