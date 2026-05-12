@@ -22,20 +22,35 @@ import com.example.springApp.service.DrawService;
 import com.example.springApp.service.GroupService;
 import com.example.springApp.service.MessageService;
 import com.example.springApp.service.NotificationService;
+import com.example.springApp.service.AiSuggestionService;
 import com.example.springApp.service.WishlistService;
+import com.example.springApp.security.JwtService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
+@AutoConfigureMockMvc
 class ServiceRulesIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private JwtService jwtService;
 
     @Autowired
     private GroupService groupService;
@@ -48,6 +63,9 @@ class ServiceRulesIntegrationTest {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private AiSuggestionService aiSuggestionService;
 
     @Autowired
     private WishlistService wishlistService;
@@ -275,6 +293,146 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void aiSuggestionRequiresWishlistItems() {
+        User user = createUser("User");
+        WishList wishlist = wishlistService.getOrCreateWishlist(user.getId());
+
+        assertThatThrownBy(() -> aiSuggestionService.generateSuggestion(wishlist, user.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("pelo menos um item");
+    }
+
+    @Test
+    void aiSuggestionFailsGracefullyWhenDisabled() {
+        User user = createUser("User");
+        wishlistService.addItemToWishlist(
+                user.getId(),
+                WishlistItem.builder().nomeProduto("Livro").link("https://example.com/livro").build()
+        );
+        WishList wishlist = wishlistService.getOrCreateWishlist(user.getId());
+
+        assertThatThrownBy(() -> aiSuggestionService.generateSuggestion(wishlist, user.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("desabilitadas");
+        assertThat(wishlistRepository.findById(wishlist.getId()).orElseThrow().getSugestaoIa()).isNull();
+        assertThat(aiSuggestionService.remainingGenerations(user.getId())).isEqualTo(3);
+    }
+
+    @Test
+    void aiSuggestionUsageIsLimitedToThreeGenerationsPerHour() {
+        User user = createUser("User");
+        wishlistService.addItemToWishlist(
+                user.getId(),
+                WishlistItem.builder().nomeProduto("Livro").link("https://example.com/livro").build()
+        );
+        WishList wishlist = wishlistService.getOrCreateWishlist(user.getId());
+        AiSuggestionService enabledService = new AiSuggestionService(
+                unavailableAiProvider(),
+                wishlistRepository,
+                java.time.Clock.systemDefaultZone(),
+                true
+        );
+
+        assertThat(enabledService.remainingGenerations(user.getId())).isEqualTo(3);
+        assertThatThrownBy(() -> enabledService.generateSuggestion(wishlist, user.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Cliente de IA");
+        assertThat(enabledService.remainingGenerations(user.getId())).isEqualTo(2);
+        assertThatThrownBy(() -> enabledService.generateSuggestion(wishlist, user.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Cliente de IA");
+        assertThat(enabledService.remainingGenerations(user.getId())).isEqualTo(1);
+        assertThatThrownBy(() -> enabledService.generateSuggestion(wishlist, user.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Cliente de IA");
+
+        assertThat(enabledService.remainingGenerations(user.getId())).isZero();
+        assertThatThrownBy(() -> enabledService.generateSuggestion(wishlist, user.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("Limite de 3 sugestoes");
+    }
+
+    @Test
+    void aiSuggestionUsageLimitIsIndependentPerUser() {
+        User user = createUser("User");
+        User otherUser = createUser("Other User");
+        wishlistService.addItemToWishlist(
+                user.getId(),
+                WishlistItem.builder().nomeProduto("Livro").link("https://example.com/livro").build()
+        );
+        WishList wishlist = wishlistService.getOrCreateWishlist(user.getId());
+        AiSuggestionService enabledService = new AiSuggestionService(
+                unavailableAiProvider(),
+                wishlistRepository,
+                java.time.Clock.systemDefaultZone(),
+                true
+        );
+
+        for (int attempt = 0; attempt < 3; attempt++) {
+            assertThatThrownBy(() -> enabledService.generateSuggestion(wishlist, user.getId()))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("Cliente de IA");
+        }
+
+        assertThat(enabledService.remainingGenerations(user.getId())).isZero();
+        assertThat(enabledService.remainingGenerations(otherUser.getId())).isEqualTo(3);
+    }
+
+    @Test
+    void aiSuggestionEndpointReturnsBusinessErrorWithoutBreakingWhenWishlistIsEmpty() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+
+        mockMvc.perform(post("/api/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion",
+                        scenario.group().getId(),
+                        ownerDraw.getDestinatario().getId()
+                )
+                        .header("Authorization", bearerToken(ownerDraw.getRemetente())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("A wishlist precisa ter pelo menos um item para gerar sugestoes"));
+    }
+
+    @Test
+    void aiSuggestionEndpointReturnsBusinessErrorWithoutCallingAiWhenDisabled() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        wishlistService.addItemToWishlist(
+                ownerDraw.getDestinatario().getId(),
+                WishlistItem.builder().nomeProduto("Livro").link("https://example.com/livro").build()
+        );
+
+        mockMvc.perform(post("/api/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion",
+                        scenario.group().getId(),
+                        ownerDraw.getDestinatario().getId()
+                )
+                        .header("Authorization", bearerToken(ownerDraw.getRemetente())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Sugestoes com IA estao desabilitadas neste ambiente"));
+    }
+
+    @Test
+    void aiSuggestionEndpointRejectsUserWhoCannotSeeWishlist() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw ownerDraw = drawService.getMeuAmigoSecreto(scenario.group().getId(), scenario.owner().getId());
+        User notAllowedViewer = List.of(scenario.owner(), scenario.memberA(), scenario.memberB()).stream()
+                .filter(user -> !user.getId().equals(ownerDraw.getRemetente().getId()))
+                .filter(user -> !user.getId().equals(ownerDraw.getDestinatario().getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(post("/api/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion",
+                        scenario.group().getId(),
+                        ownerDraw.getDestinatario().getId()
+                )
+                        .header("Authorization", bearerToken(notAllowedViewer)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Voce nao pode visualizar esta wishlist"));
+    }
+
+    @Test
     void userCanReadAndDeleteOwnNotificationsOnly() {
         User user = createUser("User");
         User otherUser = createUser("Other User");
@@ -316,6 +474,34 @@ class ServiceRulesIntegrationTest {
                 .nome(name)
                 .dataEvento(LocalDateTime.now().plusDays(30))
                 .build();
+    }
+
+    private String bearerToken(User user) {
+        return "Bearer " + jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
+    }
+
+    private ObjectProvider<org.springframework.ai.chat.client.ChatClient.Builder> unavailableAiProvider() {
+        return new ObjectProvider<>() {
+            @Override
+            public org.springframework.ai.chat.client.ChatClient.Builder getObject(Object... args) {
+                return null;
+            }
+
+            @Override
+            public org.springframework.ai.chat.client.ChatClient.Builder getIfAvailable() {
+                return null;
+            }
+
+            @Override
+            public org.springframework.ai.chat.client.ChatClient.Builder getIfUnique() {
+                return null;
+            }
+
+            @Override
+            public org.springframework.ai.chat.client.ChatClient.Builder getObject() {
+                return null;
+            }
+        };
     }
 
     private record Scenario(User owner, User memberA, User memberB, Group group) {

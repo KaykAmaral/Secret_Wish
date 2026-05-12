@@ -1,11 +1,14 @@
 package com.example.springApp.controller;
 
+import com.example.springApp.dto.AiSuggestionResponse;
 import com.example.springApp.dto.WishlistItemRequest;
 import com.example.springApp.dto.WishlistItemResponse;
 import com.example.springApp.dto.WishlistResponse;
 import com.example.springApp.mapper.ResponseMapper;
+import com.example.springApp.model.WishList;
 import com.example.springApp.model.WishlistItem;
 import com.example.springApp.security.AuthenticatedUser;
+import com.example.springApp.service.AiSuggestionService;
 import com.example.springApp.service.WishlistService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,15 +28,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class WishlistController {
 
     private final WishlistService wishlistService;
+    private final AiSuggestionService aiSuggestionService;
     private final ResponseMapper responseMapper;
     private final AuthenticatedUser authenticatedUser;
 
     public WishlistController(
             WishlistService wishlistService,
+            AiSuggestionService aiSuggestionService,
             ResponseMapper responseMapper,
             AuthenticatedUser authenticatedUser
     ) {
         this.wishlistService = wishlistService;
+        this.aiSuggestionService = aiSuggestionService;
         this.responseMapper = responseMapper;
         this.authenticatedUser = authenticatedUser;
     }
@@ -90,5 +96,17 @@ public class WishlistController {
     ) {
         Long userId = authenticatedUser.id(authentication);
         return responseMapper.toWishlistResponse(wishlistService.getVisibleWishlist(groupId, userId, ownerId));
+    }
+
+    @PostMapping("/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion")
+    public AiSuggestionResponse generateAiSuggestion(
+            @PathVariable Long groupId,
+            @PathVariable Long ownerId,
+            Authentication authentication
+    ) {
+        Long userId = authenticatedUser.id(authentication);
+        WishList wishlist = wishlistService.getVisibleWishlist(groupId, userId, ownerId);
+        String suggestion = aiSuggestionService.generateSuggestion(wishlist, userId);
+        return new AiSuggestionResponse(wishlist.getId(), suggestion);
     }
 }
