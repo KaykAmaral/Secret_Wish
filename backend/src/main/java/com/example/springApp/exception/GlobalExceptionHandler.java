@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -53,6 +54,15 @@ public class GlobalExceptionHandler {
         body.put("fields", errors);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Object> handleMissingRequestParameter(MissingServletRequestParameterException ex) {
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Parametro obrigatorio ausente",
+                "Parametro '" + ex.getParameterName() + "' deve ser informado"
+        );
     }
 
     @ExceptionHandler(Exception.class)
