@@ -1,63 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Secret Wish - Test Dashboard</title>
-    <style>
-        body { font-family: sans-serif; background: #121212; color: #eee; padding: 40px; }
-        .card { background: #1e1e1e; border: 1px solid #333; padding: 20px; border-radius: 8px; max-width: 500px; margin-bottom: 20px; }
-        button { background: #deff9a; color: #000; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #c5e687; }
-        #response { background: #000; padding: 15px; border-radius: 4px; font-family: monospace; color: #deff9a; margin-top: 10px; min-height: 50px; }
-        .status { font-size: 12px; margin-top: 5px; }
-    </style>
-</head>
-<body>
-    <h1>Secret Wish 🎁 <small style="font-size: 14px; opacity: 0.6;">Test Environment</small></h1>
-    
-    <div class="card">
-        <h3>1. Testar Conexão Backend</h3>
-        <p>Tenta acessar <code>GET http://localhost:8080/api/test</code></p>
-        <button onclick="testBackend()">Enviar Request</button>
-        <div id="response">Aguardando comando...</div>
-        <div id="status-text" class="status"></div>
-    </div>
-
-    <div class="card">
-        <h3>2. Simular Lista de Desejos (Mock)</h3>
-        <input type="text" id="item" placeholder="Nome do item" style="padding: 8px; border-radius: 4px; border: none;">
-        <button onclick="addItem()">Adicionar</button>
-        <ul id="wishlist" style="margin-top: 15px;"></ul>
-    </div>
-
-    <script>
-        async function testBackend() {
-            const respDiv = document.getElementById('response');
-            const statusDiv = document.getElementById('status-text');
-            respDiv.innerText = "Carregando...";
-            
-            try {
-                // Tenta chamar a rota que você criou no TestController
-                const response = await fetch('http://localhost:8080/api/test');
-                const data = await response.text();
-                respDiv.innerText = data;
-                statusDiv.innerText = "Sucesso: Conexão ativa.";
-                statusDiv.style.color = "#deff9a";
-            } catch (error) {
-                respDiv.innerText = "Erro ao conectar.";
-                statusDiv.innerText = "Falha: O backend está rodando em localhost:8080? Verifique o CORS.";
-                statusDiv.style.color = "#ff9a9a";
-            }
-        }
-
-        function addItem() {
-            const val = document.getElementById('item').value;
-            if(!val) return;
-            const li = document.createElement('li');
-            li.innerText = val;
-            document.getElementById('wishlist').appendChild(li);
-            document.getElementById('item').value = "";
-        }
-    </script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

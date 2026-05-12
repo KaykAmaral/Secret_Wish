@@ -1,0 +1,137 @@
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: var(--bg-card);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transition: var(--transition);
+}
+
+.sidebar-header {
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+  color: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  box-shadow: var(--shadow-md);
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: linear-gradient(to right, var(--primary-blue), var(--primary-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.close-sidebar {
+  display: none;
+  color: var(--text-secondary);
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+}
+
+.sidebar-nav ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-nav li {
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.sidebar-nav li a {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.sidebar-nav li:hover {
+  background-color: #F1F5F9;
+}
+
+.sidebar-nav li:hover a {
+  color: var(--primary-blue);
+}
+
+.sidebar-nav li.active {
+  background: linear-gradient(to right, #EFF6FF, #F5F3FF);
+  color: var(--primary-blue);
+}
+
+.sidebar-nav li.active a {
+  color: var(--primary-blue);
+}
+
+.sidebar-nav li.active .icon {
+  color: var(--primary-purple);
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.logout-container a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #EF4444;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.logout-container a:hover {
+  background-color: #FEF2F2;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 20px 0 25px -5px rgb(0 0 0 / 0.1);
+  }
+  
+  .close-sidebar {
+    display: block;
+  }
+}
