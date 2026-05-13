@@ -57,6 +57,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     return message;
                 }
 
+                // STOMP clients cannot rely on the browser's Authorization header during the handshake.
                 String token = resolveToken(accessor);
                 Long userId = token == null ? null : jwtService.validateAndGetUserId(token);
                 if (userId == null) {

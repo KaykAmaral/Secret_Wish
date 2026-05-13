@@ -5,6 +5,10 @@ import com.example.springApp.dto.UnreadCountResponse;
 import com.example.springApp.mapper.ResponseMapper;
 import com.example.springApp.security.AuthenticatedUser;
 import com.example.springApp.service.NotificationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +23,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
+@Tag(name = "Notificacoes", description = "Consulta, leitura e limpeza de notificacoes do usuario autenticado.")
 public class NotificationController {
 
     private final NotificationService notificationService;
@@ -36,6 +41,7 @@ public class NotificationController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar notificacoes")
     public List<NotificationResponse> list(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return notificationService.getUserNotifications(userId).stream()
@@ -44,14 +50,16 @@ public class NotificationController {
     }
 
     @GetMapping("/unread-count")
+    @Operation(summary = "Contar notificacoes nao lidas")
     public UnreadCountResponse unreadCount(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return new UnreadCountResponse(notificationService.countUnreadNotifications(userId));
     }
 
     @PatchMapping("/{notificationId}/read")
+    @Operation(summary = "Marcar notificacao como lida")
     public NotificationResponse markAsRead(
-            @PathVariable Long notificationId,
+            @Parameter(description = "ID da notificacao") @PathVariable Long notificationId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
@@ -60,6 +68,8 @@ public class NotificationController {
 
     @PatchMapping("/read-all")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Marcar todas como lidas")
+    @ApiResponse(responseCode = "204", description = "Notificacoes marcadas como lidas")
     public void markAllAsRead(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         notificationService.markAllAsRead(userId);
@@ -67,8 +77,10 @@ public class NotificationController {
 
     @DeleteMapping("/{notificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Excluir notificacao")
+    @ApiResponse(responseCode = "204", description = "Notificacao excluida")
     public void delete(
-            @PathVariable Long notificationId,
+            @Parameter(description = "ID da notificacao") @PathVariable Long notificationId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
@@ -77,6 +89,8 @@ public class NotificationController {
 
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Excluir todas as notificacoes")
+    @ApiResponse(responseCode = "204", description = "Notificacoes excluidas")
     public void deleteAll(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         notificationService.deleteUserNotifications(userId);

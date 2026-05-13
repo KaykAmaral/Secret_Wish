@@ -57,6 +57,7 @@ public class SecurityConfig {
                             .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
                             .requestMatchers("/ws/**").permitAll();
 
+                    // Swagger and dev endpoints are optional so production can remove them from the public surface.
                     if (swaggerEnabled) {
                         auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
                     }

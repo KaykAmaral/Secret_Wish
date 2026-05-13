@@ -6,6 +6,10 @@ import com.example.springApp.dto.UnreadCountResponse;
 import com.example.springApp.mapper.ResponseMapper;
 import com.example.springApp.security.AuthenticatedUser;
 import com.example.springApp.service.MessageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -22,6 +26,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Mensagens", description = "Mensagens privadas entre remetente e destinatario dentro de um grupo.")
 public class MessageController {
 
     private final MessageService messageService;
@@ -40,8 +45,10 @@ public class MessageController {
 
     @PostMapping("/groups/{groupId}/messages")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Enviar mensagem", description = "Envia mensagem privada para outro participante do grupo.")
+    @ApiResponse(responseCode = "201", description = "Mensagem enviada")
     public MessageResponse send(
-            @PathVariable Long groupId,
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             @Valid @RequestBody SendMessageRequest request,
             Authentication authentication
     ) {
@@ -53,9 +60,10 @@ public class MessageController {
     }
 
     @GetMapping("/groups/{groupId}/messages/{otherUserId}")
+    @Operation(summary = "Consultar conversa", description = "Lista mensagens entre o usuario autenticado e outro participante.")
     public List<MessageResponse> conversation(
-            @PathVariable Long groupId,
-            @PathVariable Long otherUserId,
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
+            @Parameter(description = "ID do outro participante") @PathVariable Long otherUserId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
@@ -66,9 +74,11 @@ public class MessageController {
 
     @PatchMapping("/groups/{groupId}/messages/{otherUserId}/read")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Marcar conversa como lida")
+    @ApiResponse(responseCode = "204", description = "Mensagens marcadas como lidas")
     public void markAsRead(
-            @PathVariable Long groupId,
-            @PathVariable Long otherUserId,
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
+            @Parameter(description = "ID do outro participante") @PathVariable Long otherUserId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
@@ -76,6 +86,7 @@ public class MessageController {
     }
 
     @GetMapping("/messages/unread-count")
+    @Operation(summary = "Contar mensagens nao lidas")
     public UnreadCountResponse unreadCount(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return new UnreadCountResponse(messageService.countUnreadMessages(userId));

@@ -10,6 +10,10 @@ import com.example.springApp.model.WishlistItem;
 import com.example.springApp.security.AuthenticatedUser;
 import com.example.springApp.service.AiSuggestionService;
 import com.example.springApp.service.WishlistService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Wishlists", description = "Gerenciamento da propria wishlist e visualizacao permitida apos o sorteio.")
 public class WishlistController {
 
     private final WishlistService wishlistService;
@@ -45,6 +50,7 @@ public class WishlistController {
     }
 
     @GetMapping("/wishlist")
+    @Operation(summary = "Consultar minha wishlist", description = "Retorna a wishlist do usuario autenticado, criando uma vazia se ainda nao existir.")
     public WishlistResponse myWishlist(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return responseMapper.toWishlistResponse(wishlistService.getOrCreateWishlist(userId));
@@ -52,6 +58,8 @@ public class WishlistController {
 
     @PostMapping("/wishlist/items")
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Adicionar item na wishlist", description = "Adiciona um item simples com nome e link.")
+    @ApiResponse(responseCode = "201", description = "Item criado")
     public WishlistItemResponse addItem(
             @Valid @RequestBody WishlistItemRequest request,
             Authentication authentication
@@ -65,8 +73,9 @@ public class WishlistController {
     }
 
     @PutMapping("/wishlist/items/{itemId}")
+    @Operation(summary = "Atualizar item da wishlist", description = "Atualiza nome e link de um item da wishlist do usuario autenticado.")
     public WishlistItemResponse updateItem(
-            @PathVariable Long itemId,
+            @Parameter(description = "ID do item") @PathVariable Long itemId,
             @Valid @RequestBody WishlistItemRequest request,
             Authentication authentication
     ) {
@@ -80,8 +89,10 @@ public class WishlistController {
 
     @DeleteMapping("/wishlist/items/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remover item da wishlist")
+    @ApiResponse(responseCode = "204", description = "Item removido")
     public void removeItem(
-            @PathVariable Long itemId,
+            @Parameter(description = "ID do item") @PathVariable Long itemId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
@@ -89,9 +100,13 @@ public class WishlistController {
     }
 
     @GetMapping("/groups/{groupId}/users/{ownerId}/wishlist")
+    @Operation(
+            summary = "Consultar wishlist visivel",
+            description = "Retorna a wishlist de outro usuario apenas quando a regra do sorteio permitir a visualizacao."
+    )
     public WishlistResponse visibleWishlist(
-            @PathVariable Long groupId,
-            @PathVariable Long ownerId,
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
+            @Parameter(description = "ID do usuario dono da wishlist") @PathVariable Long ownerId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);
@@ -99,9 +114,14 @@ public class WishlistController {
     }
 
     @PostMapping("/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion")
+    @Operation(
+            summary = "Gerar sugestao por IA",
+            description = "Gera uma sugestao textual baseada apenas nos itens presentes na wishlist visivel."
+    )
+    @ApiResponse(responseCode = "429", description = "Limite de uso por hora atingido")
     public AiSuggestionResponse generateAiSuggestion(
-            @PathVariable Long groupId,
-            @PathVariable Long ownerId,
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
+            @Parameter(description = "ID do usuario dono da wishlist") @PathVariable Long ownerId,
             Authentication authentication
     ) {
         Long userId = authenticatedUser.id(authentication);

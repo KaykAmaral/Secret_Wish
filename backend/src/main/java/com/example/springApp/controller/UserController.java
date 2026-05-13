@@ -4,6 +4,8 @@ import com.example.springApp.dto.UserResponse;
 import com.example.springApp.mapper.ResponseMapper;
 import com.example.springApp.security.AuthenticatedUser;
 import com.example.springApp.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Usuarios", description = "Dados do usuario autenticado.")
 public class UserController {
 
     private final UserService userService;
@@ -28,6 +31,7 @@ public class UserController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "Consultar usuario autenticado")
     public UserResponse me(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return responseMapper.toUserResponse(userService.getUserById(userId));
