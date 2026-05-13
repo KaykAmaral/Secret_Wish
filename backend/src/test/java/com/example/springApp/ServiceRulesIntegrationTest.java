@@ -475,6 +475,12 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void devEndpointRequiresJwtWhenDevAuthIsDisabledByDefault() throws Exception {
+        mockMvc.perform(get("/api/dev"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void drawEndpointDoesNotExposePairings() throws Exception {
         Scenario scenario = createGroupWithThreeMembers();
 

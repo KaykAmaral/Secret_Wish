@@ -24,15 +24,18 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final String frontendOrigin;
+    private final boolean authCookieSecure;
 
     public GoogleOAuth2SuccessHandler(
             UserRepository userRepository,
             JwtService jwtService,
-            @Value("${app.frontend.origin}") String frontendOrigin
+            @Value("${app.frontend.origin}") String frontendOrigin,
+            @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure
     ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.frontendOrigin = frontendOrigin;
+        this.authCookieSecure = authCookieSecure;
     }
 
     @Override
@@ -61,7 +64,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
         ResponseCookie authCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, token)
                 .httpOnly(true)
-                .secure(request.isSecure())
+                .secure(authCookieSecure || request.isSecure())
                 .sameSite("Lax")
                 .path("/")
                 .maxAge(Duration.ofHours(1))

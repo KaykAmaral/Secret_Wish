@@ -25,15 +25,21 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
     private final String frontendOrigin;
+    private final boolean devAuthEnabled;
+    private final boolean swaggerEnabled;
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler,
-            @Value("${app.frontend.origin}") String frontendOrigin
+            @Value("${app.frontend.origin}") String frontendOrigin,
+            @Value("${app.dev-auth.enabled:false}") boolean devAuthEnabled,
+            @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.googleOAuth2SuccessHandler = googleOAuth2SuccessHandler;
         this.frontendOrigin = frontendOrigin;
+        this.devAuthEnabled = devAuthEnabled;
+        this.swaggerEnabled = swaggerEnabled;
     }
 
     @Bean
@@ -46,14 +52,21 @@ public class SecurityConfig {
                         apiAuthenticationEntryPoint(),
                         request -> request.getRequestURI().startsWith("/api/")
                 ))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/api/dev/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth -> {
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                            .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
+                            .requestMatchers("/ws/**").permitAll();
+
+                    if (swaggerEnabled) {
+                        auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
+                    }
+
+                    if (devAuthEnabled) {
+                        auth.requestMatchers("/api/dev/**").permitAll();
+                    }
+
+                    auth.anyRequest().authenticated();
+                })
                 .oauth2Login(oauth2 -> oauth2.successHandler(googleOAuth2SuccessHandler))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
