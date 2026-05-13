@@ -33,7 +33,7 @@ public class WishlistService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
 
-        return wishlistRepository.findByUsuarioId(userId)
+        return wishlistRepository.findByUsuarioIdWithItems(userId)
                 .orElseGet(() -> {
                     WishList newList = new WishList();
                     newList.setUsuario(user);
@@ -65,6 +65,7 @@ public class WishlistService {
         return wishlistItemRepository.save(item);
     }
 
+    @Transactional
     public WishList getVisibleWishlist(Long groupId, Long viewerId, Long ownerId) {
         if (viewerId.equals(ownerId)) {
             return getOrCreateWishlist(ownerId);

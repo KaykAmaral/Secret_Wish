@@ -3,6 +3,10 @@ package com.example.springApp.config;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.tags.Tag;
@@ -16,6 +20,22 @@ public class OpenApiConfig {
 
     @Bean
     public OpenAPI secretWishOpenApi() {
+        Components components = new Components()
+                .addSecuritySchemes(
+                        BEARER_AUTH,
+                        new SecurityScheme()
+                                .name(BEARER_AUTH)
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")
+                )
+                .addResponses("ErroPadrao", new ApiResponse()
+                        .description("Contrato padrao de erro")
+                        .content(new Content().addMediaType(
+                                org.springframework.http.MediaType.APPLICATION_JSON_VALUE,
+                                new MediaType().schema(new Schema<>().$ref("#/components/schemas/ApiErrorResponse"))
+                        )));
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Secret Wish API")
@@ -35,13 +55,6 @@ public class OpenApiConfig {
                 .addTagsItem(new Tag().name("Notificacoes").description("Notificacoes e contadores de nao lidas."))
                 .addTagsItem(new Tag().name("Desenvolvimento").description("Endpoints locais habilitados por configuracao."))
                 .addSecurityItem(new SecurityRequirement().addList(BEARER_AUTH))
-                .components(new Components().addSecuritySchemes(
-                        BEARER_AUTH,
-                        new SecurityScheme()
-                                .name(BEARER_AUTH)
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")
-                ));
+                .components(components);
     }
 }

@@ -95,6 +95,24 @@ springdoc.swagger-ui.enabled=false
 
 Todos os endpoints abaixo exigem JWT, exceto OAuth2, Swagger quando habilitado e `/api/dev/**` quando `DEV_AUTH_ENABLED=true`.
 
+## Contrato de erro
+
+Todas as respostas de erro da API usam o mesmo formato:
+
+```json
+{
+  "timestamp": "2026-05-13T14:30:00",
+  "status": 400,
+  "error": "Erro de validacao",
+  "message": "Existem campos invalidos na requisicao",
+  "fields": {
+    "nome": "must not be blank"
+  }
+}
+```
+
+`fields` sempre existe. Quando o erro nao for de validacao de campos, ele vem como objeto vazio.
+
 ### Autenticacao
 
 - `GET /oauth2/authorization/google`: inicia login com Google.

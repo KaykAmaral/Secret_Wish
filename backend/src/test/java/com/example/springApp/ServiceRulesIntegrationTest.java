@@ -472,13 +472,19 @@ class ServiceRulesIntegrationTest {
     @Test
     void protectedEndpointRequiresJwt() throws Exception {
         mockMvc.perform(get("/api/groups"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Nao autenticado"))
+                .andExpect(jsonPath("$.message").value("Autenticacao obrigatoria para acessar este recurso"))
+                .andExpect(jsonPath("$.fields").isMap());
     }
 
     @Test
     void devEndpointRequiresJwtWhenDevAuthIsDisabledByDefault() throws Exception {
         mockMvc.perform(get("/api/dev"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.fields").isMap());
     }
 
     @Test
@@ -488,6 +494,44 @@ class ServiceRulesIntegrationTest {
                 .andExpect(result -> assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE))
                         .contains("secret_wish_token=")
                         .contains("Max-Age=0"));
+    }
+
+    @Test
+    void sockJsInfoEndpointIsPublicForHandshake() throws Exception {
+        mockMvc.perform(get("/ws-sockjs/info"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void validationErrorsUseStandardErrorContract() throws Exception {
+        User user = createUser("Validation User");
+
+        mockMvc.perform(post("/api/groups")
+                        .header("Authorization", bearerToken(user))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nome": ""
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Erro de validacao"))
+                .andExpect(jsonPath("$.message").value("Existem campos invalidos na requisicao"))
+                .andExpect(jsonPath("$.fields.nome").exists());
+    }
+
+    @Test
+    void invalidPathParameterUsesStandardErrorContract() throws Exception {
+        User user = createUser("Invalid Parameter User");
+
+        mockMvc.perform(get("/api/groups/not-a-number/draw/me")
+                        .header("Authorization", bearerToken(user)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Parametro invalido"))
+                .andExpect(jsonPath("$.message").value("Parametro 'groupId' possui valor invalido"))
+                .andExpect(jsonPath("$.fields").isMap());
     }
 
     @Test
@@ -522,6 +566,30 @@ class ServiceRulesIntegrationTest {
                         .header("Authorization", bearerToken(notAllowedViewer)))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.message").value("Voce nao pode visualizar esta wishlist"));
+    }
+
+    @Test
+    void wishlistEndpointsReturnItemsWithOpenInViewDisabled() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        wishlistService.addItemToWishlist(
+                scenario.memberA().getId(),
+                WishlistItem.builder().nomeProduto("Caneca").link("https://example.com/caneca").build()
+        );
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw draw = drawRepository.findByGrupoId(scenario.group().getId()).stream()
+                .filter(candidate -> candidate.getDestinatario().getId().equals(scenario.memberA().getId()))
+                .findFirst()
+                .orElseThrow();
+
+        mockMvc.perform(get("/api/wishlist")
+                        .header("Authorization", bearerToken(scenario.memberA())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.itens[0].nomeProduto").value("Caneca"));
+
+        mockMvc.perform(get("/api/groups/{groupId}/draw/me", scenario.group().getId())
+                        .header("Authorization", bearerToken(draw.getRemetente())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.wishlist.itens[0].nomeProduto").value("Caneca"));
     }
 
     @Test
