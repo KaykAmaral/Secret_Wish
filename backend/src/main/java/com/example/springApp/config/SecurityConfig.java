@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/api/logout").permitAll()
                             .requestMatchers("/ws/**").permitAll();
 
                     // Swagger and dev endpoints are optional so production can remove them from the public surface.

@@ -50,6 +50,7 @@ DB_PASSWORD=1234
 JWT_SECRET=replace-with-a-long-local-secret
 DEV_AUTH_ENABLED=true
 AUTH_COOKIE_SECURE=false
+AUTH_COOKIE_SAME_SITE=Lax
 FRONTEND_ORIGIN=http://localhost:3000
 SWAGGER_ENABLED=true
 
@@ -98,6 +99,7 @@ Todos os endpoints abaixo exigem JWT, exceto OAuth2, Swagger quando habilitado e
 
 - `GET /oauth2/authorization/google`: inicia login com Google.
 - `GET /login/oauth2/code/google`: callback chamado pelo Google.
+- `POST /api/logout`: remove o cookie HTTP-only de autenticacao.
 - `GET /api/me`: retorna o usuario autenticado.
 
 ### Grupos
@@ -232,9 +234,19 @@ Defaults seguros do profile `prod`:
 
 - `app.dev-auth.enabled=false`
 - `app.auth.cookie-secure=true`
+- `app.auth.cookie-same-site=Lax`
 - `spring.jpa.hibernate.ddl-auto=validate`
 - `spring.flyway.enabled=true`
 - Swagger desabilitado
+
+Se frontend e backend ficarem em dominios diferentes, use:
+
+```properties
+AUTH_COOKIE_SAME_SITE=None
+AUTH_COOKIE_SECURE=true
+```
+
+O backend bloqueia a inicializacao em `prod` quando encontra configuracao insegura, como Swagger habilitado, dev auth habilitado, `JWT_SECRET` curto ou `FRONTEND_ORIGIN` sem HTTPS.
 
 ## Testes
 

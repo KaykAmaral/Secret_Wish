@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -478,6 +479,15 @@ class ServiceRulesIntegrationTest {
     void devEndpointRequiresJwtWhenDevAuthIsDisabledByDefault() throws Exception {
         mockMvc.perform(get("/api/dev"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logoutClearsAuthenticationCookieWithoutRequiringJwt() throws Exception {
+        mockMvc.perform(post("/api/logout"))
+                .andExpect(status().isNoContent())
+                .andExpect(result -> assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE))
+                        .contains("secret_wish_token=")
+                        .contains("Max-Age=0"));
     }
 
     @Test

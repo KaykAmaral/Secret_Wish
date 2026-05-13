@@ -26,6 +26,7 @@ public class OpenApiConfig {
                                 Autenticacao principal: OAuth2 Google em /oauth2/authorization/google.
                                 Para testar endpoints protegidos pelo Swagger, informe um JWT no botao Authorize.
                                 """))
+                .addTagsItem(new Tag().name("Autenticacao").description("Login OAuth2 e encerramento de sessao."))
                 .addTagsItem(new Tag().name("Usuarios").description("Dados do usuario autenticado."))
                 .addTagsItem(new Tag().name("Grupos").description("Criacao, entrada e gerenciamento de grupos."))
                 .addTagsItem(new Tag().name("Wishlists").description("Itens desejados e sugestoes por IA."))
