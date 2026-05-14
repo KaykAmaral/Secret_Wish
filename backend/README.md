@@ -169,6 +169,212 @@ Todas as respostas de erro da API usam o mesmo formato:
 - `GET /api/dev/email/test?to=email@example.com`: envia email de teste pelo browser.
 - `POST /api/dev/email/test?to=email@example.com`: envia email de teste.
 
+## Payloads para o frontend
+
+### Status da sessao
+
+`GET /api/auth/status`
+
+```json
+{
+  "authenticated": true,
+  "user": {
+    "id": 1,
+    "nome": "Kayky",
+    "email": "kayky@example.com"
+  }
+}
+```
+
+Sem sessao:
+
+```json
+{
+  "authenticated": false,
+  "user": null
+}
+```
+
+### Criar grupo
+
+`POST /api/groups`
+
+```json
+{
+  "nome": "Amigo secreto da familia",
+  "dataEvento": "2026-12-24T20:00:00"
+}
+```
+
+Resposta:
+
+```json
+{
+  "id": 1,
+  "nome": "Amigo secreto da familia",
+  "codigoUnico": "AB12-CD34",
+  "dono": {
+    "id": 1,
+    "nome": "Kayky",
+    "email": "kayky@example.com"
+  },
+  "membros": [],
+  "dataCriacao": "2026-05-13T20:00:00",
+  "dataSorteio": null,
+  "dataEvento": "2026-12-24T20:00:00"
+}
+```
+
+### Entrar em grupo
+
+`POST /api/groups/join`
+
+```json
+{
+  "codigoUnico": "AB12-CD34"
+}
+```
+
+### Wishlist
+
+`POST /api/wishlist/items`
+
+```json
+{
+  "nomeProduto": "Fone bluetooth",
+  "link": "https://example.com/fone"
+}
+```
+
+`GET /api/wishlist`
+
+```json
+{
+  "id": 10,
+  "usuario": {
+    "id": 1,
+    "nome": "Kayky",
+    "email": "kayky@example.com"
+  },
+  "sugestaoIa": null,
+  "itens": [
+    {
+      "id": 100,
+      "nomeProduto": "Fone bluetooth",
+      "link": "https://example.com/fone"
+    }
+  ]
+}
+```
+
+### Sorteio
+
+`POST /api/groups/{groupId}/draw`
+
+```json
+{
+  "groupId": 1,
+  "participantCount": 3,
+  "performedAt": "2026-05-13T20:00:00"
+}
+```
+
+`GET /api/groups/{groupId}/draw/me`
+
+```json
+{
+  "grupoId": 1,
+  "amigoSecreto": {
+    "id": 2,
+    "nome": "Maria",
+    "email": "maria@example.com"
+  },
+  "wishlist": {
+    "id": 11,
+    "usuario": {
+      "id": 2,
+      "nome": "Maria",
+      "email": "maria@example.com"
+    },
+    "sugestaoIa": null,
+    "itens": []
+  }
+}
+```
+
+### Mensagens
+
+`POST /api/groups/{groupId}/messages`
+
+```json
+{
+  "destinatarioId": 2,
+  "conteudo": "Voce prefere camiseta preta ou azul?"
+}
+```
+
+Resposta:
+
+```json
+{
+  "id": 50,
+  "grupoId": 1,
+  "remetente": {
+    "id": 1,
+    "nome": "Kayky",
+    "email": "kayky@example.com"
+  },
+  "destinatario": {
+    "id": 2,
+    "nome": "Maria",
+    "email": "maria@example.com"
+  },
+  "nomeRemetenteExibicao": "Kayky",
+  "conteudo": "Voce prefere camiseta preta ou azul?",
+  "dataEnvio": "2026-05-13T20:00:00",
+  "lida": false,
+  "anonima": true
+}
+```
+
+Para o destinatario, o remetente anonimo volta como:
+
+```json
+{
+  "remetente": null,
+  "nomeRemetenteExibicao": "amigo secreto"
+}
+```
+
+### Notificacoes e contadores
+
+`GET /api/messages/unread-count`
+
+```json
+{
+  "unreadCount": 3
+}
+```
+
+`GET /api/notifications`
+
+```json
+[
+  {
+    "id": 1,
+    "usuario": {
+      "id": 1,
+      "nome": "Kayky",
+      "email": "kayky@example.com"
+    },
+    "titulo": "Sorteio realizado",
+    "mensagem": "Voce tirou Maria no amigo secreto.",
+    "dataCriacao": "2026-05-13T20:00:00",
+    "lida": false
+  }
+]
+```
+
 ## WebSocket
 
 Endpoints STOMP:

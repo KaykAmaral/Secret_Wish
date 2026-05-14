@@ -28,8 +28,7 @@ public class ResponseMapper {
         return new UserResponse(
                 user.getId(),
                 user.getNome(),
-                user.getEmail(),
-                user.getOauthId()
+                user.getEmail()
         );
     }
 

@@ -524,7 +524,20 @@ class ServiceRulesIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated").value(true))
                 .andExpect(jsonPath("$.user.id").value(user.getId()))
-                .andExpect(jsonPath("$.user.email").value(user.getEmail()));
+                .andExpect(jsonPath("$.user.email").value(user.getEmail()))
+                .andExpect(jsonPath("$.user.oauthId").doesNotExist());
+    }
+
+    @Test
+    void meEndpointDoesNotExposeOauthId() throws Exception {
+        User user = createUser("Me User");
+
+        mockMvc.perform(get("/api/me")
+                        .header("Authorization", bearerToken(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(user.getId()))
+                .andExpect(jsonPath("$.email").value(user.getEmail()))
+                .andExpect(jsonPath("$.oauthId").doesNotExist());
     }
 
     @Test

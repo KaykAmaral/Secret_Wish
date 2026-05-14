@@ -11,9 +11,6 @@ public record UserResponse(
         String nome,
 
         @Schema(example = "kayky@example.com")
-        String email,
-
-        @Schema(description = "Identificador OAuth do provedor. Pode ser omitido no frontend.", example = "google-sub-123")
-        String oauthId
+        String email
 ) {
 }
