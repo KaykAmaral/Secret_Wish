@@ -1,5 +1,6 @@
 package com.example.springApp.security;
 
+import com.example.springApp.config.FrontendOriginsProperties;
 import com.example.springApp.model.User;
 import com.example.springApp.repository.UserRepository;
 import jakarta.servlet.ServletException;
@@ -23,20 +24,20 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
-    private final String frontendOrigin;
+    private final FrontendOriginsProperties frontendOrigins;
     private final boolean authCookieSecure;
     private final String authCookieSameSite;
 
     public GoogleOAuth2SuccessHandler(
             UserRepository userRepository,
             JwtService jwtService,
-            @Value("${app.frontend.origin}") String frontendOrigin,
+            FrontendOriginsProperties frontendOrigins,
             @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure,
             @Value("${app.auth.cookie-same-site:Lax}") String authCookieSameSite
     ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
-        this.frontendOrigin = frontendOrigin;
+        this.frontendOrigins = frontendOrigins;
         this.authCookieSecure = authCookieSecure;
         this.authCookieSameSite = authCookieSameSite;
     }
@@ -72,7 +73,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                 .path("/")
                 .maxAge(Duration.ofHours(1))
                 .build();
-        String redirectUrl = UriComponentsBuilder.fromUriString(frontendOrigin)
+        String redirectUrl = UriComponentsBuilder.fromUriString(frontendOrigins.primaryOrigin())
                 .path("/oauth2/callback")
                 .build()
                 .toUriString();

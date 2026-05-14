@@ -30,7 +30,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
-    private final String frontendOrigin;
+    private final FrontendOriginsProperties frontendOrigins;
     private final boolean devAuthEnabled;
     private final boolean swaggerEnabled;
     private final ObjectMapper objectMapper;
@@ -38,14 +38,14 @@ public class SecurityConfig {
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
             GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler,
-            @Value("${app.frontend.origin}") String frontendOrigin,
+            FrontendOriginsProperties frontendOrigins,
             @Value("${app.dev-auth.enabled:false}") boolean devAuthEnabled,
             @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled,
             ObjectMapper objectMapper
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.googleOAuth2SuccessHandler = googleOAuth2SuccessHandler;
-        this.frontendOrigin = frontendOrigin;
+        this.frontendOrigins = frontendOrigins;
         this.devAuthEnabled = devAuthEnabled;
         this.swaggerEnabled = swaggerEnabled;
         this.objectMapper = objectMapper;
@@ -103,11 +103,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(frontendOrigin));
+        configuration.setAllowedOrigins(frontendOrigins.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

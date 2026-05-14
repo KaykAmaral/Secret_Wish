@@ -52,6 +52,7 @@ DEV_AUTH_ENABLED=true
 AUTH_COOKIE_SECURE=false
 AUTH_COOKIE_SAME_SITE=Lax
 FRONTEND_ORIGIN=http://localhost:3000
+FRONTEND_ORIGINS=http://localhost:3000,http://localhost:5173
 SWAGGER_ENABLED=true
 
 GOOGLE_CLIENT_ID=replace-with-google-client-id
@@ -234,6 +235,7 @@ DB_USERNAME=
 DB_PASSWORD=
 JWT_SECRET=
 FRONTEND_ORIGIN=
+FRONTEND_ORIGINS=
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 ```
@@ -265,7 +267,15 @@ AUTH_COOKIE_SAME_SITE=None
 AUTH_COOKIE_SECURE=true
 ```
 
-O backend bloqueia a inicializacao em `prod` quando encontra configuracao insegura, como Swagger habilitado, dev auth habilitado, `JWT_SECRET` curto ou `FRONTEND_ORIGIN` sem HTTPS.
+Para CORS, `FRONTEND_ORIGINS` aceita uma lista separada por virgula:
+
+```properties
+FRONTEND_ORIGINS=https://app.seu-dominio.com,https://admin.seu-dominio.com
+```
+
+`FRONTEND_ORIGIN` continua existindo como origem principal usada no redirect OAuth. Quando `FRONTEND_ORIGINS` nao for informado, o backend usa `FRONTEND_ORIGIN` como unica origem permitida.
+
+O backend bloqueia a inicializacao em `prod` quando encontra configuracao insegura, como Swagger habilitado, dev auth habilitado, `JWT_SECRET` curto, `FRONTEND_ORIGINS` com `*` ou origens sem HTTPS.
 
 ## Testes
 

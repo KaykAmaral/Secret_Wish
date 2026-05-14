@@ -33,7 +33,7 @@ public class ProductionSafetyValidator {
             requireFalse(environment, "springdoc.swagger-ui.enabled");
             requireFalse(environment, "springdoc.api-docs.enabled");
             requireTrue(environment, "app.auth.cookie-secure");
-            requireHttps(environment, "app.frontend.origin");
+            requireHttpsOrigins(environment);
             validateJwtSecretStrength(environment);
         };
     }
@@ -81,10 +81,16 @@ public class ProductionSafetyValidator {
         }
     }
 
-    private void requireHttps(Environment environment, String property) {
-        String value = environment.getRequiredProperty(property);
-        if (!value.startsWith("https://")) {
-            throw new IllegalStateException("Configuracao de producao insegura: " + property + " deve usar HTTPS");
+    private void requireHttpsOrigins(Environment environment) {
+        String origins = environment.getRequiredProperty("app.frontend.origins");
+        for (String origin : origins.split(",")) {
+            String normalizedOrigin = origin.trim();
+            if (normalizedOrigin.equals("*")) {
+                throw new IllegalStateException("Configuracao de producao insegura: app.frontend.origins nao pode usar *");
+            }
+            if (!normalizedOrigin.startsWith("https://")) {
+                throw new IllegalStateException("Configuracao de producao insegura: app.frontend.origins deve usar HTTPS");
+            }
         }
     }
 }

@@ -48,6 +48,8 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -493,6 +495,24 @@ class ServiceRulesIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.authenticated").value(false))
                 .andExpect(jsonPath("$.user").doesNotExist());
+    }
+
+    @Test
+    void corsAllowsConfiguredFrontendOrigins() throws Exception {
+        mockMvc.perform(options("/api/auth/status")
+                        .header("Origin", "http://localhost:5173")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
+
+    @Test
+    void corsRejectsUnknownFrontendOrigin() throws Exception {
+        mockMvc.perform(options("/api/auth/status")
+                        .header("Origin", "http://malicious.localhost")
+                        .header("Access-Control-Request-Method", "GET"))
+                .andExpect(status().isForbidden());
     }
 
     @Test

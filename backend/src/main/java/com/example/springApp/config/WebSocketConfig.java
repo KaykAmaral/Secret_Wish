@@ -2,7 +2,6 @@ package com.example.springApp.config;
 
 import com.example.springApp.security.JwtService;
 import com.example.springApp.websocket.StompUserPrincipal;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -21,22 +20,22 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JwtService jwtService;
-    private final String frontendOrigin;
+    private final FrontendOriginsProperties frontendOrigins;
 
     public WebSocketConfig(
             JwtService jwtService,
-            @Value("${app.frontend.origin}") String frontendOrigin
+            FrontendOriginsProperties frontendOrigins
     ) {
         this.jwtService = jwtService;
-        this.frontendOrigin = frontendOrigin;
+        this.frontendOrigins = frontendOrigins;
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins(frontendOrigin);
+                .setAllowedOrigins(frontendOrigins.allowedOriginsArray());
         registry.addEndpoint("/ws-sockjs")
-                .setAllowedOrigins(frontendOrigin)
+                .setAllowedOrigins(frontendOrigins.allowedOriginsArray())
                 .withSockJS();
     }
 
