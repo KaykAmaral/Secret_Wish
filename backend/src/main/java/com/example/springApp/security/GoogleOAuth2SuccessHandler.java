@@ -60,6 +60,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
             throw new ServletException("Conta Google sem email verificado");
         }
 
+        // Vincula por oauthId quando possivel; email cobre usuarios criados antes do primeiro login Google.
         User user = userRepository.findByOauthId(oauthId)
                 .or(() -> userRepository.findByEmail(email))
                 .map(existingUser -> updateGoogleData(existingUser, oauthId, email, name))
@@ -73,6 +74,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                 .path("/")
                 .maxAge(Duration.ofHours(1))
                 .build();
+        // O frontend centraliza o tratamento pos-login nesta rota.
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendOrigins.primaryOrigin())
                 .path("/oauth2/callback")
                 .build()

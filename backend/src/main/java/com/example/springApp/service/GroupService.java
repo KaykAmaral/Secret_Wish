@@ -44,6 +44,7 @@ public class GroupService {
             throw new ConflictException("Usuario ja possui um grupo criado");
         }
 
+        // O dono tambem entra como membro para aparecer nas listas e participar do sorteio.
         group.setDono(dono);
         group.setCodigoUnico(generateUniqueCode());
         group.getMembros().add(dono);
@@ -110,6 +111,7 @@ public class GroupService {
             throw new BusinessException("Participantes nao podem sair depois do sorteio");
         }
 
+        // O dono deve excluir o grupo inteiro para evitar grupo sem responsavel.
         if (group.getDono().getId().equals(userId)) {
             throw new BusinessException("O dono deve deletar o grupo em vez de sair dele");
         }
@@ -125,6 +127,7 @@ public class GroupService {
     @Transactional
     public void deleteGroup(Long groupId, Long donoId) {
         Group group = getGroupForOwner(groupId, donoId);
+        // Remove dependencias explicitamente para manter exclusao previsivel entre bancos.
         messageRepository.deleteByGrupoId(groupId);
         drawRepository.deleteByGrupoId(groupId);
         groupRepository.delete(group);

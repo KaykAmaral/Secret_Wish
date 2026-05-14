@@ -53,6 +53,7 @@ public class DrawService {
             throw new BusinessException("O grupo precisa ter pelo menos 3 participantes para o sorteio");
         }
 
+        // Refazer o sorteio invalida conversas antigas para preservar o novo pareamento.
         messageRepository.deleteByGrupoId(groupId);
         drawRepository.deleteByGrupoId(groupId);
         drawRepository.flush();
@@ -63,6 +64,7 @@ public class DrawService {
 
         for (int i = 0; i < members.size(); i++) {
             User remetente = members.get(i);
+            // Cadeia circular: A -> B -> C -> A, sem usuario tirar a si mesmo.
             User destinatario = members.get((i + 1) % members.size());
 
             Draw draw = new Draw();
@@ -83,6 +85,7 @@ public class DrawService {
                 "Voce tirou " + draw.getDestinatario().getNome() + " no amigo secreto."
         ));
         List<EmailService.DrawResultEmail> emailResults = emailService.toDrawResultEmails(savedDraws);
+        // Email sai apos commit para evitar notificar sorteio que falhou no banco.
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

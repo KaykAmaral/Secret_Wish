@@ -14,6 +14,7 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
 
     List<Draw> findByGrupoId(Long grupoId);
 
+    // Retorna as duas relacoes do usuario no ciclo: quem ele tirou e quem tirou ele.
     @Query("""
             select draw from Draw draw
             where draw.grupo.id = :groupId
@@ -24,7 +25,7 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
     boolean existsByGrupoId(Long grupoId);
     void deleteByGrupoId(Long grupoId);
 
-    // Para o usuario ver quem ele tirou em um grupo especifico
+    // Usado para consultar o resultado individual sem expor o sorteio completo.
     Optional<Draw> findByGrupo_IdAndRemetente_Id(Long groupId, Long giverId);
     Optional<Draw> findByGrupo_IdAndDestinatario_Id(Long groupId, Long receiverId);
     boolean existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(Long groupId, Long giverId, Long receiverId);

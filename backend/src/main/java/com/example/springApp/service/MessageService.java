@@ -62,6 +62,7 @@ public class MessageService {
             throw new ForbiddenException("Mensagens so podem ser trocadas entre pares do sorteio");
         }
 
+        // Mensagens sao privadas entre pares do sorteio e sempre anonimas para o destinatario.
         Message message = new Message();
         message.setGrupo(group);
         message.setRemetente(sender);
@@ -80,6 +81,7 @@ public class MessageService {
                 savedMessage.getDataEnvio(),
                 unreadCount
         );
+        // WebSocket so notifica depois que a mensagem foi persistida com sucesso.
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
@@ -144,6 +146,7 @@ public class MessageService {
     private ChatSummaryResponse toChatSummary(Draw draw, Long groupId, Long userId) {
         boolean userIsGiver = draw.getRemetente().getId().equals(userId);
         User otherUser = userIsGiver ? draw.getDestinatario() : draw.getRemetente();
+        // Quando o usuario foi tirado, a outra ponta continua oculta como "amigo secreto".
         Long unreadCount = messageRepository.countByGrupoIdAndRemetenteIdAndDestinatarioIdAndLidaFalse(
                 groupId,
                 otherUser.getId(),

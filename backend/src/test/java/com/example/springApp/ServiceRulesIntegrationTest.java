@@ -3,6 +3,7 @@ package com.example.springApp;
 import com.example.springApp.exception.BusinessException;
 import com.example.springApp.exception.ConflictException;
 import com.example.springApp.exception.ForbiddenException;
+import com.example.springApp.exception.RateLimitException;
 import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Draw;
 import com.example.springApp.model.Group;
@@ -360,7 +361,7 @@ class ServiceRulesIntegrationTest {
 
         assertThat(enabledService.remainingGenerations(user.getId())).isZero();
         assertThatThrownBy(() -> enabledService.generateSuggestion(wishlist, user.getId()))
-                .isInstanceOf(BusinessException.class)
+                .isInstanceOf(RateLimitException.class)
                 .hasMessageContaining("Limite de 3 sugestoes");
     }
 
@@ -547,6 +548,8 @@ class ServiceRulesIntegrationTest {
                 .andExpect(status().isNoContent())
                 .andExpect(result -> assertThat(result.getResponse().getHeader(HttpHeaders.SET_COOKIE))
                         .contains("secret_wish_token=")
+                        .contains("HttpOnly")
+                        .contains("SameSite=Lax")
                         .contains("Max-Age=0"));
     }
 

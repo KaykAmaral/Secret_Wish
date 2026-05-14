@@ -1,13 +1,11 @@
 package com.example.springApp.mapper;
 
-import com.example.springApp.dto.DrawResponse;
 import com.example.springApp.dto.GroupResponse;
 import com.example.springApp.dto.MessageResponse;
 import com.example.springApp.dto.NotificationResponse;
 import com.example.springApp.dto.UserResponse;
 import com.example.springApp.dto.WishlistItemResponse;
 import com.example.springApp.dto.WishlistResponse;
-import com.example.springApp.model.Draw;
 import com.example.springApp.model.Group;
 import com.example.springApp.model.Message;
 import com.example.springApp.model.Notification;
@@ -25,6 +23,7 @@ import java.util.stream.Collectors;
 public class ResponseMapper {
 
     public UserResponse toUserResponse(User user) {
+        // Nunca expor oauthId ou outros identificadores internos do provedor.
         return new UserResponse(
                 user.getId(),
                 user.getNome(),
@@ -47,15 +46,6 @@ public class ResponseMapper {
                 group.getDataCriacao(),
                 group.getDataSorteio(),
                 group.getDataEvento()
-        );
-    }
-
-    public DrawResponse toDrawResponse(Draw draw) {
-        return new DrawResponse(
-                draw.getId(),
-                draw.getGrupo().getId(),
-                toUserResponse(draw.getRemetente()),
-                toUserResponse(draw.getDestinatario())
         );
     }
 
@@ -83,6 +73,7 @@ public class ResponseMapper {
 
     public MessageResponse toMessageResponse(Message message, Long viewerId) {
         boolean viewerIsSender = message.getRemetente().getId().equals(viewerId);
+        // O destinatario ve apenas o apelido anonimo de quem tirou ele.
         String displayName = viewerIsSender ? message.getRemetente().getNome() : "amigo secreto";
 
         return new MessageResponse(

@@ -67,6 +67,7 @@ public class AuthController {
     @ApiResponse(responseCode = "204", description = "Sessao encerrada")
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         SecurityContextHolder.clearContext();
+        // Expira o cookie no mesmo caminho usado no login OAuth2.
         ResponseCookie expiredCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(authCookieSecure || request.isSecure())

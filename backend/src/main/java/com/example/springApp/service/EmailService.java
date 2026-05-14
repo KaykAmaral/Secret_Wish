@@ -33,6 +33,7 @@ public class EmailService {
 
     public List<DrawResultEmail> toDrawResultEmails(List<Draw> draws) {
         return draws.stream()
+                // Snapshot evita depender de entidades lazy depois que a transacao termina.
                 .map(draw -> new DrawResultEmail(
                         draw.getGrupo().getId(),
                         draw.getGrupo().getNome(),
@@ -61,6 +62,7 @@ public class EmailService {
             }
 
             for (DrawResultEmail result : results) {
+                // Uma falha individual nao deve impedir os demais participantes de receberem email.
                 sendDrawResult(result);
             }
         } catch (Exception ex) {

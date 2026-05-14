@@ -29,6 +29,7 @@ public class ProductionSafetyValidator {
             validateProdRequiredValue(environment, "spring.datasource.username");
             validateProdRequiredValue(environment, "spring.datasource.password");
 
+            // Em prod, a aplicacao deve falhar rapido quando alguma superficie insegura estiver ativa.
             requireHttpsProperty(environment, "app.frontend.origin");
             requireFalse(environment, "app.dev-auth.enabled");
             requireFalse(environment, "springdoc.swagger-ui.enabled");

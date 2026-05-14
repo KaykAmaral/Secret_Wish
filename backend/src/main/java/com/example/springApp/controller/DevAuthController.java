@@ -22,6 +22,7 @@ import java.util.Map;
 @ConditionalOnProperty(prefix = "app.dev-auth", name = "enabled", havingValue = "true")
 @Transactional
 @Tag(name = "Desenvolvimento", description = "Endpoints auxiliares habilitados apenas quando app.dev-auth.enabled=true.")
+// Disponivel apenas para desenvolvimento local; o profile prod bloqueia esta flag na inicializacao.
 public class DevAuthController {
 
     private final UserRepository userRepository;

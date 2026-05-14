@@ -29,6 +29,26 @@ class ProductionSafetyValidatorTest {
     }
 
     @Test
+    void rejectsDevAuthEnabledInProduction() {
+        MockEnvironment environment = secureProdEnvironment()
+                .withProperty("app.dev-auth.enabled", "true");
+
+        assertThatThrownBy(() -> runValidator(environment))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("app.dev-auth.enabled deve ser false");
+    }
+
+    @Test
+    void rejectsSwaggerEnabledInProduction() {
+        MockEnvironment environment = secureProdEnvironment()
+                .withProperty("springdoc.swagger-ui.enabled", "true");
+
+        assertThatThrownBy(() -> runValidator(environment))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("springdoc.swagger-ui.enabled deve ser false");
+    }
+
+    @Test
     void rejectsEnabledMailWithoutSmtpCredentialsInProduction() {
         MockEnvironment environment = secureProdEnvironment()
                 .withProperty("app.mail.enabled", "true")

@@ -39,6 +39,11 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, "Acesso negado", ex.getMessage());
     }
 
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiErrorResponse> handleRateLimitException(RateLimitException ex) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Limite de uso atingido", ex.getMessage());
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
         return buildResponse(HttpStatus.NOT_FOUND, "Recurso nao encontrado", ex.getMessage());
@@ -100,6 +105,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex) {
         LOGGER.error("Erro interno nao tratado", ex);
+        // Nao devolver stacktrace nem detalhes internos para o cliente.
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Erro interno no servidor",

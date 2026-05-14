@@ -39,6 +39,7 @@ public class Message {
     @Builder.Default
     private boolean lida = false;
 
+    // A mensagem guarda o remetente real, mas a resposta pode ocultar isso do destinatario.
     @Column(name = "anonima", nullable = false)
     @Builder.Default
     private boolean anonima = true;

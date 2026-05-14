@@ -1,6 +1,7 @@
 package com.example.springApp.service;
 
 import com.example.springApp.exception.BusinessException;
+import com.example.springApp.exception.RateLimitException;
 import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.WishList;
 import com.example.springApp.model.WishlistItem;
@@ -30,6 +31,7 @@ public class AiSuggestionService {
     private final WishlistRepository wishlistRepository;
     private final Clock clock;
     private final boolean aiEnabled;
+    // Limite em memoria: simples para single-instance; para multiplas instancias, migrar para storage compartilhado.
     private final Map<Long, UsageWindow> usageByUser = new ConcurrentHashMap<>();
 
     public AiSuggestionService(
@@ -109,7 +111,7 @@ public class AiSuggestionService {
                 window = new UsageWindow(now.plus(1, ChronoUnit.HOURS), 0);
             }
             if (window.count() >= MAX_GENERATIONS_PER_HOUR) {
-                throw new BusinessException("Limite de 3 sugestoes com IA por hora atingido");
+                throw new RateLimitException("Limite de 3 sugestoes com IA por hora atingido");
             }
             return window.increment();
         });
@@ -118,6 +120,7 @@ public class AiSuggestionService {
     private String buildPrompt(List<WishlistItem> items) {
         StringBuilder builder = new StringBuilder("Wishlist disponivel:\n");
         for (WishlistItem item : items) {
+            // A IA recebe somente itens existentes para nao sugerir produtos fora da wishlist.
             builder.append("- ")
                     .append(item.getNomeProduto())
                     .append(" | link: ")

@@ -24,10 +24,11 @@ public class Group {
     @Column(nullable = false)
     private String nome;
 
-    // Codigo no padrao XXXX-XXXX
+    // Codigo curto usado pelo frontend para convite/entrada no grupo.
     @Column(name = "codigo_unico", nullable = false, unique = true, length = 9)
     private String codigoUnico;
 
+    // Regra de negocio: cada usuario pode ser dono de apenas um grupo.
     @ManyToOne
     @JoinColumn(name = "dono_id", nullable = false, unique = true)
     private User dono;

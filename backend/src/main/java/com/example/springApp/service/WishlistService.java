@@ -71,6 +71,7 @@ public class WishlistService {
             return getOrCreateWishlist(ownerId);
         }
 
+        // A wishlist de outra pessoa so fica visivel para quem tirou essa pessoa.
         boolean canView = drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(
                 groupId,
                 viewerId,

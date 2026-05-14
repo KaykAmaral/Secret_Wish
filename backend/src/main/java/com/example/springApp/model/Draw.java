@@ -7,6 +7,7 @@ import lombok.*;
 @Table(
         name = "draws",
         uniqueConstraints = {
+                // Em cada grupo, cada usuario tira uma pessoa e tambem e tirado uma unica vez.
                 @UniqueConstraint(name = "uk_draw_group_giver", columnNames = {"group_id", "giver_id"}),
                 @UniqueConstraint(name = "uk_draw_group_receiver", columnNames = {"group_id", "receiver_id"})
         }

@@ -58,6 +58,7 @@ public class JwtService {
             }
 
             String unsignedToken = parts[0] + "." + parts[1];
+            // Comparacao constante evita vazamento por timing na assinatura.
             if (!constantTimeEquals(sign(unsignedToken), parts[2])) {
                 return null;
             }
