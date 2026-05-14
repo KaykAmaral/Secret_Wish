@@ -1,5 +1,6 @@
 package com.example.springApp.controller;
 
+import com.example.springApp.dto.ChatSummaryResponse;
 import com.example.springApp.dto.MessageResponse;
 import com.example.springApp.dto.SendMessageRequest;
 import com.example.springApp.dto.UnreadCountResponse;
@@ -70,6 +71,19 @@ public class MessageController {
         return messageService.getConversation(groupId, userId, otherUserId).stream()
                 .map(message -> responseMapper.toMessageResponse(message, userId))
                 .toList();
+    }
+
+    @GetMapping("/groups/{groupId}/messages/chats")
+    @Operation(
+            summary = "Listar conversas do grupo",
+            description = "Retorna as conversas permitidas para o usuario autenticado apos o sorteio."
+    )
+    public List<ChatSummaryResponse> chats(
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
+            Authentication authentication
+    ) {
+        Long userId = authenticatedUser.id(authentication);
+        return messageService.getChatSummaries(groupId, userId);
     }
 
     @PatchMapping("/groups/{groupId}/messages/{otherUserId}/read")

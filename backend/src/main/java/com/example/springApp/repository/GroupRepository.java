@@ -1,6 +1,7 @@
 package com.example.springApp.repository;
 
 import com.example.springApp.model.Group;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -12,6 +13,11 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
 
     Optional<Group> findByCodigoUnico(String codigoUnico);
     boolean existsByDonoId(Long donoId);
+
+    @EntityGraph(attributePaths = {"dono", "membros"})
     List<Group> findByMembros_Id(Long usuarioId);
+
+    @EntityGraph(attributePaths = {"dono", "membros"})
+    Optional<Group> findByIdAndMembros_Id(Long groupId, Long userId);
 
 }

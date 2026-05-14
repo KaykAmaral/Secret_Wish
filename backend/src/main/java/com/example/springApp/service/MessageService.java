@@ -1,8 +1,10 @@
 package com.example.springApp.service;
 
 import com.example.springApp.dto.RealtimeMessageNotification;
+import com.example.springApp.dto.ChatSummaryResponse;
 import com.example.springApp.exception.ForbiddenException;
 import com.example.springApp.exception.ResourceNotFoundException;
+import com.example.springApp.model.Draw;
 import com.example.springApp.model.Group;
 import com.example.springApp.model.Message;
 import com.example.springApp.model.User;
@@ -96,6 +98,19 @@ public class MessageService {
         return messageRepository.findConversation(groupId, userId, otherUserId);
     }
 
+    @Transactional(readOnly = true)
+    public List<ChatSummaryResponse> getChatSummaries(Long groupId, Long userId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
+        if (!isMember(group, userId)) {
+            throw new ForbiddenException("Voce nao faz parte deste grupo");
+        }
+
+        return drawRepository.findUserDrawRelations(groupId, userId).stream()
+                .map(draw -> toChatSummary(draw, groupId, userId))
+                .toList();
+    }
+
     @Transactional
     public void markConversationAsRead(Long groupId, Long userId, Long otherUserId) {
         List<Message> messages = getConversation(groupId, userId, otherUserId);
@@ -124,6 +139,24 @@ public class MessageService {
     private boolean isMember(Group group, Long userId) {
         return group.getMembros().stream()
                 .anyMatch(member -> member.getId().equals(userId));
+    }
+
+    private ChatSummaryResponse toChatSummary(Draw draw, Long groupId, Long userId) {
+        boolean userIsGiver = draw.getRemetente().getId().equals(userId);
+        User otherUser = userIsGiver ? draw.getDestinatario() : draw.getRemetente();
+        Long unreadCount = messageRepository.countByGrupoIdAndRemetenteIdAndDestinatarioIdAndLidaFalse(
+                groupId,
+                otherUser.getId(),
+                userId
+        );
+
+        return new ChatSummaryResponse(
+                groupId,
+                otherUser.getId(),
+                userIsGiver ? otherUser.getNome() : "amigo secreto",
+                !userIsGiver,
+                unreadCount
+        );
     }
 
 }

@@ -53,6 +53,16 @@ public class GroupController {
                 .toList();
     }
 
+    @GetMapping("/{groupId}")
+    @Operation(summary = "Consultar grupo", description = "Retorna os dados de um grupo em que o usuario autenticado participa.")
+    public GroupResponse getById(
+            @Parameter(description = "ID do grupo") @PathVariable Long groupId,
+            Authentication authentication
+    ) {
+        Long userId = authenticatedUser.id(authentication);
+        return responseMapper.toGroupResponse(groupService.getUserGroup(groupId, userId));
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Criar grupo", description = "Cria um novo grupo. Cada usuario pode ser dono de apenas um grupo.")

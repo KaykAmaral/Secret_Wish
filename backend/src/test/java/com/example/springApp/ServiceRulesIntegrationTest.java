@@ -45,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -602,6 +603,23 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void groupByIdEndpointReturnsOnlyGroupsFromAuthenticatedUser() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        User outsider = createUser("Group Outsider");
+
+        mockMvc.perform(get("/api/groups/{groupId}", scenario.group().getId())
+                        .header("Authorization", bearerToken(scenario.memberA())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(scenario.group().getId()))
+                .andExpect(jsonPath("$.membros.length()").value(3));
+
+        mockMvc.perform(get("/api/groups/{groupId}", scenario.group().getId())
+                        .header("Authorization", bearerToken(outsider)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Grupo nao encontrado"));
+    }
+
+    @Test
     void wishlistEndpointRejectsUserWhoCannotSeeWishlist() throws Exception {
         Scenario scenario = createGroupWithThreeMembers();
         drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
@@ -666,6 +684,30 @@ class ServiceRulesIntegrationTest {
                 .andExpect(jsonPath("$[0].remetente").doesNotExist())
                 .andExpect(jsonPath("$[0].nomeRemetenteExibicao").value("amigo secreto"))
                 .andExpect(jsonPath("$[0].conteudo").value("Mensagem anonima"));
+    }
+
+    @Test
+    void chatSummaryEndpointListsOnlyAllowedDrawConversations() throws Exception {
+        Scenario scenario = createGroupWithThreeMembers();
+        drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
+        Draw drawToOwner = drawRepository.findByGrupoId(scenario.group().getId()).stream()
+                .filter(draw -> draw.getDestinatario().getId().equals(scenario.owner().getId()))
+                .findFirst()
+                .orElseThrow();
+        messageService.sendMessage(
+                scenario.group().getId(),
+                drawToOwner.getRemetente().getId(),
+                scenario.owner().getId(),
+                "Mensagem pendente"
+        );
+
+        mockMvc.perform(get("/api/groups/{groupId}/messages/chats", scenario.group().getId())
+                        .header("Authorization", bearerToken(scenario.owner())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[?(@.anonimoParaUsuario == true)].nomeExibicao").value(hasItem("amigo secreto")))
+                .andExpect(jsonPath("$[?(@.anonimoParaUsuario == true)].unreadCount").value(hasItem(1)))
+                .andExpect(jsonPath("$[?(@.anonimoParaUsuario == false)].unreadCount").value(hasItem(0)));
     }
 
     @Test

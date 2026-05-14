@@ -4,6 +4,7 @@ public record ChatSummaryResponse(
         Long grupoId,
         Long outroUsuarioId,
         String nomeExibicao,
-        boolean anonimoParaUsuario
+        boolean anonimoParaUsuario,
+        Long unreadCount
 ) {
 }

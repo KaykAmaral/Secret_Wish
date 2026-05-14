@@ -76,6 +76,11 @@ public class GroupService {
         return groupRepository.findByMembros_Id(userId);
     }
 
+    public Group getUserGroup(Long groupId, Long userId) {
+        return groupRepository.findByIdAndMembros_Id(groupId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
+    }
+
     @Transactional
     public Group removeMember(Long groupId, Long donoId, Long memberId) {
         Group group = getGroupForOwner(groupId, donoId);

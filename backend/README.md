@@ -125,6 +125,7 @@ Todas as respostas de erro da API usam o mesmo formato:
 ### Grupos
 
 - `GET /api/groups`: lista grupos do usuario.
+- `GET /api/groups/{groupId}`: consulta um grupo em que o usuario participa.
 - `POST /api/groups`: cria grupo.
 - `POST /api/groups/join`: entra em grupo pelo codigo unico.
 - `DELETE /api/groups/{groupId}/members/{memberId}`: remove membro.
@@ -148,6 +149,7 @@ Todas as respostas de erro da API usam o mesmo formato:
 ### Mensagens
 
 - `POST /api/groups/{groupId}/messages`: envia mensagem privada.
+- `GET /api/groups/{groupId}/messages/chats`: lista conversas permitidas do grupo.
 - `GET /api/groups/{groupId}/messages/{otherUserId}`: lista conversa.
 - `PATCH /api/groups/{groupId}/messages/{otherUserId}/read`: marca conversa como lida.
 - `GET /api/messages/unread-count`: conta mensagens nao lidas.
@@ -344,6 +346,27 @@ Para o destinatario, o remetente anonimo volta como:
   "remetente": null,
   "nomeRemetenteExibicao": "amigo secreto"
 }
+```
+
+`GET /api/groups/{groupId}/messages/chats`
+
+```json
+[
+  {
+    "grupoId": 1,
+    "outroUsuarioId": 2,
+    "nomeExibicao": "Maria",
+    "anonimoParaUsuario": false,
+    "unreadCount": 0
+  },
+  {
+    "grupoId": 1,
+    "outroUsuarioId": 3,
+    "nomeExibicao": "amigo secreto",
+    "anonimoParaUsuario": true,
+    "unreadCount": 1
+  }
+]
 ```
 
 ### Notificacoes e contadores
