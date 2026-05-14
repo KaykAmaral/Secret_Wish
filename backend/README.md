@@ -117,6 +117,7 @@ Todas as respostas de erro da API usam o mesmo formato:
 
 - `GET /oauth2/authorization/google`: inicia login com Google.
 - `GET /login/oauth2/code/google`: callback chamado pelo Google.
+- `GET /api/auth/status`: retorna se a sessao atual possui JWT valido.
 - `POST /api/logout`: remove o cookie HTTP-only de autenticacao.
 - `GET /api/me`: retorna o usuario autenticado.
 

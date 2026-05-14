@@ -488,6 +488,26 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void authStatusReturnsAnonymousWhenJwtIsMissing() throws Exception {
+        mockMvc.perform(get("/api/auth/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(false))
+                .andExpect(jsonPath("$.user").doesNotExist());
+    }
+
+    @Test
+    void authStatusReturnsUserWhenJwtIsValid() throws Exception {
+        User user = createUser("Session User");
+
+        mockMvc.perform(get("/api/auth/status")
+                        .header("Authorization", bearerToken(user)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authenticated").value(true))
+                .andExpect(jsonPath("$.user.id").value(user.getId()))
+                .andExpect(jsonPath("$.user.email").value(user.getEmail()));
+    }
+
+    @Test
     void logoutClearsAuthenticationCookieWithoutRequiringJwt() throws Exception {
         mockMvc.perform(post("/api/logout"))
                 .andExpect(status().isNoContent())

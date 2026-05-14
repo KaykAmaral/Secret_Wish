@@ -64,6 +64,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
                             .requestMatchers(HttpMethod.POST, "/api/logout").permitAll()
                             .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll();
 
