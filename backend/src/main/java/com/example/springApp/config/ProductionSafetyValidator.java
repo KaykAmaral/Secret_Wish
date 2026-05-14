@@ -29,12 +29,14 @@ public class ProductionSafetyValidator {
             validateProdRequiredValue(environment, "spring.datasource.username");
             validateProdRequiredValue(environment, "spring.datasource.password");
 
+            requireHttpsProperty(environment, "app.frontend.origin");
             requireFalse(environment, "app.dev-auth.enabled");
             requireFalse(environment, "springdoc.swagger-ui.enabled");
             requireFalse(environment, "springdoc.api-docs.enabled");
             requireTrue(environment, "app.auth.cookie-secure");
             requireHttpsOrigins(environment);
             validateJwtSecretStrength(environment);
+            validateOptionalIntegrations(environment);
         };
     }
 
@@ -91,6 +93,24 @@ public class ProductionSafetyValidator {
             if (!normalizedOrigin.startsWith("https://")) {
                 throw new IllegalStateException("Configuracao de producao insegura: app.frontend.origins deve usar HTTPS");
             }
+        }
+    }
+
+    private void requireHttpsProperty(Environment environment, String property) {
+        String value = environment.getRequiredProperty(property).trim();
+        if (!value.startsWith("https://")) {
+            throw new IllegalStateException("Configuracao de producao insegura: " + property + " deve usar HTTPS");
+        }
+    }
+
+    private void validateOptionalIntegrations(Environment environment) {
+        if (environment.getProperty("app.mail.enabled", Boolean.class, false)) {
+            validateProdRequiredValue(environment, "spring.mail.username");
+            validateProdRequiredValue(environment, "spring.mail.password");
+        }
+
+        if (environment.getProperty("app.ai.enabled", Boolean.class, false)) {
+            validateProdRequiredValue(environment, "spring.ai.openai.api-key");
         }
     }
 }

@@ -480,6 +480,9 @@ AI_ENABLED=false
 OPENAI_API_KEY=
 ```
 
+Quando `MAIL_ENABLED=true`, `MAIL_USERNAME` e `MAIL_PASSWORD` passam a ser obrigatorios.
+Quando `AI_ENABLED=true`, `OPENAI_API_KEY` passa a ser obrigatorio.
+
 Defaults seguros do profile `prod`:
 
 - `app.dev-auth.enabled=false`
@@ -487,6 +490,7 @@ Defaults seguros do profile `prod`:
 - `app.auth.cookie-same-site=Lax`
 - `spring.jpa.hibernate.ddl-auto=validate`
 - `spring.flyway.enabled=true`
+- `server.forward-headers-strategy=framework`
 - Swagger desabilitado
 
 Se frontend e backend ficarem em dominios diferentes, use:
@@ -504,7 +508,7 @@ FRONTEND_ORIGINS=https://app.seu-dominio.com,https://admin.seu-dominio.com
 
 `FRONTEND_ORIGIN` continua existindo como origem principal usada no redirect OAuth. Quando `FRONTEND_ORIGINS` nao for informado, o backend usa `FRONTEND_ORIGIN` como unica origem permitida.
 
-O backend bloqueia a inicializacao em `prod` quando encontra configuracao insegura, como Swagger habilitado, dev auth habilitado, `JWT_SECRET` curto, `FRONTEND_ORIGINS` com `*` ou origens sem HTTPS.
+O backend bloqueia a inicializacao em `prod` quando encontra configuracao insegura, como Swagger habilitado, dev auth habilitado, `JWT_SECRET` curto, `FRONTEND_ORIGIN` sem HTTPS, `FRONTEND_ORIGINS` com `*`, origens sem HTTPS, SMTP habilitado sem credenciais ou IA habilitada sem chave.
 
 ## Testes
 
