@@ -21,6 +21,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -33,6 +36,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
     private final FrontendOriginsProperties frontendOrigins;
+    private final ClientRegistrationRepository clientRegistrationRepository;
     private final boolean devAuthEnabled;
     private final boolean swaggerEnabled;
     private final ObjectMapper objectMapper;
@@ -41,6 +45,7 @@ public class SecurityConfig {
             JwtAuthenticationFilter jwtAuthenticationFilter,
             GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler,
             FrontendOriginsProperties frontendOrigins,
+            ClientRegistrationRepository clientRegistrationRepository,
             @Value("${app.dev-auth.enabled:false}") boolean devAuthEnabled,
             @Value("${springdoc.swagger-ui.enabled:true}") boolean swaggerEnabled,
             ObjectMapper objectMapper
@@ -48,6 +53,7 @@ public class SecurityConfig {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.googleOAuth2SuccessHandler = googleOAuth2SuccessHandler;
         this.frontendOrigins = frontendOrigins;
+        this.clientRegistrationRepository = clientRegistrationRepository;
         this.devAuthEnabled = devAuthEnabled;
         this.swaggerEnabled = swaggerEnabled;
         this.objectMapper = objectMapper;
@@ -71,9 +77,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
-                            .requestMatchers(HttpMethod.POST, "/api/logout").permitAll()
+                            .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/status").permitAll()
+                            .requestMatchers("/api/logout").permitAll()
                             .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll();
 
                     if (swaggerEnabled) {
@@ -86,9 +91,24 @@ public class SecurityConfig {
 
                     auth.anyRequest().authenticated();
                 })
-                .oauth2Login(oauth2 -> oauth2.successHandler(googleOAuth2SuccessHandler))
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(googleOAuth2SuccessHandler)
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestResolver(authorizationRequestResolver())
+                        )
+                )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+
+    private OAuth2AuthorizationRequestResolver authorizationRequestResolver() {
+        var resolver = new DefaultOAuth2AuthorizationRequestResolver(
+                clientRegistrationRepository, "/oauth2/authorization"
+        );
+        resolver.setAuthorizationRequestCustomizer(customizer -> 
+            customizer.additionalParameters(params -> params.put("prompt", "select_account"))
+        );
+        return resolver;
     }
 
     private AuthenticationEntryPoint apiAuthenticationEntryPoint() {
@@ -112,7 +132,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(frontendOrigins.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Cache-Control", "Pragma", "Expires"));
         configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

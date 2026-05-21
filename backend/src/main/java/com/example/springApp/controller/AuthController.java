@@ -13,11 +13,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +32,8 @@ import java.time.Duration;
 @RequestMapping("/api")
 @Tag(name = "Autenticacao", description = "Login OAuth2, usuario autenticado e encerramento de sessao.")
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final UserService userService;
     private final AuthService authService;
@@ -56,9 +62,11 @@ public class AuthController {
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
+        log.info("Tentativa de registro para email: {}", request.email());
         User user = authService.register(request);
         String token = authService.login(new LoginRequest(request.email(), request.password()));
         setAuthCookie(httpRequest, httpResponse, token);
+        log.info("Usuario registrado e logado com sucesso: {}", request.email());
         return new AuthStatusResponse(true, responseMapper.toUserResponse(user));
     }
 
@@ -69,9 +77,11 @@ public class AuthController {
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
+        log.info("Tentativa de login para email: {}", request.email());
         String token = authService.login(request);
         User user = userService.getUserByEmail(request.email());
         setAuthCookie(httpRequest, httpResponse, token);
+        log.info("Login realizado com sucesso para email: {}", request.email());
         return new AuthStatusResponse(true, responseMapper.toUserResponse(user));
     }
 
@@ -80,15 +90,22 @@ public class AuthController {
             summary = "Consultar status da sessao",
             description = "Retorna authenticated=false quando nao houver JWT valido e dados do usuario quando houver."
     )
-    public AuthStatusResponse status(Authentication authentication) {
+    public ResponseEntity<AuthStatusResponse> status(Authentication authentication) {
+        AuthStatusResponse body;
         if (authentication == null || !(authentication.getPrincipal() instanceof Long userId)) {
-            return new AuthStatusResponse(false, null);
+            body = new AuthStatusResponse(false, null);
+        } else {
+            body = new AuthStatusResponse(
+                    true,
+                    responseMapper.toUserResponse(userService.getUserById(userId))
+            );
         }
 
-        return new AuthStatusResponse(
-                true,
-                responseMapper.toUserResponse(userService.getUserById(userId))
-        );
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CACHE_CONTROL, "no-cache, no-store, max-age=0, must-revalidate")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .header(HttpHeaders.EXPIRES, "0")
+                .body(body);
     }
 
     @PostMapping("/logout")
@@ -97,7 +114,11 @@ public class AuthController {
     @ApiResponse(responseCode = "204", description = "Sessao encerrada")
     public void logout(HttpServletRequest request, HttpServletResponse response) {
         SecurityContextHolder.clearContext();
-        // Expira o cookie no mesmo caminho usado no login OAuth2.
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        
         ResponseCookie expiredCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, "")
                 .httpOnly(true)
                 .secure(authCookieSecure || request.isSecure())

@@ -13,13 +13,12 @@ export const AuthProvider = ({ children }) => {
     isChecking.current = true;
     
     try {
-      // Se não for a carga inicial, mostramos o loading. 
-      // Na carga inicial o estado já começa como true, evitando o erro de lint.
-      if (!isInitial) {
-        setLoading(true);
-      }
+      if (!isInitial) setLoading(true);
       
       const data = await authService.getStatus();
+      
+      console.log('[AuthDebug] Status da sessão:', data);
+      
       if (data.authenticated) {
         setUser(data.user);
         setIsAuthenticated(true);
@@ -28,7 +27,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Erro ao validar sessão:', error);
+      console.error('[AuthDebug] Erro ao validar sessão:', error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -38,31 +37,62 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    // Usamos um microtask ou timeout curto para evitar o erro de cascading render
-    // embora o isInitial já ajude.
     const timer = setTimeout(() => {
       checkAuth(true);
     }, 0);
     return () => clearTimeout(timer);
   }, [checkAuth]);
 
-  const login = () => {
+  const loginGoogle = () => {
+    console.log('[AuthDebug] Iniciando login Google...');
     window.location.href = authService.getGoogleLoginUrl();
   };
 
+  const loginWithEmail = async (email, password) => {
+    const data = await authService.login(email, password);
+    if (data.authenticated) {
+      setUser(data.user);
+      setIsAuthenticated(true);
+      return true;
+    }
+    return false;
+  };
+
+  const registerWithEmail = async (nome, email, password) => {
+    const data = await authService.register(nome, email, password);
+    if (data.authenticated) {
+      setUser(data.user);
+      setIsAuthenticated(true);
+      return true;
+    }
+    return false;
+  };
+
   const logout = async () => {
+    console.log('[AuthDebug] Executando logout...');
     try {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
-      window.location.href = '/login';
+      setLoading(false);
+      window.location.href = '/login?logout=success';
     } catch (error) {
-      console.error('Erro ao fazer logout:', error);
+      console.error('[AuthDebug] Erro no logout:', error);
+      window.location.href = '/login';
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated, 
+      loading, 
+      login: loginGoogle, 
+      loginWithEmail,
+      registerWithEmail,
+      logout, 
+      checkAuth 
+    }}>
       {children}
     </AuthContext.Provider>
   );

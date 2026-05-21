@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import authService from '../../services/authService';
 import './Auth.css';
 
 const Register = () => {
-  const { login: loginGoogle, checkAuth } = useAuth();
+  const { login: loginGoogle, registerWithEmail } = useAuth();
   const navigate = useNavigate();
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -24,9 +23,12 @@ const Register = () => {
     setLoading(true);
     setError('');
     try {
-      await authService.register(nome, email, password);
-      await checkAuth();
-      navigate('/dashboard');
+      const success = await registerWithEmail(nome, email, password);
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Falha ao cadastrar.');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao cadastrar. Tente novamente.');
     } finally {
@@ -70,7 +72,6 @@ const Register = () => {
                 <h3>Chat Anônimo</h3>
                 <p>Tire dúvidas com seu amigo secreto sem revelar sua identidade.</p>
               </div>
-        
             </div>
           </div>
         </div>

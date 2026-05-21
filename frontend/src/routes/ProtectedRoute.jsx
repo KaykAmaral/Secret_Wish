@@ -4,6 +4,8 @@ import { useAuth } from '../hooks/useAuth';
 const ProtectedRoute = () => {
   const { isAuthenticated, loading } = useAuth();
 
+  console.log('[AuthDebug] ProtectedRoute - Autenticado:', isAuthenticated, 'Carregando:', loading);
+
   if (loading) {
     return (
       <div className="loading-container">

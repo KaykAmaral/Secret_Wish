@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import authService from '../../services/authService';
 import './Auth.css';
 
 const Auth = () => {
-  const { login: loginGoogle, checkAuth } = useAuth();
+  const { login: loginGoogle, loginWithEmail } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,9 +16,12 @@ const Auth = () => {
     setLoading(true);
     setError('');
     try {
-      await authService.login(email, password);
-      await checkAuth();
-      navigate('/dashboard');
+      const success = await loginWithEmail(email, password);
+      if (success) {
+        navigate('/dashboard');
+      } else {
+        setError('Falha ao autenticar.');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao entrar. Verifique suas credenciais.');
     } finally {
