@@ -22,6 +22,8 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    private String password;
+
     @Column(name = "auth_id", unique = true)
     private String oauthId;
 

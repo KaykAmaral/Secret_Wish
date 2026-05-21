@@ -1,25 +1,26 @@
 package com.example.springApp.controller;
 
 import com.example.springApp.dto.AuthStatusResponse;
+import com.example.springApp.dto.LoginRequest;
+import com.example.springApp.dto.RegisterRequest;
 import com.example.springApp.mapper.ResponseMapper;
+import com.example.springApp.model.User;
 import com.example.springApp.security.JwtAuthenticationFilter;
+import com.example.springApp.service.AuthService;
 import com.example.springApp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 
@@ -29,20 +30,49 @@ import java.time.Duration;
 public class AuthController {
 
     private final UserService userService;
+    private final AuthService authService;
     private final ResponseMapper responseMapper;
     private final boolean authCookieSecure;
     private final String authCookieSameSite;
 
     public AuthController(
             UserService userService,
+            AuthService authService,
             ResponseMapper responseMapper,
             @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure,
             @Value("${app.auth.cookie-same-site:Lax}") String authCookieSameSite
     ) {
         this.userService = userService;
+        this.authService = authService;
         this.responseMapper = responseMapper;
         this.authCookieSecure = authCookieSecure;
         this.authCookieSameSite = authCookieSameSite;
+    }
+
+    @PostMapping("/auth/register")
+    @Operation(summary = "Criar conta com email e senha")
+    public AuthStatusResponse register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
+    ) {
+        User user = authService.register(request);
+        String token = authService.login(new LoginRequest(request.email(), request.password()));
+        setAuthCookie(httpRequest, httpResponse, token);
+        return new AuthStatusResponse(true, responseMapper.toUserResponse(user));
+    }
+
+    @PostMapping("/auth/login")
+    @Operation(summary = "Entrar com email e senha")
+    public AuthStatusResponse login(
+            @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
+    ) {
+        String token = authService.login(request);
+        User user = userService.getUserByEmail(request.email());
+        setAuthCookie(httpRequest, httpResponse, token);
+        return new AuthStatusResponse(true, responseMapper.toUserResponse(user));
     }
 
     @GetMapping("/auth/status")
@@ -77,5 +107,16 @@ public class AuthController {
                 .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+    }
+
+    private void setAuthCookie(HttpServletRequest request, HttpServletResponse response, String token) {
+        ResponseCookie authCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, token)
+                .httpOnly(true)
+                .secure(authCookieSecure || request.isSecure())
+                .sameSite(authCookieSameSite)
+                .path("/")
+                .maxAge(Duration.ofHours(1))
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, authCookie.toString());
     }
 }

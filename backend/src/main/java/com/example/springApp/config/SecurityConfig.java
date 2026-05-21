@@ -13,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -52,6 +54,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
@@ -64,11 +71,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                             .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
+                            .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/auth/status").permitAll()
                             .requestMatchers(HttpMethod.POST, "/api/logout").permitAll()
                             .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll();
 
-                    // Swagger and dev endpoints are optional so production can remove them from the public surface.
                     if (swaggerEnabled) {
                         auth.requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll();
                     }
@@ -103,7 +110,6 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // CORS fica fechado nas origens configuradas porque usamos cookies/JWT com credenciais.
         configuration.setAllowedOrigins(frontendOrigins.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));

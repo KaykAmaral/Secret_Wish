@@ -1,8 +1,7 @@
-/* App.css can be used for global overrides if needed, 
-   but most styles are in components or index.css */
-
+/* Reset de estilos específicos do App */
 #root {
   width: 100%;
   margin: 0;
   padding: 0;
+  text-align: left;
 }
