@@ -1,29 +1,32 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import groupService from '../../services/groupService';
 import notificationService from '../../services/notificationService';
+import WishlistModal from '../../components/WishlistModal/WishlistModal';
 import './Dashboard.css';
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [groups, setGroups] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Modals visibility
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [showWishlistModal, setShowWishlistModal] = useState(false);
   
   // States para formulários
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDesc, setNewGroupDesc] = useState('');
   const [newGroupDate, setNewGroupDate] = useState('');
   const [joinCode, setJoinCode] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [groupsData, notificationsData] = await Promise.all([
@@ -37,16 +40,29 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchData]);
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     setActionLoading(true);
     setError('');
     try {
-      await groupService.createGroup({ nome: newGroupName, dataEvento: newGroupDate });
+      const dateOnly = newGroupDate ? `${newGroupDate}T00:00:00` : null;
+      await groupService.createGroup({ 
+        nome: newGroupName, 
+        descricao: newGroupDesc,
+        dataEvento: dateOnly 
+      });
       setShowCreateModal(false);
       setNewGroupName('');
+      setNewGroupDesc('');
       setNewGroupDate('');
       fetchData();
     } catch (err) {
@@ -101,24 +117,6 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-page">
-      <header className="dashboard-header">
-        <div className="header-content">
-          <div className="logo">🎁 <span className="logo-text">Secret Wish</span></div>
-          <div className="user-nav">
-            <div className="notification-badge-container">
-              <span className="icon">🔔</span>
-              {notifications.filter(n => !n.lida).length > 0 && (
-                <span className="badge">{notifications.filter(n => !n.lida).length}</span>
-              )}
-            </div>
-            <div className="user-info">
-              <span className="user-name">{user?.nome}</span>
-              <button className="logout-btn" onClick={logout}>Sair</button>
-            </div>
-          </div>
-        </div>
-      </header>
-
       <main className="dashboard-main">
         <section className="welcome-section">
           <div className="welcome-text">
@@ -132,11 +130,13 @@ const Dashboard = () => {
             <button className="btn-secondary" onClick={() => setShowJoinModal(true)}>
               <span>#</span> Entrar via Código
             </button>
+            <button className="btn-wishlist" onClick={() => setShowWishlistModal(true)}>
+              <span>♥</span> Lista de Desejos
+            </button>
           </div>
         </section>
 
         <div className="dashboard-grid">
-          {/* Listagem de Grupos */}
           <div className="grid-main">
             <h2 className="section-title">Seus Grupos</h2>
             {groups.length === 0 ? (
@@ -148,7 +148,7 @@ const Dashboard = () => {
             ) : (
               <div className="groups-list">
                 {groups.map(group => (
-                  <div key={group.id} className="group-card glass">
+                  <div key={group.id} className="group-card glass" onClick={() => navigate(`/groups/${group.id}`)}>
                     <div className="group-header">
                       <h3>{group.nome}</h3>
                       <span className={`status-tag ${group.dataSorteio ? 'drawn' : 'pending'}`}>
@@ -160,16 +160,13 @@ const Dashboard = () => {
                       <p><strong>Participantes:</strong> {group.membros?.length || 0}</p>
                       <p><strong>Evento:</strong> {group.dataEvento ? new Date(group.dataEvento).toLocaleDateString() : 'Não definida'}</p>
                     </div>
-                    <button className="btn-view" onClick={() => window.location.href = `/groups/${group.id}`}>
-                      Gerenciar Grupo
-                    </button>
+                    <button className="btn-view">Gerenciar Grupo</button>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Notificações */}
           <aside className="grid-side">
             <div className="side-header">
               <h2 className="section-title">Notificações</h2>
@@ -202,7 +199,7 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Modal Criar Grupo */}
+      {/* Modais */}
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-card glass">
@@ -222,12 +219,16 @@ const Dashboard = () => {
                 />
               </div>
               <div className="input-group">
-                <label>Data do Evento (Opcional)</label>
-                <input 
-                  type="datetime-local" 
-                  value={newGroupDate}
-                  onChange={(e) => setNewGroupDate(e.target.value)}
+                <label>Descrição (Opcional)</label>
+                <textarea 
+                  placeholder="Ex: Amigo secreto de natal da família..." 
+                  value={newGroupDesc}
+                  onChange={(e) => setNewGroupDesc(e.target.value)}
                 />
+              </div>
+              <div className="input-group">
+                <label>Data do Evento (Opcional)</label>
+                <input type="date" value={newGroupDate} onChange={(e) => setNewGroupDate(e.target.value)} />
               </div>
               {error && <p className="error-msg">{error}</p>}
               <button type="submit" className="btn-primary" disabled={actionLoading}>
@@ -238,7 +239,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      {/* Modal Entrar no Grupo */}
       {showJoinModal && (
         <div className="modal-overlay">
           <div className="modal-card glass">
@@ -267,6 +267,8 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+
+      <WishlistModal isOpen={showWishlistModal} onClose={() => setShowWishlistModal(false)} />
     </div>
   );
 };

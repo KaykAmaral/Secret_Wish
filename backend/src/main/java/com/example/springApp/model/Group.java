@@ -24,6 +24,9 @@ public class Group {
     @Column(nullable = false)
     private String nome;
 
+    @Column(columnDefinition = "TEXT")
+    private String descricao;
+
     // Codigo curto usado pelo frontend para convite/entrada no grupo.
     @Column(name = "codigo_unico", nullable = false, unique = true, length = 9)
     private String codigoUnico;

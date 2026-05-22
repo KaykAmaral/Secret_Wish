@@ -75,6 +75,7 @@ public class GroupController {
         Long userId = authenticatedUser.id(authentication);
         Group group = Group.builder()
                 .nome(request.nome())
+                .descricao(request.descricao())
                 .dataEvento(request.dataEvento())
                 .build();
 

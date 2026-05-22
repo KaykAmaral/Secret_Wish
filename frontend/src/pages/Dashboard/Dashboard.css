@@ -165,6 +165,25 @@
   background: rgba(255, 255, 255, 0.08);
 }
 
+.btn-wishlist {
+  background: rgba(124, 58, 237, 0.1);
+  color: #A855F7;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  padding: 12px 24px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-wishlist:hover {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: #7C3AED;
+}
+
 /* Grid Layout */
 .dashboard-grid {
   display: grid;

@@ -6,6 +6,7 @@ import java.util.Set;
 public record GroupResponse(
         Long id,
         String nome,
+        String descricao,
         String codigoUnico,
         UserResponse dono,
         Set<UserResponse> membros,
