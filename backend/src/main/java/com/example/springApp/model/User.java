@@ -19,6 +19,9 @@ public class User {
     @Column(nullable = false)
     private String nome;
 
+    @Column(columnDefinition = "TEXT")
+    private String imagemUrl;
+
     @Column(nullable = false, unique = true)
     private String email;
 

@@ -22,15 +22,29 @@ const Register = () => {
 
     setLoading(true);
     setError('');
+    
+    console.log('[AuthDebug] Tentando registrar:', email);
+    
     try {
       const success = await registerWithEmail(nome, email, password);
+      console.log('[AuthDebug] Sucesso do registro:', success);
       if (success) {
         navigate('/dashboard');
       } else {
         setError('Falha ao cadastrar.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao cadastrar. Tente novamente.');
+      console.error('[AuthDebug] Erro capturado no componente Register:', err);
+      const backendMessage = err.response?.data?.message;
+      const backendError = err.response?.data?.error;
+      
+      if (backendMessage) {
+        setError(backendMessage);
+      } else if (backendError) {
+        setError(backendError);
+      } else {
+        setError('Erro de conexão com o servidor. Verifique se o backend está rodando.');
+      }
     } finally {
       setLoading(false);
     }

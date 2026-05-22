@@ -37,6 +37,7 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final com.example.springApp.security.JwtService jwtService;
     private final ResponseMapper responseMapper;
     private final boolean authCookieSecure;
     private final String authCookieSameSite;
@@ -44,12 +45,14 @@ public class AuthController {
     public AuthController(
             UserService userService,
             AuthService authService,
+            com.example.springApp.security.JwtService jwtService,
             ResponseMapper responseMapper,
             @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure,
             @Value("${app.auth.cookie-same-site:Lax}") String authCookieSameSite
     ) {
         this.userService = userService;
         this.authService = authService;
+        this.jwtService = jwtService;
         this.responseMapper = responseMapper;
         this.authCookieSecure = authCookieSecure;
         this.authCookieSameSite = authCookieSameSite;
@@ -64,7 +67,7 @@ public class AuthController {
     ) {
         log.info("Tentativa de registro para email: {}", request.email());
         User user = authService.register(request);
-        String token = authService.login(new LoginRequest(request.email(), request.password()));
+        String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
         setAuthCookie(httpRequest, httpResponse, token);
         log.info("Usuario registrado e logado com sucesso: {}", request.email());
         return new AuthStatusResponse(true, responseMapper.toUserResponse(user));

@@ -15,15 +15,29 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
+    console.log('[AuthDebug] Tentando login com:', email);
+    
     try {
       const success = await loginWithEmail(email, password);
+      console.log('[AuthDebug] Sucesso do login:', success);
       if (success) {
         navigate('/dashboard');
       } else {
         setError('Falha ao autenticar.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao entrar. Verifique suas credenciais.');
+      console.error('[AuthDebug] Erro capturado no componente Login:', err);
+      const backendMessage = err.response?.data?.message;
+      const backendError = err.response?.data?.error;
+      
+      if (backendMessage) {
+        setError(backendMessage);
+      } else if (backendError) {
+        setError(backendError);
+      } else {
+        setError('Erro de conexão com o servidor. Verifique se o backend está rodando.');
+      }
     } finally {
       setLoading(false);
     }

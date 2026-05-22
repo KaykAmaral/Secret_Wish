@@ -1,15 +1,12 @@
 package com.example.springApp.exception;
 
 import com.example.springApp.dto.ApiErrorResponse;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -70,6 +67,13 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String message = String.format("Parametro '%s' possui valor invalido", ex.getName());
+        LOGGER.warn("Type mismatch error: {}", message);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Parametro invalido", message);
     }
 
     @ExceptionHandler(Exception.class)

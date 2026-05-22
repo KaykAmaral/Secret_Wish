@@ -49,36 +49,50 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithEmail = async (email, password) => {
-    const data = await authService.login(email, password);
-    if (data.authenticated) {
-      setUser(data.user);
-      setIsAuthenticated(true);
-      return true;
+    setLoading(true);
+    try {
+      const data = await authService.login(email, password);
+      console.log('[AuthDebug] Login email sucesso:', data);
+      if (data.authenticated) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } finally {
+      setLoading(false);
     }
-    return false;
   };
 
   const registerWithEmail = async (nome, email, password) => {
-    const data = await authService.register(nome, email, password);
-    if (data.authenticated) {
-      setUser(data.user);
-      setIsAuthenticated(true);
-      return true;
+    setLoading(true);
+    try {
+      const data = await authService.register(nome, email, password);
+      console.log('[AuthDebug] Registro email sucesso:', data);
+      if (data.authenticated) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        return true;
+      }
+      return false;
+    } finally {
+      setLoading(false);
     }
-    return false;
   };
 
   const logout = async () => {
     console.log('[AuthDebug] Executando logout...');
+    setLoading(true);
     try {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
-      setLoading(false);
       window.location.href = '/login?logout=success';
     } catch (error) {
       console.error('[AuthDebug] Erro no logout:', error);
       window.location.href = '/login';
+    } finally {
+      setLoading(false);
     }
   };
 

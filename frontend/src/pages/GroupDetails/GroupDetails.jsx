@@ -153,7 +153,7 @@ const GroupDetails = () => {
                 </div>
               </div>
               <div className="result-actions">
-                <button className="btn-primary" onClick={() => window.location.href = `/groups/${groupId}/secret-friend`}>
+                <button className="btn-primary" onClick={() => alert('Funcionalidade de Chat Anônimo em desenvolvimento!')}>
                   Ver Wishlist e Chat
                 </button>
               </div>
