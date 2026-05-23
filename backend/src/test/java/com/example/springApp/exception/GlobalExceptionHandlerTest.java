@@ -1,7 +1,9 @@
 package com.example.springApp.exception;
 
+import com.example.springApp.dto.ApiErrorResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,7 +13,9 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void rateLimitUsesTooManyRequestsContract() {
-        var response = handler.handleRateLimitException(new RateLimitException("Limite de 3 sugestoes com IA por hora atingido"));
+        ResponseEntity<ApiErrorResponse> response = handler.handleRateLimitException(
+                new RateLimitException("Limite de 3 sugestoes com IA por hora atingido")
+        );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
         assertThat(response.getBody()).isNotNull();

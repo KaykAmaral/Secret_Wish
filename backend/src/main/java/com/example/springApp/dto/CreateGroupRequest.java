@@ -10,6 +10,9 @@ public record CreateGroupRequest(
         @Schema(description = "Nome do grupo", example = "Amigo secreto da familia")
         @NotBlank String nome,
 
+        @Schema(description = "Descricao opcional do grupo", example = "Amigo secreto da familia para o natal.")
+        String descricao,
+
         @Schema(description = "Data opcional do evento", example = "2026-12-24T20:00:00")
         LocalDateTime dataEvento
 ) {

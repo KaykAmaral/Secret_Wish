@@ -22,4 +22,18 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
     }
 
+    public User updateProfile(Long userId, String nome, String imagemUrl) {
+        User user = getUserById(userId);
+        user.setNome(nome);
+        if (imagemUrl != null) {
+            user.setImagemUrl(imagemUrl);
+        }
+        return userRepository.save(user);
+    }
+
+    public void deleteAccount(Long userId) {
+        User user = getUserById(userId);
+        userRepository.delete(user);
+    }
+
 }

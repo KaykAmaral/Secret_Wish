@@ -27,6 +27,7 @@ public class ResponseMapper {
         return new UserResponse(
                 user.getId(),
                 user.getNome(),
+                user.getImagemUrl(),
                 user.getEmail()
         );
     }
@@ -40,6 +41,7 @@ public class ResponseMapper {
         return new GroupResponse(
                 group.getId(),
                 group.getNome(),
+                group.getDescricao(),
                 group.getCodigoUnico(),
                 toUserResponse(group.getDono()),
                 members,

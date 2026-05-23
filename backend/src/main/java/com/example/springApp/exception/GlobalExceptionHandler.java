@@ -1,15 +1,12 @@
 package com.example.springApp.exception;
 
 import com.example.springApp.dto.ApiErrorResponse;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.ResponseEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
-import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -26,26 +23,31 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiErrorResponse> handleBusinessException(BusinessException ex) {
+        LOGGER.warn("Business error: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, "Erro de regra de negocio", ex.getMessage());
     }
 
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiErrorResponse> handleConflictException(ConflictException ex) {
+        LOGGER.warn("Conflict error: {}", ex.getMessage());
         return buildResponse(HttpStatus.CONFLICT, "Conflito", ex.getMessage());
     }
 
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ApiErrorResponse> handleForbiddenException(ForbiddenException ex) {
+        LOGGER.warn("Forbidden error: {}", ex.getMessage());
         return buildResponse(HttpStatus.FORBIDDEN, "Acesso negado", ex.getMessage());
     }
 
     @ExceptionHandler(RateLimitException.class)
     public ResponseEntity<ApiErrorResponse> handleRateLimitException(RateLimitException ex) {
+        LOGGER.warn("Rate limit error: {}", ex.getMessage());
         return buildResponse(HttpStatus.TOO_MANY_REQUESTS, "Limite de uso atingido", ex.getMessage());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        LOGGER.warn("Resource not found: {}", ex.getMessage());
         return buildResponse(HttpStatus.NOT_FOUND, "Recurso nao encontrado", ex.getMessage());
     }
 
@@ -55,6 +57,7 @@ public class GlobalExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
+        LOGGER.warn("Validation error: {}", errors);
 
         ApiErrorResponse body = buildBody(
                 HttpStatus.BAD_REQUEST,
@@ -66,50 +69,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ApiErrorResponse> handleMissingRequestParameter(MissingServletRequestParameterException ex) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Parametro obrigatorio ausente",
-                "Parametro '" + ex.getParameterName() + "' deve ser informado"
-        );
-    }
-
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Parametro invalido",
-                "Parametro '" + ex.getName() + "' possui valor invalido"
-        );
-    }
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiErrorResponse> handleUnreadableBody(HttpMessageNotReadableException ex) {
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "Corpo da requisicao invalido",
-                "O corpo da requisicao nao pode ser lido"
-        );
-    }
-
-    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ApiErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
-        return buildResponse(
-                HttpStatus.METHOD_NOT_ALLOWED,
-                "Metodo nao permitido",
-                "Metodo HTTP nao permitido para este endpoint"
-        );
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatchException(MethodArgumentTypeMismatchException ex) {
+        String message = String.format("Parametro '%s' possui valor invalido", ex.getName());
+        LOGGER.warn("Type mismatch error: {}", message);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Parametro invalido", message);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGenericException(Exception ex) {
-        LOGGER.error("Erro interno nao tratado", ex);
-        // Nao devolver stacktrace nem detalhes internos para o cliente.
+        LOGGER.error("Unexpected error", ex);
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Erro interno no servidor",
-                "Ocorreu um erro inesperado. Tente novamente mais tarde."
+                "Ocorreu um erro inesperado: " + ex.getMessage()
         );
     }
 

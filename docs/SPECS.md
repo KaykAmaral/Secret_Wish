@@ -9,7 +9,7 @@
 - Migracoes: Flyway
 - Autenticacao: Google OAuth2 + JWT
 - Documentacao: Springdoc OpenAPI/Swagger
-- Tempo real: WebSocket/STOMP
+- Tempo real: WebSocket/STOMPlk
 - Email: SMTP Gmail
 - IA: Spring AI/OpenAI, quando habilitado
 

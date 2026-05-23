@@ -10,6 +10,9 @@ public record UserResponse(
         @Schema(example = "Kayky")
         String nome,
 
+        @Schema(example = "https://example.com/avatar.jpg")
+        String imagemUrl,
+
         @Schema(example = "kayky@example.com")
         String email
 ) {

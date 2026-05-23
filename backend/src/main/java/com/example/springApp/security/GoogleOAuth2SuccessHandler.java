@@ -54,17 +54,17 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         String oauthId = oauthUser.getAttribute("sub");
         String email = oauthUser.getAttribute("email");
         String name = oauthUser.getAttribute("name");
+        String picture = oauthUser.getAttribute("picture");
         Boolean emailVerified = oauthUser.getAttribute("email_verified");
 
         if (oauthId == null || email == null || !Boolean.TRUE.equals(emailVerified)) {
             throw new ServletException("Conta Google sem email verificado");
         }
 
-        // Vincula por oauthId quando possivel; email cobre usuarios criados antes do primeiro login Google.
         User user = userRepository.findByOauthId(oauthId)
                 .or(() -> userRepository.findByEmail(email))
-                .map(existingUser -> updateGoogleData(existingUser, oauthId, email, name))
-                .orElseGet(() -> createUser(oauthId, email, name));
+                .map(existingUser -> updateGoogleData(existingUser, oauthId, email, name, picture))
+                .orElseGet(() -> createUser(oauthId, email, name, picture));
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
         ResponseCookie authCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, token)
@@ -74,7 +74,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
                 .path("/")
                 .maxAge(Duration.ofHours(1))
                 .build();
-        // O frontend centraliza o tratamento pos-login nesta rota.
+
         String redirectUrl = UriComponentsBuilder.fromUriString(frontendOrigins.primaryOrigin())
                 .path("/oauth2/callback")
                 .build()
@@ -84,19 +84,23 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         response.sendRedirect(redirectUrl);
     }
 
-    private User createUser(String oauthId, String email, String name) {
+    private User createUser(String oauthId, String email, String name, String picture) {
         User user = User.builder()
                 .oauthId(oauthId)
                 .email(email)
                 .nome(name)
+                .imagemUrl(picture)
                 .build();
         return userRepository.save(user);
     }
 
-    private User updateGoogleData(User user, String oauthId, String email, String name) {
+    private User updateGoogleData(User user, String oauthId, String email, String name, String picture) {
         user.setOauthId(oauthId);
         user.setEmail(email);
         user.setNome(name);
+        if (user.getImagemUrl() == null) {
+            user.setImagemUrl(picture);
+        }
         return userRepository.save(user);
     }
 }
