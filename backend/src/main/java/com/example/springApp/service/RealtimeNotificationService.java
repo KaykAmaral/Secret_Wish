@@ -56,4 +56,18 @@ public class RealtimeNotificationService {
             LOGGER.error("Falha ao enviar contador de mensagens nao lidas para usuario {}", userId, ex);
         }
     }
+
+    public void notifyWishlistUpdate(Long targetUserId, Long groupId) {
+        try {
+            messagingTemplate.convertAndSendToUser(
+                    targetUserId.toString(),
+                    "/queue/wishlist-update",
+                    new WishlistUpdateNotification(groupId)
+            );
+        } catch (RuntimeException ex) {
+            LOGGER.error("Falha ao enviar notificacao de wishlist para usuario {}", targetUserId, ex);
+        }
+    }
+
+    public record WishlistUpdateNotification(Long groupId) {}
 }
