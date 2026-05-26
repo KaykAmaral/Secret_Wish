@@ -28,6 +28,9 @@ public class WishlistService {
     @Autowired
     private DrawRepository drawRepository;
 
+    @Autowired
+    private RealtimeNotificationService realtimeNotificationService;
+
     @Transactional
     public WishList getOrCreateWishlist(Long userId) {
         User user = userRepository.findById(userId)
@@ -48,7 +51,9 @@ public class WishlistService {
         item.setWishlist(wishlist);
         wishlist.getItens().add(item);
 
-        return wishlistItemRepository.save(item);
+        WishlistItem saved = wishlistItemRepository.save(item);
+        notifyGivers(userId);
+        return saved;
     }
 
     @Transactional
@@ -62,7 +67,9 @@ public class WishlistService {
 
         item.setNomeProduto(updatedItem.getNomeProduto());
         item.setLink(updatedItem.getLink());
-        return wishlistItemRepository.save(item);
+        WishlistItem saved = wishlistItemRepository.save(item);
+        notifyGivers(userId);
+        return saved;
     }
 
     @Transactional
@@ -95,6 +102,13 @@ public class WishlistService {
         }
 
         wishlistItemRepository.delete(item);
+        notifyGivers(userId);
+    }
+
+    private void notifyGivers(Long userId) {
+        drawRepository.findByDestinatario_Id(userId).forEach(draw -> {
+            realtimeNotificationService.notifyWishlistUpdate(draw.getRemetente().getId(), draw.getGrupo().getId());
+        });
     }
 
 }

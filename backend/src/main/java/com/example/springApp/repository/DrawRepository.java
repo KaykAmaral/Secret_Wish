@@ -28,6 +28,7 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
     // Usado para consultar o resultado individual sem expor o sorteio completo.
     Optional<Draw> findByGrupo_IdAndRemetente_Id(Long groupId, Long giverId);
     Optional<Draw> findByGrupo_IdAndDestinatario_Id(Long groupId, Long receiverId);
+    List<Draw> findByDestinatario_Id(Long receiverId);
     boolean existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(Long groupId, Long giverId, Long receiverId);
 
 }
