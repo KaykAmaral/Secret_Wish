@@ -28,6 +28,10 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
+      setIsAdding(false);
+      setEditingItem(null);
+      setError('');
+      setActionLoading(false);
       const timer = setTimeout(() => {
         fetchWishlist();
       }, 0);
@@ -141,7 +145,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
           ) : (
             <div className="wishlist-content animate-in">
               <button className="btn-add-item" onClick={handleStartAdd}>
-                <span>+</span> Adicionar Presente
+                <span>+</span> Novo Presente
               </button>
 
               {loading ? (
@@ -153,7 +157,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                 <div className="wish-list-compact">
                   {wishlist?.itens?.length === 0 ? (
                     <div className="empty-wishlist">
-                      <p>Sua lista esta vazia. Comece a adicionar o que voce quer ganhar!</p>
+                      <p>Sua lista de desejos está vazia</p>
                     </div>
                   ) : (
                     wishlist?.itens?.map(item => (
