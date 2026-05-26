@@ -90,7 +90,9 @@
   font-size: 0.8rem;
   color: #6e7aff;
   text-decoration: none;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   margin-top: 0.3rem;
 }
 
@@ -101,21 +103,34 @@
 
 .wish-item-actions button {
   background: rgba(255, 255, 255, 0.05);
-  border: none;
-  width: 35px;
-  height: 35px;
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #d1d5db;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .wish-item-actions button:hover {
   background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.wish-item-actions button.delete {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.22);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .wish-item-actions button.delete:hover {
-  background: rgba(220, 38, 38, 0.2);
-  color: #ef4444;
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.38);
+  color: #fecaca;
 }
 
 .modal-form .input-group {

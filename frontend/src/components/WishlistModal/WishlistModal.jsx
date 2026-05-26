@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import wishlistService from '../../services/wishlistService';
 import './WishlistModal.css';
 
@@ -7,8 +8,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  
-  // Form states
+
   const [nomeProduto, setNomeProduto] = useState('');
   const [link, setLink] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -58,13 +58,23 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!nomeProduto.trim() || !link.trim()) {
+      setError('Preencha nome do produto e link.');
+      return;
+    }
+
     setActionLoading(true);
     setError('');
     try {
+      const payload = {
+        nomeProduto: nomeProduto.trim(),
+        link: link.trim(),
+      };
+
       if (editingItem) {
-        await wishlistService.updateItem(editingItem.id, { nomeProduto, link });
+        await wishlistService.updateItem(editingItem.id, payload);
       } else {
-        await wishlistService.addItem({ nomeProduto, link });
+        await wishlistService.addItem(payload);
       }
       resetForm();
       fetchWishlist();
@@ -91,7 +101,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
     <div className="modal-overlay">
       <div className="modal-card glass wishlist-modal">
         <div className="modal-header">
-          <h2>Minha Lista de Desejos ♥</h2>
+          <h2>Minha Lista de Desejos</h2>
           <button className="close-btn" onClick={onClose}>&times;</button>
         </div>
 
@@ -101,22 +111,23 @@ const WishlistModal = ({ isOpen, onClose }) => {
               <h3>{editingItem ? 'Editar Presente' : 'Novo Presente'}</h3>
               <div className="input-group">
                 <label>Nome do Produto</label>
-                <input 
-                  type="text" 
-                  placeholder="Ex: Caneca Gamer" 
+                <input
+                  type="text"
+                  placeholder="Ex: Caneca Gamer"
                   value={nomeProduto}
                   onChange={(e) => setNomeProduto(e.target.value)}
-                  required 
+                  required
                   autoFocus
                 />
               </div>
               <div className="input-group">
-                <label>Link (Opcional)</label>
-                <input 
-                  type="url" 
-                  placeholder="https://amazon.com/..." 
+                <label>Link</label>
+                <input
+                  type="url"
+                  placeholder="https://amazon.com/..."
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
+                  required
                 />
               </div>
               {error && <p className="error-msg">{error}</p>}
@@ -142,18 +153,26 @@ const WishlistModal = ({ isOpen, onClose }) => {
                 <div className="wish-list-compact">
                   {wishlist?.itens?.length === 0 ? (
                     <div className="empty-wishlist">
-                      <p>Sua lista está vazia. Comece a adicionar o que você quer ganhar!</p>
+                      <p>Sua lista esta vazia. Comece a adicionar o que voce quer ganhar!</p>
                     </div>
                   ) : (
                     wishlist?.itens?.map(item => (
                       <div key={item.id} className="wish-item-row">
                         <div className="wish-item-info">
                           <h4>{item.nomeProduto}</h4>
-                          {item.link && <a href={item.link} target="_blank" rel="noopener noreferrer">🔗 Link</a>}
+                          {item.link && (
+                            <a href={item.link} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink size={14} /> Link
+                            </a>
+                          )}
                         </div>
                         <div className="wish-item-actions">
-                          <button onClick={() => handleStartEdit(item)}>✏️</button>
-                          <button className="delete" onClick={() => handleDelete(item.id)}>🗑️</button>
+                          <button onClick={() => handleStartEdit(item)} title="Editar item" aria-label="Editar item">
+                            <Pencil size={16} />
+                          </button>
+                          <button className="delete" onClick={() => handleDelete(item.id)} title="Remover item" aria-label="Remover item">
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
                     ))
