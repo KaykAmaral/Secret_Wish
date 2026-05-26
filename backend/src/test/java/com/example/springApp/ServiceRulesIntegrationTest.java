@@ -171,6 +171,22 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void joiningGroupNotifiesOwner() {
+        User owner = createUser("Owner");
+        User member = createUser("Member");
+        Group group = groupService.createGroup(newGroup("Grupo"), owner.getId());
+
+        groupService.joinGroup(group.getCodigoUnico(), member.getId());
+
+        List<Notification> notifications = notificationService.getUserNotifications(owner.getId());
+        assertThat(notifications).hasSize(1);
+        assertThat(notifications.getFirst().getTitulo()).isEqualTo("Novo participante no grupo");
+        assertThat(notifications.getFirst().getMensagem())
+                .contains(member.getNome())
+                .contains(group.getNome());
+    }
+
+    @Test
     void onlyOwnerCanPerformDraw() {
         Scenario scenario = createGroupWithThreeMembers();
 
@@ -198,13 +214,11 @@ class ServiceRulesIntegrationTest {
         drawService.performDraw(scenario.group().getId(), scenario.owner().getId());
 
         assertThat(notificationService.getUserNotifications(scenario.owner().getId()))
+                .filteredOn(notification -> notification.getTitulo().equals("Sorteio realizado"))
                 .hasSize(1)
                 .first()
-                .satisfies(notification -> {
-                    assertThat(notification.getTitulo()).isEqualTo("Sorteio realizado");
-                    assertThat(notification.isLida()).isFalse();
-                });
-        assertThat(notificationService.countUnreadNotifications(scenario.owner().getId())).isEqualTo(1);
+                .satisfies(notification -> assertThat(notification.isLida()).isFalse());
+        assertThat(notificationService.countUnreadNotifications(scenario.owner().getId())).isEqualTo(3);
     }
 
     @Test

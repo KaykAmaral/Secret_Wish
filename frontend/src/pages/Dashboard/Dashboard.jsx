@@ -38,6 +38,13 @@ const Dashboard = () => {
     maxDate.setMonth(maxDate.getMonth() + 24);
     return formatInputDate(maxDate);
   })();
+  const formatGroupCode = (value) => {
+    const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
+    if (cleaned.length <= 4) {
+      return cleaned;
+    }
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -295,7 +302,7 @@ const Dashboard = () => {
                   type="text" 
                   placeholder="XXXX-XXXX" 
                   value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+                  onChange={(e) => setJoinCode(formatGroupCode(e.target.value))}
                   maxLength="9"
                   required 
                 />

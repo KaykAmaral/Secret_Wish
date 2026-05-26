@@ -40,6 +40,9 @@ public class GroupService {
     @Autowired
     private Clock clock;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public Group createGroup(Group group, Long donoId) {
         User dono = userRepository.findById(donoId)
@@ -91,7 +94,14 @@ public class GroupService {
 
         group.getMembros().add(user);
 
-        return groupRepository.save(group);
+        Group savedGroup = groupRepository.save(group);
+        notificationService.createNotification(
+                group.getDono().getId(),
+                "Novo participante no grupo",
+                user.getNome() + " entrou no grupo " + group.getNome() + "."
+        );
+
+        return savedGroup;
     }
 
     public List<Group> getUserGroups(Long userId) {
