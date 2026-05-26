@@ -201,7 +201,9 @@ const Dashboard = () => {
                       <p><strong>Participantes:</strong> {group.membros?.length || 0}</p>
                       <p><strong>Evento:</strong> {group.dataEvento ? new Date(group.dataEvento).toLocaleDateString() : 'Não definida'}</p>
                     </div>
-                    <button className="btn-view">Gerenciar Grupo</button>
+                    <button className="btn-view">
+                      {group.dono?.id === user?.id ? 'Gerenciar Grupo' : 'Visualizar Grupo'}
+                    </button>
                   </div>
                 ))}
               </div>
