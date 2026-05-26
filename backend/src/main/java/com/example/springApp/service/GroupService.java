@@ -14,6 +14,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.LocalDate;
 import java.security.SecureRandom;
 import java.util.List;
 
@@ -35,10 +37,15 @@ public class GroupService {
     @Autowired
     private MessageRepository messageRepository;
 
+    @Autowired
+    private Clock clock;
+
     @Transactional
     public Group createGroup(Group group, Long donoId) {
         User dono = userRepository.findById(donoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado"));
+
+        validateEventDate(group);
 
         if (groupRepository.existsByDonoId(donoId)) {
             throw new ConflictException("Usuario ja possui um grupo criado");
@@ -50,6 +57,20 @@ public class GroupService {
         group.getMembros().add(dono);
 
         return groupRepository.save(group);
+    }
+
+    private void validateEventDate(Group group) {
+        if (group.getDataEvento() == null) {
+            return;
+        }
+
+        LocalDate eventDate = group.getDataEvento().toLocalDate();
+        LocalDate today = LocalDate.now(clock);
+        LocalDate maxDate = today.plusMonths(24);
+
+        if (eventDate.isBefore(today) || eventDate.isAfter(maxDate)) {
+            throw new BusinessException("A data do evento deve ser entre hoje e 24 meses a partir de hoje");
+        }
     }
 
     @Transactional

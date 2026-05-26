@@ -26,6 +26,18 @@ const Dashboard = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const hasCreatedGroup = groups.some(group => group.dono?.id === user?.id);
+  const formatInputDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayDate = formatInputDate(new Date());
+  const maxEventDateValue = (() => {
+    const maxDate = new Date();
+    maxDate.setMonth(maxDate.getMonth() + 24);
+    return formatInputDate(maxDate);
+  })();
 
   const fetchData = useCallback(async () => {
     try {
@@ -57,13 +69,23 @@ const Dashboard = () => {
       return;
     }
 
+    if (!newGroupName.trim() || !newGroupDesc.trim() || !newGroupDate) {
+      setError('Preencha nome, descricao e data do evento.');
+      return;
+    }
+
+    if (newGroupDate && (newGroupDate < todayDate || newGroupDate > maxEventDateValue)) {
+      setError('A data do evento deve ser entre hoje e 24 meses a partir de hoje.');
+      return;
+    }
+
     setActionLoading(true);
     setError('');
     try {
-      const dateOnly = newGroupDate ? `${newGroupDate}T00:00:00` : null;
+      const dateOnly = `${newGroupDate}T00:00:00`;
       const createdGroup = await groupService.createGroup({ 
-        nome: newGroupName, 
-        descricao: newGroupDesc,
+        nome: newGroupName.trim(), 
+        descricao: newGroupDesc.trim(),
         dataEvento: dateOnly 
       });
       setGroups(previousGroups => [createdGroup, ...previousGroups]);
@@ -231,16 +253,24 @@ const Dashboard = () => {
                 />
               </div>
               <div className="input-group">
-                <label>Descrição (Opcional)</label>
+                <label>Descrição</label>
                 <textarea 
                   placeholder="Ex: Amigo secreto de natal da família..." 
                   value={newGroupDesc}
                   onChange={(e) => setNewGroupDesc(e.target.value)}
+                  required
                 />
               </div>
               <div className="input-group">
-                <label>Data do Evento (Opcional)</label>
-                <input type="date" value={newGroupDate} onChange={(e) => setNewGroupDate(e.target.value)} />
+                <label>Data do Evento</label>
+                <input
+                  type="date"
+                  value={newGroupDate}
+                  min={todayDate}
+                  max={maxEventDateValue}
+                  onChange={(e) => setNewGroupDate(e.target.value)}
+                  required
+                />
               </div>
               {error && <p className="error-msg">{error}</p>}
               <button type="submit" className="btn-primary" disabled={actionLoading || hasCreatedGroup}>

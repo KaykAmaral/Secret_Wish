@@ -137,6 +137,28 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void groupEventDateCannotBeInThePast() {
+        User owner = createUser("Owner");
+        Group group = newGroup("Grupo");
+        group.setDataEvento(LocalDateTime.now().minusDays(1));
+
+        assertThatThrownBy(() -> groupService.createGroup(group, owner.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("24 meses");
+    }
+
+    @Test
+    void groupEventDateCannotBeMoreThanTwentyFourMonthsInTheFuture() {
+        User owner = createUser("Owner");
+        Group group = newGroup("Grupo");
+        group.setDataEvento(LocalDateTime.now().plusMonths(24).plusDays(1));
+
+        assertThatThrownBy(() -> groupService.createGroup(group, owner.getId()))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("24 meses");
+    }
+
+    @Test
     void drawRequiresAtLeastThreeMembers() {
         User owner = createUser("Owner");
         User member = createUser("Member");
@@ -579,6 +601,24 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void groupCreationRequiresDescriptionAndEventDate() throws Exception {
+        User user = createUser("Required Fields User");
+
+        mockMvc.perform(post("/api/groups")
+                        .header("Authorization", bearerToken(user))
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nome": "Grupo",
+                                  "descricao": ""
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fields.descricao").exists())
+                .andExpect(jsonPath("$.fields.dataEvento").exists());
+    }
+
+    @Test
     void invalidPathParameterUsesStandardErrorContract() throws Exception {
         User user = createUser("Invalid Parameter User");
 
@@ -815,6 +855,7 @@ class ServiceRulesIntegrationTest {
     private Group newGroup(String name) {
         return Group.builder()
                 .nome(name)
+                .descricao("Descricao do grupo")
                 .dataEvento(LocalDateTime.now().plusDays(30))
                 .build();
     }
