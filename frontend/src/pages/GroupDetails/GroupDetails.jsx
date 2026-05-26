@@ -1,7 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Gift, HelpCircle, Users, Calendar, Hash, ArrowLeft, Trash2, LogOut, Sparkles } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Crown,
+  Gift,
+  Hash,
+  HelpCircle,
+  LogOut,
+  Sparkles,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import groupService from '../../services/groupService';
 import drawService from '../../services/drawService';
@@ -14,14 +26,14 @@ const GroupDetails = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [group, setGroup] = useState(null);
   const [whoITook, setWhoITook] = useState(null);
   const [gifterChat, setGifterChat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [isFriendChatOpen, setIsFriendChatOpen] = useState(false);
   const [isGifterChatOpen, setIsGifterChatOpen] = useState(false);
 
@@ -30,13 +42,12 @@ const GroupDetails = () => {
       setLoading(true);
       const data = await groupService.getGroupById(groupId);
       setGroup(data);
-      
+
       if (data.dataSorteio) {
         try {
           const drawData = await drawService.getWhoITook(groupId);
           setWhoITook(drawData);
-          
-          // Buscar resumos de chat para encontrar quem tirou o usuário
+
           const summaries = await messageService.getChatSummaries(groupId);
           const anonymousGifter = summaries.find(c => c.anonimoParaUsuario);
           setGifterChat(anonymousGifter);
@@ -54,17 +65,14 @@ const GroupDetails = () => {
 
   useEffect(() => {
     fetchGroupDetails();
-    // Conectar WebSocket (em ambiente real, o token viria do AuthContext ou seria pego via cookie se o backend suportasse)
-    // Para dev, tentamos conectar. O backend com dev-auth habilitado pode precisar do token no header.
-    // Como não temos acesso fácil ao token HttpOnly aqui, esperamos que o backend aceite a conexão se o cookie for enviado.
     webSocketService.connect();
-    
+
     return () => webSocketService.disconnect();
   }, [fetchGroupDetails]);
 
   const handlePerformDraw = async () => {
-    if (!window.confirm('Tem certeza que deseja realizar o sorteio agora? Ninguém mais poderá entrar no grupo.')) return;
-    
+    if (!window.confirm('Tem certeza que deseja realizar o sorteio agora? Ninguem mais podera entrar no grupo.')) return;
+
     setActionLoading(true);
     setError('');
     try {
@@ -88,7 +96,7 @@ const GroupDetails = () => {
   };
 
   const handleDeleteGroup = async () => {
-    if (!window.confirm('⚠️ ATENÇÃO: Esta ação é irreversível.')) return;
+    if (!window.confirm('ATENCAO: Esta acao e irreversivel.')) return;
     try {
       await groupService.deleteGroup(groupId);
       navigate('/dashboard');
@@ -101,7 +109,7 @@ const GroupDetails = () => {
     return (
       <div className="loading-container">
         <Sparkles className="spinning-icon" size={48} />
-        <p>Entrando no clima do mistério...</p>
+        <p>Entrando no clima do misterio...</p>
       </div>
     );
   }
@@ -116,7 +124,7 @@ const GroupDetails = () => {
         </button>
       </nav>
 
-      <motion.header 
+      <motion.header
         className="group-detail-header glass"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -124,7 +132,15 @@ const GroupDetails = () => {
         <div className="header-main">
           <div className="title-area">
             <span className="status-badge large">
-              {group.dataSorteio ? '✨ Sorteio Realizado' : '⏳ Aguardando Sorteio'}
+              {group.dataSorteio ? (
+                <>
+                  <Sparkles size={14} /> Sorteio Realizado
+                </>
+              ) : (
+                <>
+                  <Clock size={14} /> Aguardando Sorteio
+                </>
+              )}
             </span>
             <h1>{group.nome}</h1>
             {group.descricao && <p className="group-desc">{group.descricao}</p>}
@@ -132,7 +148,8 @@ const GroupDetails = () => {
           <div className="header-actions">
             {isDono && !group.dataSorteio && (
               <button className="btn-premium" onClick={handlePerformDraw} disabled={actionLoading}>
-                {actionLoading ? 'Sorteando...' : '🎲 Realizar Sorteio'}
+                <Sparkles size={18} />
+                {actionLoading ? 'Sorteando...' : 'Realizar Sorteio'}
               </button>
             )}
             {!isDono && !group.dataSorteio && (
@@ -141,8 +158,9 @@ const GroupDetails = () => {
               </button>
             )}
             {isDono && (
-              <button className="btn-icon danger" onClick={handleDeleteGroup} title="Excluir Grupo">
+              <button className="btn-danger-text" onClick={handleDeleteGroup} title="Excluir Grupo">
                 <Trash2 size={20} />
+                Excluir Grupo
               </button>
             )}
           </div>
@@ -150,21 +168,21 @@ const GroupDetails = () => {
 
         <div className="header-stats">
           <div className="stat-item">
-            <Hash size={18} />
+            <span className="stat-icon"><Hash size={18} /></span>
             <div>
-              <span className="stat-label">Código</span>
+              <span className="stat-label">Codigo</span>
               <span className="stat-value highlight">{group.codigoUnico}</span>
             </div>
           </div>
           <div className="stat-item">
-            <Calendar size={18} />
+            <span className="stat-icon"><Calendar size={18} /></span>
             <div>
               <span className="stat-label">Evento</span>
               <span className="stat-value">{group.dataEvento ? new Date(group.dataEvento).toLocaleDateString() : 'A definir'}</span>
             </div>
           </div>
           <div className="stat-item">
-            <Users size={18} />
+            <span className="stat-icon"><Users size={18} /></span>
             <div>
               <span className="stat-label">Membros</span>
               <span className="stat-value">{group.membros.length}</span>
@@ -176,9 +194,8 @@ const GroupDetails = () => {
       {error && <div className="error-alert">{error}</div>}
 
       <div className="group-content-grid">
-        {/* CARD 1: Seu Amigo Secreto */}
         {group.dataSorteio && whoITook ? (
-          <motion.section 
+          <motion.section
             className="premium-card glass purple"
             whileHover={{ scale: 1.02 }}
             initial={{ opacity: 0, x: -20 }}
@@ -186,11 +203,10 @@ const GroupDetails = () => {
             onClick={() => setIsFriendChatOpen(true)}
           >
             <div className="card-top">
-              <div className="card-icon">🎁</div>
+              <div className="card-icon"><Gift size={44} /></div>
               <h2 className="card-title">Seu Amigo Secreto</h2>
               <p className="card-subtitle">
-                Você tirou <strong>{whoITook.amigoSecreto.nome}</strong>. 
-                Veja a wishlist e converse anonimamente!
+                Voce tirou <strong>{whoITook.amigoSecreto.nome}</strong>. Veja a wishlist e converse anonimamente!
               </p>
             </div>
             <div className="card-footer">
@@ -202,15 +218,14 @@ const GroupDetails = () => {
           </motion.section>
         ) : (
           <section className="premium-card glass disabled">
-            <div className="card-icon">🔒</div>
+            <div className="card-icon"><Clock size={44} /></div>
             <h2 className="card-title">Aguardando Sorteio</h2>
-            <p className="card-subtitle">O mistério começará em breve...</p>
+            <p className="card-subtitle">O misterio comecara em breve...</p>
           </section>
         )}
 
-        {/* CARD 2: Quem está te presenteando? */}
         {group.dataSorteio ? (
-          <motion.section 
+          <motion.section
             className="premium-card glass blue"
             whileHover={{ scale: 1.02 }}
             initial={{ opacity: 0, x: 20 }}
@@ -218,32 +233,30 @@ const GroupDetails = () => {
             onClick={() => setIsGifterChatOpen(true)}
           >
             <div className="card-top">
-              <div className="card-icon"><HelpCircle size={48} /></div>
-              <h2 className="card-title">Quem está te presenteando?</h2>
+              <div className="card-icon"><HelpCircle size={44} /></div>
+              <h2 className="card-title">Quem esta te presenteando?</h2>
               <p className="card-subtitle">
-                👀 Alguém misterioso está observando sua wishlist. 
-                Envie uma mensagem para o seu amigo secreto!
+                Alguem misterioso esta observando sua wishlist. Envie uma mensagem para o seu amigo secreto!
               </p>
             </div>
             <div className="card-footer">
               <span className="chat-status">
-                {gifterChat?.unreadCount > 0 ? `💬 ${gifterChat.unreadCount} novas mensagens` : 'Chat ativo'}
+                {gifterChat?.unreadCount > 0 ? `${gifterChat.unreadCount} novas mensagens` : 'Chat ativo'}
               </span>
-              <button className="btn-premium">Abrir Chat Anônimo</button>
+              <button className="btn-premium">Abrir Chat Anonimo</button>
             </div>
           </motion.section>
         ) : (
           <section className="premium-card glass disabled">
-            <div className="card-icon">👀</div>
+            <div className="card-icon"><HelpCircle size={44} /></div>
             <h2 className="card-title">Quem te tirou?</h2>
-            <p className="card-subtitle">Você saberá quem é (ou não) em breve.</p>
+            <p className="card-subtitle">Voce sabera quem e, ou nao, em breve.</p>
           </section>
         )}
       </div>
 
-      {/* Seção de Membros */}
-      <motion.section 
-        className="members-section glass mt-4"
+      <motion.section
+        className="members-section glass"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.4 }}
@@ -258,9 +271,9 @@ const GroupDetails = () => {
               <div className="member-avatar">{membro.nome.charAt(0)}</div>
               <div className="member-info">
                 <span className="member-name">
-                  {membro.nome} 
-                  {membro.id === group.dono.id && <span className="owner-tag">👑</span>}
-                  {membro.id === user.id && <span className="me-tag">(Você)</span>}
+                  {membro.nome}
+                  {membro.id === group.dono.id && <Crown className="owner-icon" size={15} />}
+                  {membro.id === user.id && <span className="me-tag">(Voce)</span>}
                 </span>
               </div>
             </div>
@@ -268,7 +281,6 @@ const GroupDetails = () => {
         </div>
       </motion.section>
 
-      {/* Drawers */}
       {whoITook && (
         <PremiumChatDrawer
           isOpen={isFriendChatOpen}

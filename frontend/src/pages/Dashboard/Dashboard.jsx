@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [joinCode, setJoinCode] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const hasCreatedGroup = groups.some(group => group.dono?.id === user?.id);
 
   const fetchData = useCallback(async () => {
     try {
@@ -51,20 +52,26 @@ const Dashboard = () => {
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
+    if (hasCreatedGroup) {
+      setError('Voce ja possui um grupo criado.');
+      return;
+    }
+
     setActionLoading(true);
     setError('');
     try {
       const dateOnly = newGroupDate ? `${newGroupDate}T00:00:00` : null;
-      await groupService.createGroup({ 
+      const createdGroup = await groupService.createGroup({ 
         nome: newGroupName, 
         descricao: newGroupDesc,
         dataEvento: dateOnly 
       });
+      setGroups(previousGroups => [createdGroup, ...previousGroups]);
       setShowCreateModal(false);
       setNewGroupName('');
       setNewGroupDesc('');
       setNewGroupDate('');
-      fetchData();
+      await fetchData();
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao criar grupo.');
     } finally {
@@ -124,7 +131,12 @@ const Dashboard = () => {
             <p>Pronto para mais um amigo secreto inesquecível?</p>
           </div>
           <div className="actions-bar">
-            <button className="btn-primary" onClick={() => setShowCreateModal(true)}>
+            <button
+              className="btn-primary"
+              onClick={() => setShowCreateModal(true)}
+              disabled={hasCreatedGroup}
+              title={hasCreatedGroup ? 'Voce ja possui um grupo criado' : 'Criar grupo'}
+            >
               <span>+</span> Criar Grupo
             </button>
             <button className="btn-secondary" onClick={() => setShowJoinModal(true)}>
@@ -231,7 +243,7 @@ const Dashboard = () => {
                 <input type="date" value={newGroupDate} onChange={(e) => setNewGroupDate(e.target.value)} />
               </div>
               {error && <p className="error-msg">{error}</p>}
-              <button type="submit" className="btn-primary" disabled={actionLoading}>
+              <button type="submit" className="btn-primary" disabled={actionLoading || hasCreatedGroup}>
                 {actionLoading ? 'Criando...' : 'Criar Grupo'}
               </button>
             </form>
