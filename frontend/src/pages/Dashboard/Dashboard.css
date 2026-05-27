@@ -131,18 +131,32 @@
   gap: 16px;
 }
 
+.actions-bar button {
+  width: 180px;
+  min-height: 44px;
+  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.actions-bar .btn-primary,
+.actions-bar .btn-secondary,
+.actions-bar .btn-wishlist {
+  margin-top: 0;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
   color: white;
   border: none;
-  padding: 12px 24px;
   border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .btn-primary:hover {
@@ -162,7 +176,6 @@
   background: rgba(255, 255, 255, 0.05);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 12px 24px;
   border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -177,14 +190,10 @@
   background: rgba(124, 58, 237, 0.1);
   color: #A855F7;
   border: 1px solid rgba(124, 58, 237, 0.2);
-  padding: 12px 24px;
   border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .btn-wishlist:hover {
