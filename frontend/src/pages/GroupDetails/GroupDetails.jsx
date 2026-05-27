@@ -12,6 +12,7 @@ import {
   LogOut,
   Sparkles,
   Trash2,
+  User,
   Users,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -273,6 +274,7 @@ const GroupDetails = () => {
                 <span className="member-name">
                   {membro.nome}
                   {membro.id === group.dono.id && <Crown className="owner-icon" size={15} />}
+                  {membro.id !== group.dono.id && <User className="participant-icon" size={15} />}
                   {membro.id === user.id && <span className="me-tag">(Voce)</span>}
                 </span>
               </div>
