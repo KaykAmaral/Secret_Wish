@@ -42,6 +42,9 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         this.authCookieSameSite = authCookieSameSite;
     }
 
+    /**
+     * Finaliza o login Google criando/atualizando o usuario local, emitindo cookie JWT e redirecionando ao frontend.
+     */
     @Override
     @Transactional
     public void onAuthenticationSuccess(
@@ -84,6 +87,9 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         response.sendRedirect(redirectUrl);
     }
 
+    /**
+     * Cria a conta local usando os dados verificados retornados pelo Google.
+     */
     private User createUser(String oauthId, String email, String name, String picture) {
         User user = User.builder()
                 .oauthId(oauthId)
@@ -94,6 +100,9 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
         return userRepository.save(user);
     }
 
+    /**
+     * Vincula ou atualiza dados Google sem sobrescrever foto definida manualmente pelo usuario.
+     */
     private User updateGoogleData(User user, String oauthId, String email, String name, String picture) {
         user.setOauthId(oauthId);
         user.setEmail(email);

@@ -25,14 +25,23 @@ public class FrontendOriginsProperties {
         }
     }
 
+    /**
+     * Retorna todas as origens aceitas por CORS e WebSocket.
+     */
     public List<String> allowedOrigins() {
         return allowedOrigins;
     }
 
+    /**
+     * Usa a primeira origem como destino de redirecionamentos OAuth.
+     */
     public String primaryOrigin() {
         return allowedOrigins.getFirst();
     }
 
+    /**
+     * Adapta a lista para APIs Spring que recebem array de origens.
+     */
     public String[] allowedOriginsArray() {
         return allowedOrigins.toArray(String[]::new);
     }

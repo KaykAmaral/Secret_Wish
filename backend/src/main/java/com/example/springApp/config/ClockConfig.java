@@ -8,6 +8,9 @@ import java.time.Clock;
 @Configuration
 public class ClockConfig {
 
+    /**
+     * Injeta Clock para permitir testes deterministas de regras baseadas em data.
+     */
     @Bean
     public Clock clock() {
         return Clock.systemDefaultZone();

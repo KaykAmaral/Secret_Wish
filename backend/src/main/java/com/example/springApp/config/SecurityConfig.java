@@ -59,11 +59,17 @@ public class SecurityConfig {
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Fornece o encoder usado para senhas locais de usuarios cadastrados por email.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Define a politica de acesso HTTP, OAuth2, JWT e endpoints liberados por ambiente.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -101,6 +107,9 @@ public class SecurityConfig {
                 .build();
     }
 
+    /**
+     * Forca selecao de conta no Google para evitar login silencioso com conta errada.
+     */
     private OAuth2AuthorizationRequestResolver authorizationRequestResolver() {
         var resolver = new DefaultOAuth2AuthorizationRequestResolver(
                 clientRegistrationRepository, "/oauth2/authorization"
@@ -111,6 +120,9 @@ public class SecurityConfig {
         return resolver;
     }
 
+    /**
+     * Retorna JSON padronizado para chamadas de API nao autenticadas.
+     */
     private AuthenticationEntryPoint apiAuthenticationEntryPoint() {
         return (request, response, authException) -> {
             ApiErrorResponse body = new ApiErrorResponse(
@@ -127,6 +139,9 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * Restringe CORS as origens de frontend configuradas e permite cookies de autenticacao.
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

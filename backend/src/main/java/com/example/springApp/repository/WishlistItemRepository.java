@@ -9,7 +9,14 @@ import java.util.List;
 @Repository
 public interface WishlistItemRepository extends JpaRepository<WishlistItem, Long> {
 
+    /**
+     * Lista itens de wishlist pertencentes a um usuario.
+     */
     List<WishlistItem> findByWishlistUsuarioId(Long usuarioId);
+
+    /**
+     * Conta itens sem carregar a lista completa.
+     */
     long countByWishlistUsuarioId(Long usuarioId);
 
 }

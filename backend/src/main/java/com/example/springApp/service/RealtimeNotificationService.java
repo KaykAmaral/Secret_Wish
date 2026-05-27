@@ -19,6 +19,9 @@ public class RealtimeNotificationService {
         this.messagingTemplate = messagingTemplate;
     }
 
+    /**
+     * Converte uma entidade Message em payload minimo antes de enviar ao destinatario.
+     */
     public void notifyNewMessage(Message message, Long unreadCount) {
         notifyNewMessage(new RealtimeMessageNotification(
                         message.getGrupo().getId(),
@@ -32,6 +35,9 @@ public class RealtimeNotificationService {
         );
     }
 
+    /**
+     * Entrega a nova mensagem no canal privado do usuario e sincroniza o contador de nao lidas.
+     */
     public void notifyNewMessage(RealtimeMessageNotification notification, Long recipientId) {
         try {
             messagingTemplate.convertAndSendToUser(
@@ -45,6 +51,9 @@ public class RealtimeNotificationService {
         }
     }
 
+    /**
+     * Publica o total atual de mensagens nao lidas para atualizar badges no frontend.
+     */
     public void notifyUnreadCount(Long userId, Long unreadCount) {
         try {
             messagingTemplate.convertAndSendToUser(
@@ -57,6 +66,9 @@ public class RealtimeNotificationService {
         }
     }
 
+    /**
+     * Avisa quem tirou o usuario quando a wishlist dele muda.
+     */
     public void notifyWishlistUpdate(Long targetUserId, Long groupId) {
         try {
             messagingTemplate.convertAndSendToUser(

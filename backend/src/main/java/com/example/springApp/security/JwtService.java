@@ -32,6 +32,9 @@ public class JwtService {
         this.expirationSeconds = expirationMinutes * 60;
     }
 
+    /**
+     * Gera um JWT HMAC contendo apenas identificadores necessarios para reconstruir a sessao.
+     */
     public String generateToken(Long userId, String email, String name) {
         Instant now = Instant.now();
 
@@ -50,6 +53,9 @@ public class JwtService {
         return unsignedToken + "." + sign(unsignedToken);
     }
 
+    /**
+     * Valida assinatura e expiracao do JWT, retornando null para tokens invalidos sem vazar motivo.
+     */
     public Long validateAndGetUserId(String token) {
         try {
             String[] parts = token.split("\\.");
@@ -80,6 +86,9 @@ public class JwtService {
         }
     }
 
+    /**
+     * Serializa e codifica um trecho do JWT em Base64URL sem padding.
+     */
     private String encodeJson(Map<String, Object> value) {
         try {
             return BASE64_URL_ENCODER.encodeToString(OBJECT_MAPPER.writeValueAsBytes(value));
@@ -88,6 +97,9 @@ public class JwtService {
         }
     }
 
+    /**
+     * Assina header e payload usando HMAC-SHA256 com o segredo da aplicacao.
+     */
     private String sign(String value) {
         try {
             Mac mac = Mac.getInstance("HmacSHA256");
@@ -98,6 +110,9 @@ public class JwtService {
         }
     }
 
+    /**
+     * Compara assinaturas em tempo constante para reduzir risco de timing attacks.
+     */
     private boolean constantTimeEquals(String expected, String actual) {
         return MessageDigest.isEqual(
                 expected.getBytes(StandardCharsets.UTF_8),

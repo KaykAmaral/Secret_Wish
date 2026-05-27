@@ -31,6 +31,9 @@ public class EmailService {
         this.fromAddress = fromAddress;
     }
 
+    /**
+     * Cria snapshots imutaveis do resultado para envio apos o fechamento da transacao.
+     */
     public List<DrawResultEmail> toDrawResultEmails(List<Draw> draws) {
         return draws.stream()
                 // Snapshot evita depender de entidades lazy depois que a transacao termina.
@@ -45,6 +48,9 @@ public class EmailService {
                 .toList();
     }
 
+    /**
+     * Envia todos os resultados disponiveis sem derrubar a aplicacao se o provedor falhar.
+     */
     public void sendDrawResults(List<DrawResultEmail> results) {
         if (results == null || results.isEmpty()) {
             return;
@@ -70,6 +76,9 @@ public class EmailService {
         }
     }
 
+    /**
+     * Valida a configuracao SMTP enviando uma mensagem controlada para um destinatario informado.
+     */
     public void sendTestEmail(String recipientEmail) {
         String normalizedRecipient = normalizeRecipient(recipientEmail);
 
@@ -103,6 +112,9 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envia o resultado individual e isola falhas por participante.
+     */
     private void sendDrawResult(DrawResultEmail result) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
@@ -124,6 +136,9 @@ public class EmailService {
         }
     }
 
+    /**
+     * Monta o corpo do email sem incluir dados sensiveis alem do par sorteado.
+     */
     private String buildDrawResultBody(DrawResultEmail result) {
         return """
                 Ola, %s!
@@ -140,6 +155,9 @@ public class EmailService {
         );
     }
 
+    /**
+     * Faz uma validacao leve para evitar chamadas SMTP com destinatario vazio ou claramente invalido.
+     */
     private String normalizeRecipient(String recipientEmail) {
         if (recipientEmail == null || recipientEmail.isBlank()) {
             throw new BusinessException("Email de destino deve ser informado");

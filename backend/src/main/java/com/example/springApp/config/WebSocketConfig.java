@@ -30,6 +30,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         this.frontendOrigins = frontendOrigins;
     }
 
+    /**
+     * Registra endpoints STOMP nativo e SockJS usando as mesmas origens permitidas do frontend.
+     */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
@@ -39,6 +42,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS();
     }
 
+    /**
+     * Configura topicos publicos, filas privadas e prefixos de comandos enviados pelo cliente.
+     */
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // /user permite enviar notificacoes privadas para cada usuario autenticado no STOMP.
@@ -47,6 +53,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.setUserDestinationPrefix("/user");
     }
 
+    /**
+     * Autentica a conexao STOMP no CONNECT para habilitar envio privado por usuario.
+     */
     @Override
     public void configureClientInboundChannel(ChannelRegistration registration) {
         registration.interceptors(new ChannelInterceptor() {
@@ -70,6 +79,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         });
     }
 
+    /**
+     * Extrai JWT dos headers STOMP aceitos pelos clientes web.
+     */
     private String resolveToken(StompHeaderAccessor accessor) {
         String authorization = accessor.getFirstNativeHeader("Authorization");
         if (authorization != null && authorization.startsWith("Bearer ")) {

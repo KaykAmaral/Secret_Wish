@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 @Component
 public class ResponseMapper {
 
+    /**
+     * Expõe somente campos de usuario seguros para retorno em API.
+     */
     public UserResponse toUserResponse(User user) {
         // Nunca expor oauthId ou outros identificadores internos do provedor.
         return new UserResponse(
@@ -32,6 +35,9 @@ public class ResponseMapper {
         );
     }
 
+    /**
+     * Ordena membros por nome para manter resposta estavel entre chamadas.
+     */
     public GroupResponse toGroupResponse(Group group) {
         Set<UserResponse> members = group.getMembros().stream()
                 .sorted(Comparator.comparing(User::getNome))
@@ -51,6 +57,9 @@ public class ResponseMapper {
         );
     }
 
+    /**
+     * Retorna a wishlist com itens ordenados para evitar mudancas visuais aleatorias no frontend.
+     */
     public WishlistResponse toWishlistResponse(WishList wishlist) {
         List<WishlistItemResponse> items = wishlist.getItens().stream()
                 .sorted(Comparator.comparing(WishlistItem::getId))
@@ -65,6 +74,9 @@ public class ResponseMapper {
         );
     }
 
+    /**
+     * Converte item de wishlist sem expor dados internos da entidade pai.
+     */
     public WishlistItemResponse toWishlistItemResponse(WishlistItem item) {
         return new WishlistItemResponse(
                 item.getId(),
@@ -73,6 +85,9 @@ public class ResponseMapper {
         );
     }
 
+    /**
+     * Aplica a regra de anonimato da conversa de acordo com quem esta visualizando.
+     */
     public MessageResponse toMessageResponse(Message message, Long viewerId) {
         boolean viewerIsSender = message.getRemetente().getId().equals(viewerId);
         // O destinatario ve apenas o apelido anonimo de quem tirou ele.
@@ -91,6 +106,9 @@ public class ResponseMapper {
         );
     }
 
+    /**
+     * Converte notificacao persistida para o contrato usado pelo dashboard.
+     */
     public NotificationResponse toNotificationResponse(Notification notification) {
         return new NotificationResponse(
                 notification.getId(),

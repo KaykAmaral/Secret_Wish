@@ -43,6 +43,9 @@ public class GroupService {
     @Autowired
     private NotificationService notificationService;
 
+    /**
+     * Cria um grupo novo e inclui o dono como primeiro membro para que ele participe do sorteio.
+     */
     @Transactional
     public Group createGroup(Group group, Long donoId) {
         User dono = userRepository.findById(donoId)
@@ -62,6 +65,9 @@ public class GroupService {
         return groupRepository.save(group);
     }
 
+    /**
+     * Garante que a data do evento fique dentro da janela permitida para planejamento do grupo.
+     */
     private void validateEventDate(Group group) {
         if (group.getDataEvento() == null) {
             return;
@@ -76,6 +82,9 @@ public class GroupService {
         }
     }
 
+    /**
+     * Adiciona um usuario ao grupo enquanto o sorteio ainda nao foi realizado.
+     */
     @Transactional
     public Group joinGroup(String codigoUnico, Long userId) {
         Group group = groupRepository.findByCodigoUnico(codigoUnico)
@@ -104,15 +113,24 @@ public class GroupService {
         return savedGroup;
     }
 
+    /**
+     * Lista os grupos em que o usuario aparece como membro.
+     */
     public List<Group> getUserGroups(Long userId) {
         return groupRepository.findByMembros_Id(userId);
     }
 
+    /**
+     * Busca um grupo somente se o usuario autenticado participar dele.
+     */
     public Group getUserGroup(Long groupId, Long userId) {
         return groupRepository.findByIdAndMembros_Id(groupId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
     }
 
+    /**
+     * Remove um participante comum sem permitir alterar grupos ja sorteados ou remover o dono.
+     */
     @Transactional
     public Group removeMember(Long groupId, Long donoId, Long memberId) {
         Group group = getGroupForOwner(groupId, donoId);
@@ -133,6 +151,9 @@ public class GroupService {
         return groupRepository.save(group);
     }
 
+    /**
+     * Permite que um participante saia antes do sorteio, mantendo o dono responsavel pelo grupo.
+     */
     @Transactional
     public void leaveGroup(Long groupId, Long userId) {
         Group group = groupRepository.findById(groupId)
@@ -155,6 +176,9 @@ public class GroupService {
         groupRepository.save(group);
     }
 
+    /**
+     * Exclui o grupo do dono e limpa entidades dependentes que podem bloquear a remocao.
+     */
     @Transactional
     public void deleteGroup(Long groupId, Long donoId) {
         Group group = getGroupForOwner(groupId, donoId);
@@ -164,6 +188,9 @@ public class GroupService {
         groupRepository.delete(group);
     }
 
+    /**
+     * Centraliza a checagem de propriedade para operacoes restritas ao dono.
+     */
     private Group getGroupForOwner(Long groupId, Long donoId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
@@ -175,6 +202,9 @@ public class GroupService {
         return group;
     }
 
+    /**
+     * Gera codigos ate encontrar um que ainda nao exista no banco.
+     */
     private String generateUniqueCode() {
         String code;
         do {
@@ -183,6 +213,9 @@ public class GroupService {
         return code;
     }
 
+    /**
+     * Monta o codigo publico no formato XXXX-XXXX usando alfabeto seguro para digitacao.
+     */
     private String generateCode() {
         StringBuilder builder = new StringBuilder(9);
         for (int i = 0; i < 8; i++) {
@@ -194,6 +227,9 @@ public class GroupService {
         return builder.toString();
     }
 
+    /**
+     * Verifica participacao pelo id para evitar depender de igualdade de entidade JPA.
+     */
     private boolean isMember(Group group, Long userId) {
         return group.getMembros().stream()
                 .anyMatch(member -> member.getId().equals(userId));

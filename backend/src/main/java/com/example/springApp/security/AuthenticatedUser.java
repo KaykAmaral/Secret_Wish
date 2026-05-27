@@ -6,6 +6,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class AuthenticatedUser {
 
+    /**
+     * Extrai o id normalizado do principal criado pelo filtro JWT.
+     */
     public Long id(Authentication authentication) {
         Object principal = authentication.getPrincipal();
         if (principal instanceof Long userId) {

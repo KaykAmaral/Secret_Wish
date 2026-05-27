@@ -18,6 +18,9 @@ public class OpenApiConfig {
 
     private static final String BEARER_AUTH = "bearerAuth";
 
+    /**
+     * Centraliza metadados e componentes reutilizaveis da documentacao Swagger.
+     */
     @Bean
     public OpenAPI secretWishOpenApi() {
         Components components = new Components()

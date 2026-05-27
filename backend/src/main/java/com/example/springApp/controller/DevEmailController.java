@@ -35,6 +35,9 @@ public class DevEmailController {
         return sendTestEmail(to);
     }
 
+    /**
+     * Reutiliza o mesmo fluxo de envio para GET e POST dos endpoints locais.
+     */
     private TestEmailResponse sendTestEmail(String recipientEmail) {
         emailService.sendTestEmail(recipientEmail);
         return new TestEmailResponse(recipientEmail.trim(), "Email de teste enviado");

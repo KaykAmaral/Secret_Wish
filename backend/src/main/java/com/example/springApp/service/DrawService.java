@@ -38,6 +38,9 @@ public class DrawService {
     @Autowired
     private NotificationService notificationService;
 
+    /**
+     * Realiza o sorteio do grupo criando uma cadeia circular de pares e notificando cada participante.
+     */
     @Transactional
     public List<Draw> performDraw(Long groupId, Long donoId) {
         Group group = groupRepository.findById(groupId)
@@ -95,6 +98,9 @@ public class DrawService {
         return savedDraws;
     }
 
+    /**
+     * Retorna o par sorteado do usuario dentro do grupo.
+     */
     public Draw getMeuAmigoSecreto(Long grupoId, Long remetenteId) {
         return drawRepository.findByGrupo_IdAndRemetente_Id(grupoId, remetenteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sorteio nao encontrado para este usuario"));

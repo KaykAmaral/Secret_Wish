@@ -25,6 +25,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
     }
 
+    /**
+     * Reconstroi a autenticacao Spring a partir do JWT enviado por cookie ou header.
+     */
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -49,6 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Aceita Bearer token para chamadas tecnicas e cookie HTTP-only para o frontend web.
+     */
     private String resolveToken(HttpServletRequest request) {
         String authorization = request.getHeader("Authorization");
         if (authorization != null && authorization.startsWith("Bearer ")) {

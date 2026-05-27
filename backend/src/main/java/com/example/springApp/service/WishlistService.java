@@ -31,6 +31,9 @@ public class WishlistService {
     @Autowired
     private RealtimeNotificationService realtimeNotificationService;
 
+    /**
+     * Retorna a wishlist do usuario ou cria uma vazia para simplificar o fluxo do frontend.
+     */
     @Transactional
     public WishList getOrCreateWishlist(Long userId) {
         User user = userRepository.findById(userId)
@@ -44,6 +47,9 @@ public class WishlistService {
                 });
     }
 
+    /**
+     * Adiciona item na propria wishlist e avisa quem ja tirou esse usuario no sorteio.
+     */
     @Transactional
     public WishlistItem addItemToWishlist(Long userId, WishlistItem item) {
         WishList wishlist = getOrCreateWishlist(userId);
@@ -56,6 +62,9 @@ public class WishlistService {
         return saved;
     }
 
+    /**
+     * Atualiza somente itens pertencentes ao usuario autenticado.
+     */
     @Transactional
     public WishlistItem updateItem(Long itemId, Long userId, WishlistItem updatedItem) {
         WishlistItem item = wishlistItemRepository.findById(itemId)
@@ -72,6 +81,9 @@ public class WishlistService {
         return saved;
     }
 
+    /**
+     * Libera visualizacao da wishlist para o dono ou para quem sorteou esse dono no grupo.
+     */
     @Transactional
     public WishList getVisibleWishlist(Long groupId, Long viewerId, Long ownerId) {
         if (viewerId.equals(ownerId)) {
@@ -92,6 +104,9 @@ public class WishlistService {
         return getOrCreateWishlist(ownerId);
     }
 
+    /**
+     * Remove item da propria wishlist e propaga a mudanca para chats que exibem essa lista.
+     */
     @Transactional
     public void removeItemFromWishlist(Long itemId, Long userId) {
         WishlistItem item = wishlistItemRepository.findById(itemId)
@@ -105,6 +120,9 @@ public class WishlistService {
         notifyGivers(userId);
     }
 
+    /**
+     * Notifica em tempo real todos os usuarios que podem ver a wishlist atualizada.
+     */
     private void notifyGivers(Long userId) {
         drawRepository.findByDestinatario_Id(userId).forEach(draw -> {
             realtimeNotificationService.notifyWishlistUpdate(draw.getRemetente().getId(), draw.getGrupo().getId());

@@ -66,6 +66,9 @@ public class DevAuthController {
         return issueToken(nome, email);
     }
 
+    /**
+     * Cria ou reutiliza usuario de desenvolvimento e emite token sem passar por OAuth.
+     */
     private AuthTokenResponse issueToken(String nome, String email) {
         String normalizedEmail = email.trim().toLowerCase();
         String normalizedName = nome == null || nome.isBlank() ? "Dev User" : nome.trim();

@@ -11,11 +11,29 @@ import java.util.List;
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
 
+    /**
+     * Busca mensagens recebidas por usuario em um grupo.
+     */
     List<Message> findByGrupoIdAndDestinatarioId(Long groupId, Long receiverId);
+
+    /**
+     * Calcula o badge global de mensagens nao lidas.
+     */
     Long countByDestinatarioIdAndLidaFalse(Long userId);
+
+    /**
+     * Conta nao lidas de uma conversa especifica.
+     */
     Long countByGrupoIdAndRemetenteIdAndDestinatarioIdAndLidaFalse(Long groupId, Long senderId, Long receiverId);
+
+    /**
+     * Limpa mensagens vinculadas a um grupo excluido ou sorteado novamente.
+     */
     void deleteByGrupoId(Long groupId);
 
+    /**
+     * Retorna conversa bilateral em ordem cronologica.
+     */
     @Query("""
             select m from Message m
             where m.grupo.id = :groupId
@@ -29,6 +47,9 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             @Param("otherUserId") Long otherUserId
     );
 
+    /**
+     * Lista todas as mensagens de um grupo em ordem de envio.
+     */
     List<Message> findByGrupo_IdOrderByDataEnvioAsc(Long grupoId);
 
 }

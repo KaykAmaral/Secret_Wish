@@ -133,6 +133,9 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
     }
 
+    /**
+     * Grava o JWT em cookie HTTP-only para reduzir exposicao do token ao JavaScript do navegador.
+     */
     private void setAuthCookie(HttpServletRequest request, HttpServletResponse response, String token) {
         ResponseCookie authCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, token)
                 .httpOnly(true)

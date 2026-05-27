@@ -12,6 +12,9 @@ import java.util.Optional;
 @Repository
 public interface DrawRepository extends JpaRepository<Draw, Long> {
 
+    /**
+     * Lista todos os pares sorteados de um grupo.
+     */
     List<Draw> findByGrupoId(Long grupoId);
 
     // Retorna as duas relacoes do usuario no ciclo: quem ele tirou e quem tirou ele.
@@ -22,13 +25,32 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
             """)
     List<Draw> findUserDrawRelations(@Param("groupId") Long groupId, @Param("userId") Long userId);
 
+    /**
+     * Indica se o grupo ja teve sorteio realizado.
+     */
     boolean existsByGrupoId(Long grupoId);
+
+    /**
+     * Remove sorteios antigos quando o grupo e excluido ou sorteado novamente.
+     */
     void deleteByGrupoId(Long grupoId);
 
     // Usado para consultar o resultado individual sem expor o sorteio completo.
     Optional<Draw> findByGrupo_IdAndRemetente_Id(Long groupId, Long giverId);
+
+    /**
+     * Localiza quem tirou determinado usuario dentro do grupo.
+     */
     Optional<Draw> findByGrupo_IdAndDestinatario_Id(Long groupId, Long receiverId);
+
+    /**
+     * Encontra todos os sorteios em que o usuario aparece como presenteado.
+     */
     List<Draw> findByDestinatario_Id(Long receiverId);
+
+    /**
+     * Verifica se dois usuarios formam um par direto permitido para chat ou wishlist.
+     */
     boolean existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(Long groupId, Long giverId, Long receiverId);
 
 }

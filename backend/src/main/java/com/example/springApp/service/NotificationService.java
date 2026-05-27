@@ -21,6 +21,9 @@ public class NotificationService {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Cria uma notificacao persistida para leitura posterior no painel do usuario.
+     */
     @Transactional
     public Notification createNotification(Long userId, String title, String content) {
         User user = userRepository.findById(userId)
@@ -35,14 +38,23 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
+    /**
+     * Lista notificacoes mais recentes primeiro para exibir no dashboard.
+     */
     public List<Notification> getUserNotifications(Long userId) {
         return notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(userId);
     }
 
+    /**
+     * Conta notificacoes pendentes sem carregar a lista inteira.
+     */
     public long countUnreadNotifications(Long userId) {
         return notificationRepository.countByUsuarioIdAndLidaFalse(userId);
     }
 
+    /**
+     * Marca uma notificacao individual garantindo que ela pertence ao usuario.
+     */
     @Transactional
     public Notification markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findByIdAndUsuarioId(notificationId, userId)
@@ -51,6 +63,9 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
+    /**
+     * Marca todas as notificacoes pendentes do usuario em uma unica operacao de lote.
+     */
     @Transactional
     public void markAllAsRead(Long userId) {
         List<Notification> notifications = notificationRepository.findByUsuarioIdAndLidaFalse(userId);
@@ -58,6 +73,9 @@ public class NotificationService {
         notificationRepository.saveAll(notifications);
     }
 
+    /**
+     * Exclui uma notificacao somente quando ela pertence ao usuario autenticado.
+     */
     @Transactional
     public void deleteNotification(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findByIdAndUsuarioId(notificationId, userId)
@@ -65,6 +83,9 @@ public class NotificationService {
         notificationRepository.delete(notification);
     }
 
+    /**
+     * Remove todo o historico de notificacoes do usuario.
+     */
     @Transactional
     public void deleteUserNotifications(Long userId) {
         notificationRepository.deleteByUsuarioId(userId);

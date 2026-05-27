@@ -46,6 +46,9 @@ public class AiSuggestionService {
         this.aiEnabled = aiEnabled;
     }
 
+    /**
+     * Gera e persiste uma sugestao usando somente itens reais da wishlist visivel ao solicitante.
+     */
     @Transactional
     public String generateSuggestion(WishList wishlist, Long requesterId) {
         WishList managedWishlist = wishlistRepository.findByIdWithItems(wishlist.getId())
@@ -95,6 +98,9 @@ public class AiSuggestionService {
         return managedWishlist.getSugestaoIa();
     }
 
+    /**
+     * Informa quantas geracoes de IA ainda estao disponiveis na janela atual do usuario.
+     */
     public int remainingGenerations(Long userId) {
         UsageWindow window = usageByUser.get(userId);
         if (window == null || window.isExpired(Instant.now(clock))) {
@@ -103,6 +109,9 @@ public class AiSuggestionService {
         return Math.max(0, MAX_GENERATIONS_PER_HOUR - window.count());
     }
 
+    /**
+     * Consome uma cota de IA e reinicia a janela quando o intervalo de uma hora expira.
+     */
     private void consumeUsage(Long userId) {
         Instant now = Instant.now(clock);
         usageByUser.compute(userId, (id, currentWindow) -> {
@@ -117,6 +126,9 @@ public class AiSuggestionService {
         });
     }
 
+    /**
+     * Monta o prompt com dados minimizados para reduzir alucinacao e exposicao desnecessaria.
+     */
     private String buildPrompt(List<WishlistItem> items) {
         StringBuilder builder = new StringBuilder("Wishlist disponivel:\n");
         for (WishlistItem item : items) {
@@ -132,10 +144,16 @@ public class AiSuggestionService {
 
     private record UsageWindow(Instant expiresAt, int count) {
 
+        /**
+         * Indica se a janela de cota ja pode ser renovada.
+         */
         boolean isExpired(Instant now) {
             return !expiresAt.isAfter(now);
         }
 
+        /**
+         * Retorna nova janela imutavel com o contador incrementado.
+         */
         UsageWindow increment() {
             return new UsageWindow(expiresAt, count + 1);
         }

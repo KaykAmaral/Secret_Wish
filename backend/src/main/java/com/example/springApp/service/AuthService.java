@@ -26,6 +26,9 @@ public class AuthService {
     @Autowired
     private JwtService jwtService;
 
+    /**
+     * Cadastra usuario por email/senha garantindo unicidade de email e armazenando senha criptografada.
+     */
     @Transactional
     public User register(RegisterRequest request) {
         log.info("Iniciando registro para email: {}", request.email());
@@ -45,6 +48,9 @@ public class AuthService {
         return savedUser;
     }
 
+    /**
+     * Valida credenciais locais e devolve o JWT usado pelo cookie HTTP-only.
+     */
     public String login(LoginRequest request) {
         log.info("Iniciando validacao de login para: {}", request.email());
         User user = userRepository.findByEmail(request.email())

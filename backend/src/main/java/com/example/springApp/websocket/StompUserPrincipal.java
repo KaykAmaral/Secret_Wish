@@ -10,6 +10,9 @@ public class StompUserPrincipal implements Principal {
         this.name = name;
     }
 
+    /**
+     * Retorna o identificador usado pelo Spring para rotear mensagens privadas do WebSocket.
+     */
     @Override
     public String getName() {
         return name;

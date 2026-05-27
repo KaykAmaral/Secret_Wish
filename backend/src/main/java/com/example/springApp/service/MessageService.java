@@ -39,6 +39,9 @@ public class MessageService {
     @Autowired
     private RealtimeNotificationService realtimeNotificationService;
 
+    /**
+     * Envia mensagem apenas entre pares autorizados pelo sorteio e atualiza o destinatario em tempo real.
+     */
     @Transactional
     public Message sendMessage(Long groupId, Long senderId, Long receiverId, String content) {
         Group group = groupRepository.findById(groupId)
@@ -92,6 +95,9 @@ public class MessageService {
         return savedMessage;
     }
 
+    /**
+     * Recupera a conversa entre duas pontas do sorteio quando o usuario tem permissao para acessa-la.
+     */
     public List<Message> getConversation(Long groupId, Long userId, Long otherUserId) {
         if (!canExchangeMessages(groupId, userId, otherUserId)) {
             throw new ForbiddenException("Voce nao pode acessar esta conversa");
@@ -100,6 +106,9 @@ public class MessageService {
         return messageRepository.findConversation(groupId, userId, otherUserId);
     }
 
+    /**
+     * Monta os resumos dos chats permitidos para o usuario apos o sorteio do grupo.
+     */
     @Transactional(readOnly = true)
     public List<ChatSummaryResponse> getChatSummaries(Long groupId, Long userId) {
         Group group = groupRepository.findById(groupId)
@@ -113,6 +122,9 @@ public class MessageService {
                 .toList();
     }
 
+    /**
+     * Marca como lidas apenas as mensagens recebidas pelo usuario nessa conversa.
+     */
     @Transactional
     public void markConversationAsRead(Long groupId, Long userId, Long otherUserId) {
         List<Message> messages = getConversation(groupId, userId, otherUserId);
@@ -129,20 +141,32 @@ public class MessageService {
         });
     }
 
+    /**
+     * Calcula o contador exibido no frontend e enviado via WebSocket.
+     */
     public Long countUnreadMessages(Long userId) {
         return messageRepository.countByDestinatarioIdAndLidaFalse(userId);
     }
 
+    /**
+     * Confirma que os dois usuarios formam um par direto do sorteio em qualquer direcao.
+     */
     private boolean canExchangeMessages(Long groupId, Long userId, Long otherUserId) {
         return drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, userId, otherUserId)
                 || drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, otherUserId, userId);
     }
 
+    /**
+     * Valida participacao pelo id para nao depender do estado da entidade JPA.
+     */
     private boolean isMember(Group group, Long userId) {
         return group.getMembros().stream()
                 .anyMatch(member -> member.getId().equals(userId));
     }
 
+    /**
+     * Define como cada conversa deve aparecer para preservar anonimato quando necessario.
+     */
     private ChatSummaryResponse toChatSummary(Draw draw, Long groupId, Long userId) {
         boolean userIsGiver = draw.getRemetente().getId().equals(userId);
         User otherUser = userIsGiver ? draw.getDestinatario() : draw.getRemetente();
