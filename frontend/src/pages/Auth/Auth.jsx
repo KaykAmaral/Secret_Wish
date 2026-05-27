@@ -10,10 +10,12 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [alertType, setAlertType] = useState('error');
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setAlertType('error');
     setError('');
     
     console.log('[AuthDebug] Tentando login com:', email);
@@ -24,6 +26,7 @@ const Auth = () => {
       if (success) {
         navigate('/dashboard');
       } else {
+        setAlertType('error');
         setError('Falha ao autenticar.');
       }
     } catch (err) {
@@ -116,7 +119,7 @@ const Auth = () => {
                 />
               </div>
 
-              {error && <div className="auth-error">{error}</div>}
+              {error && <div className={`auth-alert ${alertType}`}>{error}</div>}
 
               <button type="submit" className="btn-primary" disabled={loading}>
                 {loading ? <span className="spinner-small"></span> : 'Entrar'}

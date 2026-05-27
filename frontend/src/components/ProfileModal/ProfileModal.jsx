@@ -85,7 +85,7 @@ const ProfileModal = ({ isOpen, onClose, onUpdate }) => {
                 <input type="email" value={user?.email} disabled className="disabled-input" />
               </div>
 
-              {error && <p className="error-msg">{error}</p>}
+              {error && <p className="form-alert error">{error}</p>}
 
               <div className="form-actions">
                 <button type="button" className="btn-danger-outline" onClick={() => setShowDeleteConfirm(true)}>Excluir Conta</button>

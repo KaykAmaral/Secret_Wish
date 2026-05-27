@@ -12,15 +12,18 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [alertType, setAlertType] = useState('error');
 
   const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
+      setAlertType('warning');
       setError('As senhas não coincidem.');
       return;
     }
 
     setLoading(true);
+    setAlertType('error');
     setError('');
     
     console.log('[AuthDebug] Tentando registrar:', email);
@@ -31,6 +34,7 @@ const Register = () => {
       if (success) {
         navigate('/dashboard');
       } else {
+        setAlertType('error');
         setError('Falha ao cadastrar.');
       }
     } catch (err) {
@@ -144,7 +148,7 @@ const Register = () => {
                 />
               </div>
 
-              {error && <div className="auth-error">{error}</div>}
+              {error && <div className={`auth-alert ${alertType}`}>{error}</div>}
 
               <button type="submit" className="btn-primary" disabled={loading}>
                 {loading ? <span className="spinner-small"></span> : 'Cadastrar'}

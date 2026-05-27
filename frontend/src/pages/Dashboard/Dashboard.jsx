@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [joinCode, setJoinCode] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const [alertType, setAlertType] = useState('error');
   const hasCreatedGroup = groups.some(group => group.dono?.id === user?.id);
   const formatInputDate = (date) => {
     const year = date.getFullYear();
@@ -72,21 +73,25 @@ const Dashboard = () => {
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     if (hasCreatedGroup) {
+      setAlertType('warning');
       setError('Voce ja possui um grupo criado.');
       return;
     }
 
     if (!newGroupName.trim() || !newGroupDesc.trim() || !newGroupDate) {
+      setAlertType('warning');
       setError('Preencha nome, descricao e data do evento.');
       return;
     }
 
     if (newGroupDate && (newGroupDate < todayDate || newGroupDate > maxEventDateValue)) {
+      setAlertType('warning');
       setError('A data do evento deve ser entre hoje e 24 meses a partir de hoje.');
       return;
     }
 
     setActionLoading(true);
+    setAlertType('error');
     setError('');
     try {
       const dateOnly = `${newGroupDate}T00:00:00`;
@@ -102,6 +107,7 @@ const Dashboard = () => {
       setNewGroupDate('');
       await fetchData();
     } catch (err) {
+      setAlertType('error');
       setError(err.response?.data?.message || 'Erro ao criar grupo.');
     } finally {
       setActionLoading(false);
@@ -110,7 +116,14 @@ const Dashboard = () => {
 
   const handleJoinGroup = async (e) => {
     e.preventDefault();
+    if (!joinCode.trim()) {
+      setAlertType('warning');
+      setError('Informe o codigo do grupo.');
+      return;
+    }
+
     setActionLoading(true);
+    setAlertType('error');
     setError('');
     try {
       await groupService.joinGroup(joinCode);
@@ -118,6 +131,7 @@ const Dashboard = () => {
       setJoinCode('');
       fetchData();
     } catch (err) {
+      setAlertType('error');
       setError(err.response?.data?.message || 'Código inválido ou grupo já sorteado.');
     } finally {
       setActionLoading(false);
@@ -250,7 +264,7 @@ const Dashboard = () => {
               <h2>Criar Novo Grupo</h2>
               <button className="close-btn" onClick={() => setShowCreateModal(false)}>&times;</button>
             </div>
-            <form onSubmit={handleCreateGroup} className="modal-form">
+            <form onSubmit={handleCreateGroup} className="modal-form" noValidate>
               <div className="input-group">
                 <label>Nome do Grupo</label>
                 <input 
@@ -281,7 +295,7 @@ const Dashboard = () => {
                   required
                 />
               </div>
-              {error && <p className="error-msg">{error}</p>}
+              {error && <p className={`form-alert ${alertType}`}>{error}</p>}
               <button type="submit" className="btn-primary" disabled={actionLoading || hasCreatedGroup}>
                 {actionLoading ? 'Criando...' : 'Criar Grupo'}
               </button>
@@ -297,7 +311,7 @@ const Dashboard = () => {
               <h2>Entrar em um Grupo</h2>
               <button className="close-btn" onClick={() => setShowJoinModal(false)}>&times;</button>
             </div>
-            <form onSubmit={handleJoinGroup} className="modal-form">
+            <form onSubmit={handleJoinGroup} className="modal-form" noValidate>
               <div className="input-group">
                 <label>Código do Grupo</label>
                 <input 
@@ -310,7 +324,7 @@ const Dashboard = () => {
                 />
                 <p className="helper-text">Peça o código para quem criou o grupo.</p>
               </div>
-              {error && <p className="error-msg">{error}</p>}
+              {error && <p className={`form-alert ${alertType}`}>{error}</p>}
               <button type="submit" className="btn-primary" disabled={actionLoading}>
                 {actionLoading ? 'Entrando...' : 'Entrar no Grupo'}
               </button>

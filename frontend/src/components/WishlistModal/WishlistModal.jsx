@@ -13,6 +13,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [link, setLink] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const [alertType, setAlertType] = useState('error');
 
   const fetchWishlist = useCallback(async () => {
     try {
@@ -31,6 +32,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       setIsAdding(false);
       setEditingItem(null);
       setError('');
+      setAlertType('error');
       setActionLoading(false);
       const timer = setTimeout(() => {
         fetchWishlist();
@@ -45,6 +47,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
     setEditingItem(null);
     setIsAdding(false);
     setError('');
+    setAlertType('error');
   };
 
   const handleStartAdd = () => {
@@ -58,16 +61,19 @@ const WishlistModal = ({ isOpen, onClose }) => {
     setLink(item.link || '');
     setIsAdding(true);
     setError('');
+    setAlertType('error');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!nomeProduto.trim() || !link.trim()) {
+      setAlertType('warning');
       setError('Preencha nome do produto e link.');
       return;
     }
 
     setActionLoading(true);
+    setAlertType('error');
     setError('');
     try {
       const payload = {
@@ -83,6 +89,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       resetForm();
       fetchWishlist();
     } catch (err) {
+      setAlertType('error');
       setError(err.response?.data?.message || 'Erro ao salvar item.');
     } finally {
       setActionLoading(false);
@@ -111,7 +118,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
         <div className="wishlist-modal-body">
           {isAdding ? (
-            <form onSubmit={handleSubmit} className="modal-form animate-in">
+            <form onSubmit={handleSubmit} className="modal-form animate-in" noValidate>
               <h3>{editingItem ? 'Editar Presente' : 'Novo Presente'}</h3>
               <div className="input-group">
                 <label>Nome do Produto</label>
@@ -134,7 +141,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                   required
                 />
               </div>
-              {error && <p className="error-msg">{error}</p>}
+              {error && <p className={`form-alert ${alertType}`}>{error}</p>}
               <div className="form-actions">
                 <button type="button" className="btn-secondary" onClick={resetForm}>Cancelar</button>
                 <button type="submit" className="btn-primary" disabled={actionLoading}>

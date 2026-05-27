@@ -236,13 +236,26 @@
   transform: none;
 }
 
+.auth-alert,
 .auth-error {
-  color: #ef4444;
+  padding: 12px 14px;
+  border-radius: 12px;
   font-size: 13px;
-  background: rgba(239, 68, 68, 0.1);
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.auth-alert.warning {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+}
+
+.auth-alert.error,
+.auth-error {
+  color: #fecaca;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.32);
 }
 
 .divider {
