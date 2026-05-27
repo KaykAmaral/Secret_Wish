@@ -102,7 +102,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay wishlist-overlay">
       <div className="modal-card glass wishlist-modal">
         <div className="modal-header">
           <h2>Minha Lista de Desejos</h2>
