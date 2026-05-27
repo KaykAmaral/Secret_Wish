@@ -52,6 +52,20 @@
   gap: 0.5rem;
 }
 
+.wishlist-empty-notice {
+  padding: 0.9rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.wishlist-empty-notice p {
+  margin: 0;
+}
+
 .system-card-footer {
   margin-top: 1rem;
   display: flex;

@@ -9,6 +9,7 @@ import './PremiumChatDrawer.css';
 const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAnonymousChat }) => {
   const [messages, setMessages] = useState([]);
   const [wishlist, setWishlist] = useState(null);
+  const [wishlistLoaded, setWishlistLoaded] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
@@ -31,14 +32,24 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
 
   const fetchData = async () => {
     setLoading(true);
+    setWishlistLoaded(false);
     try {
       const msgs = await messageService.getConversation(groupId, otherUserId);
       setMessages(msgs);
 
       // Se for o chat com quem eu tirei, mostrar a wishlist dela
       if (!isAnonymousChat) {
-        const wl = await wishlistService.getVisibleWishlist(groupId, otherUserId);
-        setWishlist(wl);
+        try {
+          const wl = await wishlistService.getVisibleWishlist(groupId, otherUserId);
+          setWishlist(wl);
+        } catch (wishlistErr) {
+          console.error('Erro ao carregar wishlist do chat:', wishlistErr);
+          setWishlist({ itens: [] });
+        } finally {
+          setWishlistLoaded(true);
+        }
+      } else {
+        setWishlist(null);
       }
     } catch (err) {
       console.error('Erro ao carregar dados do chat:', err);
@@ -79,6 +90,8 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
 
   if (!isOpen) return null;
 
+  const wishlistItems = wishlist?.itens || [];
+
   return (
     <AnimatePresence>
       <div className="drawer-overlay" onClick={onClose}>
@@ -101,28 +114,36 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
           <div className="chat-container">
             <div className="messages-list">
               {/* Mensagem Especial do Sistema com Wishlist */}
-              {!isAnonymousChat && wishlist && wishlist.itens.length > 0 && (
+              {!isAnonymousChat && wishlistLoaded && (
                 <div className="wishlist-system-card">
                   <div className="system-card-header">
                     <Gift size={18} className="text-purple" />
                     <span>Lista de desejos de <strong>{title}</strong></span>
                   </div>
-                  <div className="wishlist-items-grid">
-                    {wishlist.itens.map(item => (
-                      <div key={item.id} className="wishlist-item-mini glass">
-                        <span className="item-name">{item.nomeProduto}</span>
-                        {item.link && (
-                          <a href={item.link} target="_blank" rel="noopener noreferrer" className="item-link">
-                            <ExternalLink size={14} />
-                          </a>
-                        )}
+                  {wishlistItems.length > 0 ? (
+                    <>
+                      <div className="wishlist-items-grid">
+                        {wishlistItems.map(item => (
+                          <div key={item.id} className="wishlist-item-mini glass">
+                            <span className="item-name">{item.nomeProduto}</span>
+                            {item.link && (
+                              <a href={item.link} target="_blank" rel="noopener noreferrer" className="item-link">
+                                <ExternalLink size={14} />
+                              </a>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div className="system-card-footer">
-                    <Sparkles size={14} />
-                    <span>IA analisou e recomenda foco nestes itens!</span>
-                  </div>
+                      <div className="system-card-footer">
+                        <Sparkles size={14} />
+                        <span>IA analisou e recomenda foco nestes itens!</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="wishlist-empty-notice">
+                      <p><strong>{title}</strong> ainda nao adicionou itens a lista de desejos.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
