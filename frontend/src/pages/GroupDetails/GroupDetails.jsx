@@ -116,6 +116,25 @@ const GroupDetails = () => {
   }
 
   const isDono = group.dono.id === user.id;
+  const getDaysUntilEvent = (dateValue) => {
+    if (!dateValue) return null;
+
+    const [year, month, day] = dateValue.split('T')[0].split('-').map(Number);
+    const eventDate = new Date(year, month - 1, day);
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+    return Math.ceil((eventDate - todayOnly) / millisecondsPerDay);
+  };
+  const formatDaysUntilEvent = (dateValue) => {
+    const days = getDaysUntilEvent(dateValue);
+    if (days === null) return 'A definir';
+    if (days < 0) return 'Data ja passou';
+    if (days === 0) return 'E hoje';
+    if (days === 1) return 'Falta 1 dia';
+    return `Faltam ${days} dias`;
+  };
 
   return (
     <div className="group-details-page">
@@ -180,6 +199,7 @@ const GroupDetails = () => {
             <div>
               <span className="stat-label">Evento</span>
               <span className="stat-value">{group.dataEvento ? new Date(group.dataEvento).toLocaleDateString() : 'A definir'}</span>
+              <span className="stat-helper">{formatDaysUntilEvent(group.dataEvento)}</span>
             </div>
           </div>
           <div className="stat-item">
@@ -187,6 +207,13 @@ const GroupDetails = () => {
             <div>
               <span className="stat-label">Membros</span>
               <span className="stat-value">{group.membros.length}</span>
+            </div>
+          </div>
+          <div className="stat-item">
+            <span className="stat-icon"><Clock size={18} /></span>
+            <div>
+              <span className="stat-label">Dias restantes</span>
+              <span className="stat-value">{formatDaysUntilEvent(group.dataEvento)}</span>
             </div>
           </div>
         </div>

@@ -46,6 +46,25 @@ const Dashboard = () => {
     }
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
   };
+  const getDaysUntilEvent = (dateValue) => {
+    if (!dateValue) return null;
+
+    const [year, month, day] = dateValue.split('T')[0].split('-').map(Number);
+    const eventDate = new Date(year, month - 1, day);
+    const today = new Date();
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const millisecondsPerDay = 1000 * 60 * 60 * 24;
+
+    return Math.ceil((eventDate - todayOnly) / millisecondsPerDay);
+  };
+  const formatDaysUntilEvent = (dateValue) => {
+    const days = getDaysUntilEvent(dateValue);
+    if (days === null) return 'Data nao definida';
+    if (days < 0) return 'Data ja passou';
+    if (days === 0) return 'E hoje';
+    if (days === 1) return 'Falta 1 dia';
+    return `Faltam ${days} dias`;
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -214,6 +233,7 @@ const Dashboard = () => {
                       <p><strong>Código:</strong> <code>{group.codigoUnico}</code></p>
                       <p><strong>Participantes:</strong> {group.membros?.length || 0}</p>
                       <p><strong>Evento:</strong> {group.dataEvento ? new Date(group.dataEvento).toLocaleDateString() : 'Não definida'}</p>
+                      <p><strong>Contagem:</strong> {formatDaysUntilEvent(group.dataEvento)}</p>
                     </div>
                     <button className="btn-view">
                       {group.dono?.id === user?.id ? 'Gerenciar Grupo' : 'Visualizar Grupo'}

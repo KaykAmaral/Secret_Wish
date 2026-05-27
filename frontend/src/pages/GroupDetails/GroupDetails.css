@@ -91,7 +91,7 @@
 
 .header-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   padding: 0 2rem 2rem;
 }
@@ -121,7 +121,8 @@
 }
 
 .stat-label,
-.stat-value {
+.stat-value,
+.stat-helper {
   display: block;
 }
 
@@ -142,6 +143,13 @@
   color: #ffffff;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   letter-spacing: 0.04em;
+}
+
+.stat-helper {
+  margin-top: 0.25rem;
+  color: #d8b4fe;
+  font-size: 0.78rem;
+  font-weight: 700;
 }
 
 .group-content-grid {
