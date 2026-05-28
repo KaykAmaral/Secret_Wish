@@ -4,6 +4,7 @@ import Auth from '../pages/Auth/Auth';
 import Register from '../pages/Auth/Register';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import MyGroups from '../pages/MyGroups/MyGroups';
+import Profile from '../pages/Profile/Profile';
 import GroupDetails from '../pages/GroupDetails/GroupDetails';
 import OAuthCallback from '../pages/OAuthCallback/OAuthCallback';
 import Wishlist from '../pages/Wishlist/Wishlist';
@@ -22,6 +23,7 @@ const AppRoutes = () => {
           {/* Rotas Privadas (Protegidas Individualmente) */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/my-groups" element={<ProtectedRoute><MyGroups /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
           <Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetails /></ProtectedRoute>} />
 

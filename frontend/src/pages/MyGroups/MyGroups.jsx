@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, Plus, Hash, Calendar, Clock, ArrowRight, Search, Filter, Hash as HashIcon, ArrowLeft } from 'lucide-react';
+import { Users, Plus, Hash, Calendar, Clock, ArrowRight, Search, Filter, Hash as HashIcon, ArrowLeft, User } from 'lucide-react';
 import groupService from '../../services/groupService';
 import { useAuth } from '../../hooks/useAuth';
 import './MyGroups.css';
@@ -170,26 +170,19 @@ const MyGroups = () => {
         </nav>
 
         <header className="my-groups-header">
-          <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
+          <div>
             <span className="my-groups-kicker">Gerenciamento central</span>
             <h1>Meus Grupos</h1>
             <p>Acompanhe e administre todos os seus amigos secretos em um só lugar.</p>
-          </motion.div>
-          <motion.div 
-            className="header-actions"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
+          </div>
+          <div className="header-actions">
             <button className="btn-primary" onClick={() => setShowCreateModal(true)} disabled={hasCreatedGroup}>
               <Plus size={20} /> Novo Grupo
             </button>
             <button className="btn-secondary" onClick={() => setShowJoinModal(true)}>
               <HashIcon size={20} /> Entrar no Grupo
             </button>
-          </motion.div>
+          </div>
         </header>
 
         {error && <p className={`form-alert ${alertType}`}>{error}</p>}
@@ -219,32 +212,33 @@ const MyGroups = () => {
             </div>
 
             {filteredGroups.length === 0 ? (
-              <motion.div 
-                className="empty-state glass"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
+              <div className="empty-state glass">
                 <div className="empty-icon">🎄</div>
                 <h3>Nenhum grupo encontrado</h3>
                 <p>Tente mudar o filtro ou use as ações rápidas acima.</p>
-              </motion.div>
+              </div>
             ) : (
               <div className="groups-grid">
-                {filteredGroups.map((group, index) => (
-                  <motion.article 
+                {filteredGroups.map((group) => (
+                  <article 
                     key={group.id} 
-                    className="group-manage-card glass"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    className={`group-manage-card glass ${group.dono?.id === user?.id ? 'is-owner' : 'is-member'}`}
                     onClick={() => navigate(`/groups/${group.id}`)}
-                    whileHover={{ translateY: -5, backgroundColor: 'rgba(255, 255, 255, 0.04)' }}
                   >
                     <div className="card-badge-row">
-                      <span className={`status-pill ${group.dataSorteio ? 'drawn' : 'pending'}`}>
-                        {group.dataSorteio ? 'Sorteado' : 'Pendente'}
-                      </span>
-                      {group.dono?.id === user?.id && <span className="role-pill">Dono</span>}
+                      <div className="badge-group">
+                        <span className={`status-pill ${group.dataSorteio ? 'drawn' : 'pending'}`}>
+                          {group.dataSorteio ? 'Sorteado' : 'Pendente'}
+                        </span>
+                        {group.dono?.id === user?.id && <span className="role-pill">Dono</span>}
+                      </div>
+                      <div className="card-role-icon">
+                        {group.dono?.id === user?.id ? (
+                          <span className="crown-emoji" title="Você é o dono">👑</span>
+                        ) : (
+                          <User size={18} className="member-icon" title="Você é participante" />
+                        )}
+                      </div>
                     </div>
                     
                     <div className="card-main-content">
@@ -273,7 +267,7 @@ const MyGroups = () => {
                       <span>Gerenciar Grupo</span>
                       <ArrowRight size={16} />
                     </div>
-                  </motion.article>
+                  </article>
                 ))}
               </div>
             )}

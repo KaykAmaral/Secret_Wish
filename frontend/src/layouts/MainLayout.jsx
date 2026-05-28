@@ -1,15 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import ProfileModal from '../components/ProfileModal/ProfileModal';
 import './MainLayout.css';
 
 const MainLayout = () => {
-  const { isAuthenticated, logout, user, checkAuth, loading } = useAuth();
+  const { isAuthenticated, logout, user, loading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showProfileModal, setShowProfileModal] = useState(false);
   const dropdownRef = useRef(null);
 
   // Fecha o menu de perfil ao clicar fora sem registrar listener enquanto ele esta fechado.
@@ -30,9 +28,9 @@ const MainLayout = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
-  const handleOpenProfile = () => {
-    setShowProfileModal(true);
+  const handleGoToProfile = () => {
     setShowDropdown(false);
+    navigate('/profile');
   };
 
   // Se estiver carregando o status inicial, mostra um spinner global para evitar saltos de layout.
@@ -72,9 +70,9 @@ const MainLayout = () => {
               <NavLink to="/wishlist" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 Lista de desejos
               </NavLink>
-              <button type="button" className="nav-link nav-button" onClick={handleOpenProfile}>
+              <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                 Meu perfil
-              </button>
+              </NavLink>
             </nav>
 
             <div className="user-nav-container" ref={dropdownRef}>
@@ -99,7 +97,7 @@ const MainLayout = () => {
                     <p className="dropdown-user-email">{user?.email}</p>
                   </div>
                   <div className="dropdown-divider"></div>
-                  <button className="dropdown-item" onClick={handleOpenProfile}>
+                  <button className="dropdown-item" onClick={handleGoToProfile}>
                     <span className="item-icon">👤</span> Perfil & Conta
                   </button>
                   <button className="dropdown-item" onClick={() => setShowDropdown(false)}>
@@ -122,14 +120,6 @@ const MainLayout = () => {
       <main className={isAuthenticated ? "app-content" : "auth-content-wrapper"}>
         <Outlet />
       </main>
-
-      {isAuthenticated && (
-        <ProfileModal 
-          isOpen={showProfileModal} 
-          onClose={() => setShowProfileModal(false)}
-          onUpdate={() => checkAuth()} 
-        />
-      )}
     </div>
   );
 };

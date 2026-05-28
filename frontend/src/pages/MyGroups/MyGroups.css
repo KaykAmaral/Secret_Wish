@@ -218,11 +218,43 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.group-manage-card.is-owner {
+  border-color: #fbbf24; /* Amarelo/Dourado */
+}
+
+.group-manage-card.is-member {
+  border-color: var(--accent-purple); /* Roxo */
 }
 
 .card-badge-row {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+}
+
+.badge-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.card-role-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.member-icon {
+  color: #10b981; /* Verde */
+}
+
+.crown-emoji {
+  filter: drop-shadow(0 0 5px rgba(251, 191, 36, 0.4));
 }
 
 .status-pill {
