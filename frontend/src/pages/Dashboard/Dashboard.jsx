@@ -223,7 +223,7 @@ const Dashboard = () => {
         </section>
 
         <div className="dashboard-grid">
-          <div className="grid-main">
+          <div className="grid-main" id="meus-grupos">
             <h2 className="section-title">Seus Grupos</h2>
             {groups.length === 0 ? (
               <div className="empty-state glass">
