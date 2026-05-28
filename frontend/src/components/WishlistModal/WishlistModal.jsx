@@ -3,6 +3,8 @@ import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import wishlistService from '../../services/wishlistService';
 import './WishlistModal.css';
 
+const MAX_WISHLIST_ITEMS = 10;
+
 const WishlistModal = ({ isOpen, onClose }) => {
   const [wishlist, setWishlist] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -55,6 +57,12 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
   // Inicia criacao garantindo que nenhum item anterior permaneça em edicao.
   const handleStartAdd = () => {
+    if ((wishlist?.itens?.length || 0) >= MAX_WISHLIST_ITEMS) {
+      setAlertType('warning');
+      setError('Sua lista de desejos ja possui o limite de 10 itens.');
+      return;
+    }
+
     resetForm();
     setIsAdding(true);
   };
@@ -75,6 +83,12 @@ const WishlistModal = ({ isOpen, onClose }) => {
     if (!nomeProduto.trim() || !link.trim()) {
       setAlertType('warning');
       setError('Preencha nome do produto e link.');
+      return;
+    }
+
+    if (!editingItem && (wishlist?.itens?.length || 0) >= MAX_WISHLIST_ITEMS) {
+      setAlertType('warning');
+      setError('Sua lista de desejos ja possui o limite de 10 itens.');
       return;
     }
 
@@ -162,6 +176,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
               <button className="btn-add-item" onClick={handleStartAdd}>
                 <span>+</span> Novo Presente
               </button>
+              {error && <p className={`form-alert ${alertType}`}>{error}</p>}
 
               {loading ? (
                 <div className="loading-state">

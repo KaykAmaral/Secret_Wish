@@ -1,5 +1,6 @@
 package com.example.springApp.service;
 
+import com.example.springApp.exception.BusinessException;
 import com.example.springApp.exception.ForbiddenException;
 import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.User;
@@ -15,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class WishlistService {
+
+    private static final int MAX_ITEMS_PER_WISHLIST = 10;
 
     @Autowired
     private WishlistRepository wishlistRepository;
@@ -53,6 +56,11 @@ public class WishlistService {
     @Transactional
     public WishlistItem addItemToWishlist(Long userId, WishlistItem item) {
         WishList wishlist = getOrCreateWishlist(userId);
+        long currentItemCount = wishlistItemRepository.countByWishlistUsuarioId(userId);
+
+        if (currentItemCount >= MAX_ITEMS_PER_WISHLIST) {
+            throw new BusinessException("A lista de desejos pode ter no maximo 10 itens");
+        }
 
         item.setWishlist(wishlist);
         wishlist.getItens().add(item);

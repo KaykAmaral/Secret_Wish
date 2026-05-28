@@ -342,6 +342,29 @@ class ServiceRulesIntegrationTest {
     }
 
     @Test
+    void userCannotAddMoreThanTenWishlistItems() {
+        User user = createUser("User");
+
+        for (int index = 1; index <= 10; index++) {
+            wishlistService.addItemToWishlist(
+                    user.getId(),
+                    WishlistItem.builder()
+                            .nomeProduto("Presente " + index)
+                            .link("https://example.com/presente-" + index)
+                            .build()
+            );
+        }
+
+        assertThatThrownBy(() -> wishlistService.addItemToWishlist(
+                user.getId(),
+                WishlistItem.builder().nomeProduto("Presente 11").link("https://example.com/presente-11").build()
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("maximo 10 itens");
+        assertThat(wishlistItemRepository.countByWishlistUsuarioId(user.getId())).isEqualTo(10);
+    }
+
+    @Test
     void aiSuggestionRequiresWishlistItems() {
         User user = createUser("User");
         WishList wishlist = wishlistService.getOrCreateWishlist(user.getId());

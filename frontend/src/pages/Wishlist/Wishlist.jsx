@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import wishlistService from '../../services/wishlistService';
 import './Wishlist.css';
 
+const MAX_WISHLIST_ITEMS = 10;
+
 const Wishlist = () => {
   const navigate = useNavigate();
   const [wishlist, setWishlist] = useState(null);
@@ -45,6 +47,12 @@ const Wishlist = () => {
   };
 
   const handleStartAdd = () => {
+    if (wishlistItems.length >= MAX_WISHLIST_ITEMS) {
+      setAlertType('warning');
+      setError('Sua lista de desejos ja possui o limite de 10 itens.');
+      return;
+    }
+
     resetForm();
     setIsAdding(true);
   };
@@ -64,6 +72,12 @@ const Wishlist = () => {
     if (!nomeProduto.trim() || !link.trim()) {
       setAlertType('warning');
       setError('Preencha nome do produto e link.');
+      return;
+    }
+
+    if (!editingItem && wishlistItems.length >= MAX_WISHLIST_ITEMS) {
+      setAlertType('warning');
+      setError('Sua lista de desejos ja possui o limite de 10 itens.');
       return;
     }
 
@@ -105,9 +119,20 @@ const Wishlist = () => {
   };
 
   const wishlistItems = wishlist?.itens || [];
+  const hasReachedWishlistLimit = wishlistItems.length >= MAX_WISHLIST_ITEMS;
 
   return (
     <div className="wishlist-page">
+      <div className="wishlist-background-decor" aria-hidden="true">
+        <span className="gift gift-one">🎁</span>
+        <span className="gift gift-two">🎁</span>
+        <span className="gift gift-three">🎁</span>
+        <span className="gift gift-four">🎁</span>
+        <span className="dashed-square square-one"></span>
+        <span className="dashed-square square-two"></span>
+        <span className="dashed-square square-three"></span>
+        <span className="dashed-square square-four"></span>
+      </div>
       <main className="wishlist-main">
         <nav className="wishlist-breadcrumb">
           <button onClick={() => navigate('/dashboard')}>
@@ -129,7 +154,7 @@ const Wishlist = () => {
           <section className="wishlist-list-panel">
             <div className="wishlist-section-header">
               <h2>Seus presentes</h2>
-              <span>{wishlistItems.length} itens</span>
+              <span>{wishlistItems.length}/{MAX_WISHLIST_ITEMS} itens</span>
             </div>
 
             {loading ? (
@@ -174,7 +199,11 @@ const Wishlist = () => {
 
           <aside className="wishlist-form-panel">
             <h2>{editingItem ? 'Editar presente' : 'Novo presente'}</h2>
-            <p>Informe um nome claro e um link direto para o produto.</p>
+            <p>
+              {hasReachedWishlistLimit && !editingItem
+                ? 'Sua lista ja chegou ao limite de 10 itens. Remova um presente para adicionar outro.'
+                : 'Informe um nome claro e um link direto para o produto.'}
+            </p>
 
             {isAdding ? (
               <form onSubmit={handleSubmit} className="wishlist-form" noValidate>
@@ -207,7 +236,7 @@ const Wishlist = () => {
                 </div>
               </form>
             ) : (
-              <button className="btn-primary wishlist-start-button" onClick={handleStartAdd}>
+              <button className="btn-primary wishlist-start-button" onClick={handleStartAdd} disabled={hasReachedWishlistLimit}>
                 <Plus size={18} /> Adicionar presente
               </button>
             )}
