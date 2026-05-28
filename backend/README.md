@@ -1,460 +1,133 @@
-# Secret Wish Backend
+# Secret Wish API
 
-Backend Spring Boot do Secret Wish.
+Backend da plataforma Secret Wish, uma aplicacao para organizar amigo secreto com grupos, sorteio, wishlist, chat anonimo, notificacoes em tempo real, login com Google e sugestoes com IA.
+
+## Stack
+
+| Area | Tecnologia |
+| --- | --- |
+| Linguagem | Java 21 |
+| Framework | Spring Boot 3.5.14 |
+| Build | Maven Wrapper |
+| API REST | Spring Web |
+| Persistencia | Spring Data JPA, Hibernate |
+| Banco local | H2 file-based em modo MySQL |
+| Banco producao | MySQL 8+ |
+| Migrations | Flyway |
+| Seguranca | Spring Security, JWT, OAuth2 Client |
+| Login social | Google OAuth2 |
+| Tempo real | Spring WebSocket, STOMP, SockJS |
+| Email | Spring Mail, SMTP Gmail |
+| IA | Spring AI, OpenAI |
+| Documentacao | Springdoc OpenAPI, Swagger UI |
+| Validacao | Jakarta Bean Validation |
+| Boilerplate | Lombok |
+| Testes | JUnit 5, Spring Boot Test, MockMvc, Spring Security Test, H2 em memoria |
+
+## Visao Geral
+
+O backend expoe uma API REST protegida por JWT em cookie HTTP-only ou header `Authorization`. A aplicacao suporta cadastro/login por email e senha, login via Google OAuth2, criacao de grupos, entrada por codigo, sorteio, consulta de amigo secreto, wishlist, chat anonimo entre pares sorteados, notificacoes e sugestoes de presentes com IA.
+
+O projeto tambem possui canais WebSocket para mensagens privadas, contadores de nao lidas e atualizacao de wishlist em tempo real.
+
+## Arquitetura
+
+```text
+src/main/java/com/example/springApp
+|-- config        # Security, CORS, OpenAPI, WebSocket, clock e validacoes de producao
+|-- controller    # Controllers REST da API
+|-- dto           # Requests e responses expostos ao frontend
+|-- exception     # Excecoes de dominio e handler global
+|-- mapper        # Conversao de entidades para DTOs
+|-- model         # Entidades JPA
+|-- repository    # Repositorios Spring Data JPA
+|-- security      # JWT, filtro de autenticacao, OAuth2 Google
+|-- service       # Regras de negocio
+`-- websocket     # Principal STOMP
+```
+
+## Modulos Principais
+
+- **Autenticacao**: cadastro, login local, logout, status da sessao, Google OAuth2 e JWT.
+- **Usuarios**: consulta, atualizacao de perfil e exclusao de conta.
+- **Grupos**: criacao, entrada por codigo, remocao de membros, saida e exclusao.
+- **Sorteio**: ciclo de amigo secreto sem auto-sorteio, com permissao apenas para dono do grupo.
+- **Wishlist**: lista pessoal de desejos, limite de 10 itens, visibilidade controlada pelo sorteio.
+- **Mensagens**: chat anonimo permitido apenas entre pares do sorteio.
+- **Notificacoes**: eventos persistidos para dashboard e contadores.
+- **Tempo real**: mensagens, contadores e updates via STOMP.
+- **IA**: sugestoes de presente com OpenAI usando apenas os itens reais da wishlist.
+- **Email**: notificacoes de resultado de sorteio via SMTP quando habilitado.
 
 ## Requisitos
 
 - Java 21
-- MySQL 8+
-- Maven Wrapper incluso no projeto (`mvnw.cmd`)
-- Google OAuth2 configurado no Google Cloud Console
-- Gmail com senha de app para SMTP, se `MAIL_ENABLED=true`
+- Maven Wrapper incluso no projeto
+- MySQL 8+ para uso com profile local/prod
+- Google OAuth2 configurado, se login social for usado
+- Chave OpenAI, se `AI_ENABLED=true`
+- SMTP Gmail com senha de app, se `MAIL_ENABLED=true`
 
-## Execucao local
+## Execucao Rapida em Desenvolvimento
 
-1. Crie o banco local:
+O profile padrao usa H2 em arquivo e sobe sem MySQL:
 
-```sql
-CREATE DATABASE secret_wish;
+```powershell
+.\mvnw.cmd spring-boot:run
 ```
 
-2. Copie o arquivo de exemplo:
+URLs principais:
+
+- API: `http://localhost:8080`
+- Swagger: `http://localhost:8080/swagger-ui.html`
+- Google OAuth2: `http://localhost:8080/oauth2/authorization/google`
+- WebSocket nativo: `ws://localhost:8080/ws`
+- SockJS: `http://localhost:8080/ws-sockjs`
+
+## Execucao Local com MySQL
+
+Crie o banco:
+
+```sql
+CREATE DATABASE secret_wish CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Copie o arquivo de exemplo:
 
 ```powershell
 Copy-Item src\main\resources\application-local.example.properties src\main\resources\application-local.properties
 ```
 
-3. Preencha `src/main/resources/application-local.properties` com seus valores locais.
-
-4. Suba a aplicacao com o profile local:
+Preencha os valores locais e execute:
 
 ```powershell
 .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local"
 ```
 
-5. Acesse:
+## Configuracao
 
-- API: `http://localhost:8080`
-- Swagger: `http://localhost:8080/swagger-ui.html`
-- Login Google: `http://localhost:8080/oauth2/authorization/google`
+### Desenvolvimento Padrao
 
-## Variaveis locais principais
+`src/main/resources/application.properties` usa:
 
-`application-local.properties` aceita estas chaves:
+- H2 em arquivo: `./data/secret_wish`
+- `spring.jpa.hibernate.ddl-auto=update`
+- Flyway desabilitado para H2
+- Swagger habilitado
+- auth de desenvolvimento habilitado
+- email e IA desabilitados por padrao
 
-```properties
-DB_URL=jdbc:mysql://localhost:3306/secret_wish
-DB_USERNAME=root
-DB_PASSWORD=1234
+### Producao
 
-JWT_SECRET=replace-with-a-long-local-secret
-DEV_AUTH_ENABLED=true
-AUTH_COOKIE_SECURE=false
-AUTH_COOKIE_SAME_SITE=Lax
-FRONTEND_ORIGIN=http://localhost:5173
-FRONTEND_ORIGINS=http://localhost:5173
-SWAGGER_ENABLED=true
+`src/main/resources/application-prod.properties` usa defaults mais restritivos:
 
-GOOGLE_CLIENT_ID=replace-with-google-client-id
-GOOGLE_CLIENT_SECRET=replace-with-google-client-secret
-GOOGLE_REDIRECT_URI={baseUrl}/login/oauth2/code/{registrationId}
-
-MAIL_ENABLED=false
-MAIL_USERNAME=your-app-gmail@gmail.com
-MAIL_PASSWORD=your-gmail-app-password
-
-AI_ENABLED=false
-OPENAI_API_KEY=local-placeholder-openai-key
-```
-
-## Endpoints de desenvolvimento
-
-Os endpoints `/api/dev/**` existem apenas quando:
-
-```properties
-DEV_AUTH_ENABLED=true
-```
-
-Use somente em ambiente local. Em producao eles ficam desabilitados pelo profile `prod`.
-
-## Swagger
-
-O Swagger fica habilitado quando:
-
-```properties
-SWAGGER_ENABLED=true
-```
-
-Em producao, `application-prod.properties` desabilita:
-
-```properties
-springdoc.api-docs.enabled=false
-springdoc.swagger-ui.enabled=false
-```
-
-## Mapa da API
-
-Todos os endpoints abaixo exigem JWT, exceto OAuth2, Swagger quando habilitado e `/api/dev/**` quando `DEV_AUTH_ENABLED=true`.
-
-## Contrato de erro
-
-Todas as respostas de erro da API usam o mesmo formato:
-
-```json
-{
-  "timestamp": "2026-05-13T14:30:00",
-  "status": 400,
-  "error": "Erro de validacao",
-  "message": "Existem campos invalidos na requisicao",
-  "fields": {
-    "nome": "must not be blank"
-  }
-}
-```
-
-`fields` sempre existe. Quando o erro nao for de validacao de campos, ele vem como objeto vazio.
-
-### Autenticacao
-
-- `GET /oauth2/authorization/google`: inicia login com Google.
-- `GET /login/oauth2/code/google`: callback chamado pelo Google.
-- `GET /api/auth/status`: retorna se a sessao atual possui JWT valido.
-- `POST /api/logout`: remove o cookie HTTP-only de autenticacao.
-- `GET /api/me`: retorna o usuario autenticado.
-
-### Grupos
-
-- `GET /api/groups`: lista grupos do usuario.
-- `GET /api/groups/{groupId}`: consulta um grupo em que o usuario participa.
-- `POST /api/groups`: cria grupo.
-- `POST /api/groups/join`: entra em grupo pelo codigo unico.
-- `DELETE /api/groups/{groupId}/members/{memberId}`: remove membro.
-- `DELETE /api/groups/{groupId}/leave`: sai do grupo antes do sorteio.
-- `DELETE /api/groups/{groupId}`: exclui grupo.
-
-### Wishlist
-
-- `GET /api/wishlist`: retorna ou cria a wishlist do usuario.
-- `POST /api/wishlist/items`: adiciona item.
-- `PUT /api/wishlist/items/{itemId}`: atualiza item.
-- `DELETE /api/wishlist/items/{itemId}`: remove item.
-- `GET /api/groups/{groupId}/users/{ownerId}/wishlist`: consulta wishlist visivel.
-- `POST /api/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion`: gera sugestao por IA.
-
-### Sorteio
-
-- `POST /api/groups/{groupId}/draw`: executa ou refaz o sorteio.
-- `GET /api/groups/{groupId}/draw/me`: consulta o amigo secreto do usuario autenticado.
-
-### Mensagens
-
-- `POST /api/groups/{groupId}/messages`: envia mensagem privada.
-- `GET /api/groups/{groupId}/messages/chats`: lista conversas permitidas do grupo.
-- `GET /api/groups/{groupId}/messages/{otherUserId}`: lista conversa.
-- `PATCH /api/groups/{groupId}/messages/{otherUserId}/read`: marca conversa como lida.
-- `GET /api/messages/unread-count`: conta mensagens nao lidas.
-
-### Notificacoes
-
-- `GET /api/notifications`: lista notificacoes.
-- `GET /api/notifications/unread-count`: conta notificacoes nao lidas.
-- `PATCH /api/notifications/{notificationId}/read`: marca uma notificacao como lida.
-- `PATCH /api/notifications/read-all`: marca todas como lidas.
-- `DELETE /api/notifications/{notificationId}`: exclui uma notificacao.
-- `DELETE /api/notifications`: exclui todas.
-
-### Desenvolvimento local
-
-- `GET /api/dev`: ajuda dos endpoints locais.
-- `GET /api/dev/token`: gera JWT local pelo browser.
-- `POST /api/dev/token`: gera JWT local.
-- `GET /api/dev/email/test?to=email@example.com`: envia email de teste pelo browser.
-- `POST /api/dev/email/test?to=email@example.com`: envia email de teste.
-
-## Payloads para o frontend
-
-### Status da sessao
-
-`GET /api/auth/status`
-
-```json
-{
-  "authenticated": true,
-  "user": {
-    "id": 1,
-    "nome": "Kayky",
-    "email": "kayky@example.com"
-  }
-}
-```
-
-Sem sessao:
-
-```json
-{
-  "authenticated": false,
-  "user": null
-}
-```
-
-### Criar grupo
-
-`POST /api/groups`
-
-```json
-{
-  "nome": "Amigo secreto da familia",
-  "dataEvento": "2026-12-24T20:00:00"
-}
-```
-
-Resposta:
-
-```json
-{
-  "id": 1,
-  "nome": "Amigo secreto da familia",
-  "codigoUnico": "AB12-CD34",
-  "dono": {
-    "id": 1,
-    "nome": "Kayky",
-    "email": "kayky@example.com"
-  },
-  "membros": [],
-  "dataCriacao": "2026-05-13T20:00:00",
-  "dataSorteio": null,
-  "dataEvento": "2026-12-24T20:00:00"
-}
-```
-
-### Entrar em grupo
-
-`POST /api/groups/join`
-
-```json
-{
-  "codigoUnico": "AB12-CD34"
-}
-```
-
-### Wishlist
-
-`POST /api/wishlist/items`
-
-```json
-{
-  "nomeProduto": "Fone bluetooth",
-  "link": "https://example.com/fone"
-}
-```
-
-`GET /api/wishlist`
-
-```json
-{
-  "id": 10,
-  "usuario": {
-    "id": 1,
-    "nome": "Kayky",
-    "email": "kayky@example.com"
-  },
-  "sugestaoIa": null,
-  "itens": [
-    {
-      "id": 100,
-      "nomeProduto": "Fone bluetooth",
-      "link": "https://example.com/fone"
-    }
-  ]
-}
-```
-
-### Sorteio
-
-`POST /api/groups/{groupId}/draw`
-
-```json
-{
-  "groupId": 1,
-  "participantCount": 3,
-  "performedAt": "2026-05-13T20:00:00"
-}
-```
-
-`GET /api/groups/{groupId}/draw/me`
-
-```json
-{
-  "grupoId": 1,
-  "amigoSecreto": {
-    "id": 2,
-    "nome": "Maria",
-    "email": "maria@example.com"
-  },
-  "wishlist": {
-    "id": 11,
-    "usuario": {
-      "id": 2,
-      "nome": "Maria",
-      "email": "maria@example.com"
-    },
-    "sugestaoIa": null,
-    "itens": []
-  }
-}
-```
-
-### Mensagens
-
-`POST /api/groups/{groupId}/messages`
-
-```json
-{
-  "destinatarioId": 2,
-  "conteudo": "Voce prefere camiseta preta ou azul?"
-}
-```
-
-Resposta:
-
-```json
-{
-  "id": 50,
-  "grupoId": 1,
-  "remetente": {
-    "id": 1,
-    "nome": "Kayky",
-    "email": "kayky@example.com"
-  },
-  "destinatario": {
-    "id": 2,
-    "nome": "Maria",
-    "email": "maria@example.com"
-  },
-  "nomeRemetenteExibicao": "Kayky",
-  "conteudo": "Voce prefere camiseta preta ou azul?",
-  "dataEnvio": "2026-05-13T20:00:00",
-  "lida": false,
-  "anonima": true
-}
-```
-
-Para o destinatario, o remetente anonimo volta como:
-
-```json
-{
-  "remetente": null,
-  "nomeRemetenteExibicao": "amigo secreto"
-}
-```
-
-`GET /api/groups/{groupId}/messages/chats`
-
-```json
-[
-  {
-    "grupoId": 1,
-    "outroUsuarioId": 2,
-    "nomeExibicao": "Maria",
-    "anonimoParaUsuario": false,
-    "unreadCount": 0
-  },
-  {
-    "grupoId": 1,
-    "outroUsuarioId": 3,
-    "nomeExibicao": "amigo secreto",
-    "anonimoParaUsuario": true,
-    "unreadCount": 1
-  }
-]
-```
-
-### Notificacoes e contadores
-
-`GET /api/messages/unread-count`
-
-```json
-{
-  "unreadCount": 3
-}
-```
-
-`GET /api/notifications`
-
-```json
-[
-  {
-    "id": 1,
-    "usuario": {
-      "id": 1,
-      "nome": "Kayky",
-      "email": "kayky@example.com"
-    },
-    "titulo": "Sorteio realizado",
-    "mensagem": "Voce tirou Maria no amigo secreto.",
-    "dataCriacao": "2026-05-13T20:00:00",
-    "lida": false
-  }
-]
-```
-
-## WebSocket
-
-Endpoints STOMP:
-
-- `/ws`: conexao WebSocket nativa.
-- `/ws-sockjs`: fallback SockJS.
-
-No `CONNECT`, envie o JWT em um destes headers nativos:
-
-```text
-Authorization: Bearer seu-jwt
-```
-
-ou:
-
-```text
-access_token: seu-jwt
-```
-
-Destinos para assinar:
-
-- `/user/queue/messages`: novas mensagens privadas.
-- `/user/queue/unread-count`: contador atualizado de mensagens nao lidas.
-
-## OAuth2 Google
-
-No Google Cloud Console, configure o redirect URI:
-
-```text
-http://localhost:8080/login/oauth2/code/google
-```
-
-Em producao, configure tambem o dominio real:
-
-```text
-https://seu-dominio.com/login/oauth2/code/google
-```
-
-## SMTP Gmail
-
-Para enviar emails:
-
-```properties
-MAIL_ENABLED=true
-MAIL_USERNAME=seu-email@gmail.com
-MAIL_PASSWORD=sua-senha-de-app
-```
-
-Use senha de app do Google, nao a senha normal da conta.
-
-## Producao
-
-Suba com o profile `prod`:
-
-```powershell
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=prod"
-```
+- datasource obrigatorio via env vars
+- `spring.jpa.hibernate.ddl-auto=validate`
+- Flyway habilitado
+- Swagger desabilitado
+- dev auth desabilitado
+- cookie seguro habilitado
+- validacao de configuracoes inseguras no startup
 
 Variaveis obrigatorias em producao:
 
@@ -469,7 +142,7 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 ```
 
-Variaveis opcionais em producao:
+Variaveis opcionais:
 
 ```properties
 GOOGLE_REDIRECT_URI={baseUrl}/login/oauth2/code/{registrationId}
@@ -478,47 +151,213 @@ MAIL_USERNAME=
 MAIL_PASSWORD=
 AI_ENABLED=false
 OPENAI_API_KEY=
+AUTH_COOKIE_SAME_SITE=Lax
 ```
 
-Quando `MAIL_ENABLED=true`, `MAIL_USERNAME` e `MAIL_PASSWORD` passam a ser obrigatorios.
-Quando `AI_ENABLED=true`, `OPENAI_API_KEY` passa a ser obrigatorio.
+## Banco de Dados
 
-Defaults seguros do profile `prod`:
+As migrations ficam em:
 
-- `app.dev-auth.enabled=false`
-- `app.auth.cookie-secure=true`
-- `app.auth.cookie-same-site=Lax`
-- `spring.jpa.hibernate.ddl-auto=validate`
-- `spring.flyway.enabled=true`
-- `server.forward-headers-strategy=framework`
-- Swagger desabilitado
-
-Se frontend e backend ficarem em dominios diferentes, use:
-
-```properties
-AUTH_COOKIE_SAME_SITE=None
-AUTH_COOKIE_SECURE=true
+```text
+src/main/resources/db/migration
 ```
 
-Para CORS, `FRONTEND_ORIGINS` aceita uma lista separada por virgula:
+Tabelas principais:
 
-```properties
-FRONTEND_ORIGINS=https://app.seu-dominio.com,https://admin.seu-dominio.com
+- `users`
+- `groups_table`
+- `group_members`
+- `draws`
+- `messages`
+- `notifications`
+- `wishlists`
+- `wishlist_items`
+
+## Endpoints
+
+### Autenticacao
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/status`
+- `POST /api/logout`
+- `GET /oauth2/authorization/google`
+- `GET /login/oauth2/code/google`
+
+### Usuario
+
+- `GET /api/me`
+- `PUT /api/me`
+- `DELETE /api/me`
+
+### Grupos
+
+- `GET /api/groups`
+- `GET /api/groups/{groupId}`
+- `POST /api/groups`
+- `POST /api/groups/join`
+- `DELETE /api/groups/{groupId}/members/{memberId}`
+- `DELETE /api/groups/{groupId}/leave`
+- `DELETE /api/groups/{groupId}`
+
+### Sorteio
+
+- `POST /api/groups/{groupId}/draw`
+- `GET /api/groups/{groupId}/draw/me`
+
+### Wishlist
+
+- `GET /api/wishlist`
+- `POST /api/wishlist/items`
+- `PUT /api/wishlist/items/{itemId}`
+- `DELETE /api/wishlist/items/{itemId}`
+- `GET /api/groups/{groupId}/users/{ownerId}/wishlist`
+- `POST /api/groups/{groupId}/users/{ownerId}/wishlist/ai-suggestion`
+
+### Mensagens
+
+- `POST /api/groups/{groupId}/messages`
+- `GET /api/groups/{groupId}/messages/{otherUserId}`
+- `GET /api/groups/{groupId}/messages/chats`
+- `PATCH /api/groups/{groupId}/messages/{otherUserId}/read`
+- `GET /api/messages/unread-count`
+
+### Notificacoes
+
+- `GET /api/notifications`
+- `GET /api/notifications/unread-count`
+- `PATCH /api/notifications/{notificationId}/read`
+- `PATCH /api/notifications/read-all`
+- `DELETE /api/notifications/{notificationId}`
+- `DELETE /api/notifications`
+
+### Desenvolvimento Local
+
+Disponiveis apenas com `app.dev-auth.enabled=true`:
+
+- `GET /api/dev`
+- `GET /api/dev/token`
+- `POST /api/dev/token`
+- `GET /api/dev/email/test`
+- `POST /api/dev/email/test`
+
+## WebSocket
+
+Endpoints:
+
+- `/ws`
+- `/ws-sockjs`
+
+Envie o JWT no `CONNECT`:
+
+```text
+Authorization: Bearer <token>
 ```
 
-`FRONTEND_ORIGIN` continua existindo como origem principal usada no redirect OAuth. Quando `FRONTEND_ORIGINS` nao for informado, o backend usa `FRONTEND_ORIGIN` como unica origem permitida.
+ou:
 
-O backend bloqueia a inicializacao em `prod` quando encontra configuracao insegura, como Swagger habilitado, dev auth habilitado, `JWT_SECRET` curto, `FRONTEND_ORIGIN` sem HTTPS, `FRONTEND_ORIGINS` com `*`, origens sem HTTPS, SMTP habilitado sem credenciais ou IA habilitada sem chave.
+```text
+access_token: <token>
+```
+
+Filas do usuario:
+
+- `/user/queue/messages`
+- `/user/queue/unread-count`
+- `/user/queue/wishlist-update`
+
+## Regras de Negocio Importantes
+
+- Um usuario pode criar apenas um grupo.
+- Grupo precisa de pelo menos 3 participantes para sorteio.
+- Participantes nao podem entrar ou sair depois do sorteio.
+- Apenas o dono pode sortear, remover membros e excluir o grupo.
+- O sorteio cria pares sem que alguem tire a si mesmo.
+- Chat e wishlist de terceiros so ficam disponiveis para pares permitidos pelo sorteio.
+- Wishlist pessoal possui limite de 10 itens.
+- Sugestao de IA exige pelo menos um item real na wishlist.
+- Uso de sugestao por IA possui limite por janela de tempo.
+
+## Contrato de Erro
+
+Erros seguem um formato unico:
+
+```json
+{
+  "timestamp": "2026-05-27T22:30:00",
+  "status": 400,
+  "error": "Erro de validacao",
+  "message": "Existem campos invalidos na requisicao",
+  "fields": {
+    "nome": "must not be blank"
+  }
+}
+```
+
+Quando nao ha erros por campo, `fields` retorna `{}`.
 
 ## Testes
+
+Rodar todos os testes:
 
 ```powershell
 .\mvnw.cmd test
 ```
 
-## Observacoes de seguranca
+Rodar um teste especifico:
 
-- Nunca versionar `application-local.properties`.
+```powershell
+.\mvnw.cmd -Dtest=ServiceRulesIntegrationTest#userCannotAddMoreThanTenWishlistItems test
+```
+
+Coberturas relevantes:
+
+- regras de grupos e sorteio
+- permissoes de wishlist e chat
+- contrato global de erros
+- CORS e seguranca
+- validacoes de producao
+- endpoints REST com MockMvc
+
+## Documentacao OpenAPI
+
+Em desenvolvimento:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+Em producao o Swagger fica desabilitado por padrao.
+
+## Seguranca
+
+- JWT assinado via `JWT_SECRET`.
+- Cookie de autenticacao HTTP-only.
+- `SameSite` e `Secure` configuraveis por ambiente.
+- CORS restrito por `FRONTEND_ORIGIN` e `FRONTEND_ORIGINS`.
+- OAuth2 Google integrado ao fluxo de sessao do backend.
+- Endpoints `/api/dev/**` bloqueados em producao.
+- Startup falha em `prod` se detectar configuracao insegura.
+
+## Comandos Uteis
+
+```powershell
+# iniciar backend
+.\mvnw.cmd spring-boot:run
+
+# iniciar com profile prod
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=prod"
+
+# rodar testes
+.\mvnw.cmd test
+
+# gerar pacote
+.\mvnw.cmd clean package
+```
+
+## Observacoes
+
+- Nao versionar `application-local.properties`.
 - Nao usar secrets locais em producao.
-- Rotacionar secrets se forem compartilhados por engano.
-- Manter `JWT_SECRET` longo e aleatorio.
+- Use senha de app para SMTP Gmail.
+- Para cookies cross-site, configure `AUTH_COOKIE_SAME_SITE=None` e `AUTH_COOKIE_SECURE=true`.
