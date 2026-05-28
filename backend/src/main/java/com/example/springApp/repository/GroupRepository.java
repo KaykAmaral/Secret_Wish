@@ -22,6 +22,11 @@ public interface GroupRepository extends JpaRepository<Group, Long> {
     boolean existsByDonoId(Long donoId);
 
     /**
+     * Verifica participacao sem carregar a entidade e seus relacionamentos.
+     */
+    boolean existsByIdAndMembros_Id(Long groupId, Long userId);
+
+    /**
      * Carrega os grupos do usuario com dono e membros para evitar consultas adicionais na resposta.
      */
     @EntityGraph(attributePaths = {"dono", "membros"})

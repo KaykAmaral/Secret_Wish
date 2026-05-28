@@ -1,6 +1,7 @@
 package com.example.springApp.service;
 
 import com.example.springApp.dto.ChatSummaryResponse;
+import com.example.springApp.dto.UnreadConversationCount;
 import com.example.springApp.exception.ForbiddenException;
 import com.example.springApp.model.Draw;
 import com.example.springApp.model.Group;
@@ -16,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,10 +64,10 @@ class MessageServiceTest {
                 .destinatario(receiver)
                 .build();
 
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.existsByIdAndMembros_Id(10L, 1L)).thenReturn(true);
         when(drawRepository.findUserDrawRelations(10L, 1L)).thenReturn(List.of(draw));
-        when(messageRepository.countByGrupoIdAndRemetenteIdAndDestinatarioIdAndLidaFalse(10L, 2L, 1L))
-                .thenReturn(3L);
+        when(messageRepository.countUnreadByConversationPartners(10L, 1L, List.of(2L)))
+                .thenReturn(List.of(unreadCount(2L, 3L)));
 
         List<ChatSummaryResponse> summaries = messageService.getChatSummaries(10L, 1L);
 
@@ -85,10 +85,10 @@ class MessageServiceTest {
                 .destinatario(receiver)
                 .build();
 
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.existsByIdAndMembros_Id(10L, 2L)).thenReturn(true);
         when(drawRepository.findUserDrawRelations(10L, 2L)).thenReturn(List.of(draw));
-        when(messageRepository.countByGrupoIdAndRemetenteIdAndDestinatarioIdAndLidaFalse(10L, 1L, 2L))
-                .thenReturn(1L);
+        when(messageRepository.countUnreadByConversationPartners(10L, 2L, List.of(1L)))
+                .thenReturn(List.of(unreadCount(1L, 1L)));
 
         List<ChatSummaryResponse> summaries = messageService.getChatSummaries(10L, 2L);
 
@@ -97,10 +97,8 @@ class MessageServiceTest {
 
     @Test
     void getChatSummariesRejectsUserOutsideGroup() {
-        User member = user(1L, "Ana");
-        Group group = group(10L, member);
-
-        when(groupRepository.findById(10L)).thenReturn(Optional.of(group));
+        when(groupRepository.existsByIdAndMembros_Id(10L, 99L)).thenReturn(false);
+        when(groupRepository.existsById(10L)).thenReturn(true);
 
         assertThatThrownBy(() -> messageService.getChatSummaries(10L, 99L))
                 .isInstanceOf(ForbiddenException.class)
@@ -123,5 +121,19 @@ class MessageServiceTest {
                 .nome(name)
                 .email("user" + id + "@example.com")
                 .build();
+    }
+
+    private UnreadConversationCount unreadCount(Long otherUserId, Long unreadCount) {
+        return new UnreadConversationCount() {
+            @Override
+            public Long getOtherUserId() {
+                return otherUserId;
+            }
+
+            @Override
+            public Long getUnreadCount() {
+                return unreadCount;
+            }
+        };
     }
 }

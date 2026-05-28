@@ -2,6 +2,7 @@ package com.example.springApp.service;
 
 import com.example.springApp.dto.RealtimeMessageNotification;
 import com.example.springApp.dto.ChatSummaryResponse;
+import com.example.springApp.dto.UnreadConversationCount;
 import com.example.springApp.exception.ForbiddenException;
 import com.example.springApp.exception.ResourceNotFoundException;
 import com.example.springApp.model.Draw;
@@ -20,6 +21,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
@@ -111,14 +114,27 @@ public class MessageService {
      */
     @Transactional(readOnly = true)
     public List<ChatSummaryResponse> getChatSummaries(Long groupId, Long userId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new ResourceNotFoundException("Grupo nao encontrado"));
-        if (!isMember(group, userId)) {
+        if (!groupRepository.existsByIdAndMembros_Id(groupId, userId)) {
+            if (!groupRepository.existsById(groupId)) {
+                throw new ResourceNotFoundException("Grupo nao encontrado");
+            }
             throw new ForbiddenException("Voce nao faz parte deste grupo");
         }
 
-        return drawRepository.findUserDrawRelations(groupId, userId).stream()
-                .map(draw -> toChatSummary(draw, groupId, userId))
+        List<Draw> draws = drawRepository.findUserDrawRelations(groupId, userId);
+        List<Long> otherUserIds = draws.stream()
+                .map(draw -> otherUser(draw, userId).getId())
+                .toList();
+        Map<Long, Long> unreadByOtherUser = otherUserIds.isEmpty()
+                ? Map.of()
+                : messageRepository.countUnreadByConversationPartners(groupId, userId, otherUserIds).stream()
+                        .collect(Collectors.toMap(
+                                UnreadConversationCount::getOtherUserId,
+                                UnreadConversationCount::getUnreadCount
+                        ));
+
+        return draws.stream()
+                .map(draw -> toChatSummary(draw, groupId, userId, unreadByOtherUser))
                 .toList();
     }
 
@@ -127,11 +143,11 @@ public class MessageService {
      */
     @Transactional
     public void markConversationAsRead(Long groupId, Long userId, Long otherUserId) {
-        List<Message> messages = getConversation(groupId, userId, otherUserId);
-        messages.stream()
-                .filter(message -> message.getDestinatario().getId().equals(userId))
-                .forEach(message -> message.setLida(true));
-        messageRepository.saveAll(messages);
+        if (!canExchangeMessages(groupId, userId, otherUserId)) {
+            throw new ForbiddenException("Voce nao pode acessar esta conversa");
+        }
+
+        messageRepository.markConversationReceivedMessagesAsRead(groupId, userId, otherUserId);
         Long unreadCount = countUnreadMessages(userId);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
@@ -167,15 +183,10 @@ public class MessageService {
     /**
      * Define como cada conversa deve aparecer para preservar anonimato quando necessario.
      */
-    private ChatSummaryResponse toChatSummary(Draw draw, Long groupId, Long userId) {
+    private ChatSummaryResponse toChatSummary(Draw draw, Long groupId, Long userId, Map<Long, Long> unreadByOtherUser) {
         boolean userIsGiver = draw.getRemetente().getId().equals(userId);
-        User otherUser = userIsGiver ? draw.getDestinatario() : draw.getRemetente();
-        // Quando o usuario foi tirado, a outra ponta continua oculta como "amigo secreto".
-        Long unreadCount = messageRepository.countByGrupoIdAndRemetenteIdAndDestinatarioIdAndLidaFalse(
-                groupId,
-                otherUser.getId(),
-                userId
-        );
+        User otherUser = otherUser(draw, userId);
+        Long unreadCount = unreadByOtherUser.getOrDefault(otherUser.getId(), 0L);
 
         return new ChatSummaryResponse(
                 groupId,
@@ -184,6 +195,11 @@ public class MessageService {
                 !userIsGiver,
                 unreadCount
         );
+    }
+
+    private User otherUser(Draw draw, Long userId) {
+        boolean userIsGiver = draw.getRemetente().getId().equals(userId);
+        return userIsGiver ? draw.getDestinatario() : draw.getRemetente();
     }
 
 }

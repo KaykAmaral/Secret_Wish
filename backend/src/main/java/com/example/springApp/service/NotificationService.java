@@ -68,9 +68,7 @@ public class NotificationService {
      */
     @Transactional
     public void markAllAsRead(Long userId) {
-        List<Notification> notifications = notificationRepository.findByUsuarioIdAndLidaFalse(userId);
-        notifications.forEach(notification -> notification.setLida(true));
-        notificationRepository.saveAll(notifications);
+        notificationRepository.markAllUnreadAsRead(userId);
     }
 
     /**

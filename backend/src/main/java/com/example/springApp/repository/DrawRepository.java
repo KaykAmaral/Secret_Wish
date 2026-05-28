@@ -20,6 +20,9 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
     // Retorna as duas relacoes do usuario no ciclo: quem ele tirou e quem tirou ele.
     @Query("""
             select draw from Draw draw
+            join fetch draw.grupo grupo
+            join fetch draw.remetente remetente
+            join fetch draw.destinatario destinatario
             where draw.grupo.id = :groupId
               and (draw.remetente.id = :userId or draw.destinatario.id = :userId)
             """)
@@ -36,7 +39,15 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
     void deleteByGrupoId(Long grupoId);
 
     // Usado para consultar o resultado individual sem expor o sorteio completo.
-    Optional<Draw> findByGrupo_IdAndRemetente_Id(Long groupId, Long giverId);
+    @Query("""
+            select draw from Draw draw
+            join fetch draw.grupo grupo
+            join fetch draw.remetente remetente
+            join fetch draw.destinatario destinatario
+            where grupo.id = :groupId
+              and remetente.id = :giverId
+            """)
+    Optional<Draw> findByGrupo_IdAndRemetente_Id(@Param("groupId") Long groupId, @Param("giverId") Long giverId);
 
     /**
      * Localiza quem tirou determinado usuario dentro do grupo.
@@ -46,7 +57,14 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
     /**
      * Encontra todos os sorteios em que o usuario aparece como presenteado.
      */
-    List<Draw> findByDestinatario_Id(Long receiverId);
+    @Query("""
+            select draw from Draw draw
+            join fetch draw.grupo grupo
+            join fetch draw.remetente remetente
+            join fetch draw.destinatario destinatario
+            where destinatario.id = :receiverId
+            """)
+    List<Draw> findByDestinatario_Id(@Param("receiverId") Long receiverId);
 
     /**
      * Verifica se dois usuarios formam um par direto permitido para chat ou wishlist.

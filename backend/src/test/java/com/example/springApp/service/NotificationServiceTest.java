@@ -11,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -85,17 +84,11 @@ class NotificationServiceTest {
     }
 
     @Test
-    void markAllAsReadSavesOnlyUnreadNotifications() {
-        Notification first = Notification.builder().id(1L).lida(false).build();
-        Notification second = Notification.builder().id(2L).lida(false).build();
-
-        when(notificationRepository.findByUsuarioIdAndLidaFalse(1L)).thenReturn(List.of(first, second));
-
+    void markAllAsReadUsesBulkUpdate() {
         notificationService.markAllAsRead(1L);
 
-        assertThat(first.isLida()).isTrue();
-        assertThat(second.isLida()).isTrue();
-        verify(notificationRepository).saveAll(List.of(first, second));
+        verify(notificationRepository).markAllUnreadAsRead(1L);
+        verify(notificationRepository, never()).saveAll(any());
     }
 
     private User user(Long id) {
