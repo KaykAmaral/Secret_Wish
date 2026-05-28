@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import ConfirmationModal from '../ConfirmationModal/ConfirmationModal';
 import wishlistService from '../../services/wishlistService';
 import './WishlistModal.css';
 
@@ -14,6 +15,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [nomeProduto, setNomeProduto] = useState('');
   const [link, setLink] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
@@ -38,6 +40,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       setError('');
       setAlertType('error');
       setActionLoading(false);
+      setItemToDelete(null);
       const timer = setTimeout(() => {
         fetchWishlist();
       }, 0);
@@ -118,10 +121,15 @@ const WishlistModal = ({ isOpen, onClose }) => {
   };
 
   // Remove item somente apos confirmacao explicita por ser uma acao destrutiva.
-  const handleDelete = async (itemId) => {
-    if (!window.confirm('Tem certeza que deseja remover este item?')) return;
+  const handleDelete = (itemId) => {
+    setItemToDelete(itemId);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      await wishlistService.removeItem(itemId);
+      await wishlistService.removeItem(itemToDelete);
+      setItemToDelete(null);
       fetchWishlist();
     } catch (err) {
       console.error('Erro ao remover item:', err);
@@ -217,6 +225,15 @@ const WishlistModal = ({ isOpen, onClose }) => {
           )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={Boolean(itemToDelete)}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Remover item?"
+        message="Tem certeza que deseja remover este item?"
+        confirmText="Remover item"
+        variant="danger"
+      />
     </div>
   );
 };

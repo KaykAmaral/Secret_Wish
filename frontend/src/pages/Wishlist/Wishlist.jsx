@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationModal';
 import wishlistService from '../../services/wishlistService';
 import './Wishlist.css';
 
@@ -15,6 +16,7 @@ const Wishlist = () => {
   const [nomeProduto, setNomeProduto] = useState('');
   const [link, setLink] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
@@ -107,11 +109,15 @@ const Wishlist = () => {
     }
   };
 
-  const handleDelete = async (itemId) => {
-    if (!window.confirm('Tem certeza que deseja remover este item?')) return;
+  const handleDelete = (itemId) => {
+    setItemToDelete(itemId);
+  };
 
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      await wishlistService.removeItem(itemId);
+      await wishlistService.removeItem(itemToDelete);
+      setItemToDelete(null);
       await fetchWishlist();
     } catch (err) {
       setAlertType('error');
@@ -245,6 +251,15 @@ const Wishlist = () => {
 
         </div>
       </main>
+      <ConfirmationModal
+        isOpen={Boolean(itemToDelete)}
+        onClose={() => setItemToDelete(null)}
+        onConfirm={confirmDelete}
+        title="Remover item?"
+        message="Tem certeza que deseja remover este item?"
+        confirmText="Remover item"
+        variant="danger"
+      />
     </div>
   );
 };
