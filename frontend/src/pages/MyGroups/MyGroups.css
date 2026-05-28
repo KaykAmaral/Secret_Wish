@@ -1,0 +1,317 @@
+.my-groups-page {
+  position: relative;
+  min-height: 100vh;
+  background-color: #0a0a0a;
+  color: #fff;
+  overflow: hidden;
+}
+
+/* Background Decorativo Reutilizado da Wishlist */
+.wishlist-background-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.wishlist-background-decor .gift,
+.wishlist-background-decor .dashed-square {
+  position: absolute;
+  display: block;
+  user-select: none;
+}
+
+.wishlist-background-decor .gift {
+  opacity: 0.32;
+  filter: drop-shadow(0 14px 22px rgba(124, 58, 237, 0.28));
+}
+
+.gift-one { top: 120px; left: 7%; font-size: 54px; transform: rotate(-14deg); }
+.gift-two { top: 220px; right: 8%; font-size: 42px; transform: rotate(12deg); }
+.gift-three { bottom: 90px; left: 14%; font-size: 46px; transform: rotate(10deg); }
+.gift-four { bottom: 160px; right: 18%; font-size: 62px; transform: rotate(-10deg); }
+
+.wishlist-background-decor .dashed-square {
+  opacity: 0.3;
+  border: 2px dashed rgba(167, 139, 250, 0.55);
+  background: rgba(124, 58, 237, 0.06);
+  border-radius: 18px;
+}
+
+.square-one { width: 132px; height: 132px; top: 94px; right: 24%; transform: rotate(13deg); }
+.square-two { width: 96px; height: 96px; top: 430px; left: 5%; transform: rotate(-18deg); }
+.square-three { width: 150px; height: 150px; bottom: 70px; right: 6%; transform: rotate(18deg); }
+.square-four { width: 86px; height: 86px; bottom: 260px; left: 36%; transform: rotate(9deg); }
+
+.my-groups-main {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.my-groups-breadcrumb {
+  margin-bottom: 28px;
+}
+
+.my-groups-breadcrumb button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #a78bfa;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.my-groups-breadcrumb button:hover {
+  opacity: 0.8;
+}
+
+.my-groups-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.my-groups-kicker {
+  display: block;
+  margin-bottom: 10px;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.my-groups-header h1 {
+  margin: 0 0 10px;
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.my-groups-header p {
+  color: #9ca3af;
+  line-height: 1.6;
+  max-width: 600px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.header-actions button {
+  min-width: 160px;
+  padding: 12px 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.my-groups-page .btn-primary {
+  background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.my-groups-page .btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px -4px rgba(124, 58, 237, 0.4);
+}
+
+.my-groups-page .btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.my-groups-page .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.controls-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.search-box input {
+  background: none;
+  border: none;
+  color: #fff;
+  width: 100%;
+  outline: none;
+  font-size: 14px;
+}
+
+.filter-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.filter-box select {
+  background: none;
+  border: none;
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.filter-box option {
+  background: #121216;
+}
+
+.groups-list-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.group-manage-card {
+  padding: 20px;
+  border-radius: 16px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-badge-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.status-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.status-pill.pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.status-pill.drawn { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+
+.role-pill {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+}
+
+.card-main-content h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9ca3af;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.info-row code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fff;
+}
+
+.card-stats-row {
+  display: flex;
+  gap: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #a78bfa;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon { font-size: 48px; }
+
+@media (max-width: 900px) {
+  .my-groups-main { padding: 24px 20px; }
+  .my-groups-header { flex-direction: column; align-items: stretch; }
+  .header-actions { flex-direction: column; }
+  .header-actions button { width: 100%; }
+  
+  .gift-one, .gift-three, .square-two, .square-four { display: none; }
+  .gift-two { top: 140px; right: 18px; font-size: 34px; }
+  .gift-four { bottom: 70px; right: 24px; font-size: 40px; }
+  .square-one { width: 92px; height: 92px; top: 90px; right: 60px; }
+  .square-three { width: 110px; height: 110px; bottom: 40px; right: -24px; }
+}

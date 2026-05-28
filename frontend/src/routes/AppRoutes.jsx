@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout';
 import Auth from '../pages/Auth/Auth';
 import Register from '../pages/Auth/Register';
 import Dashboard from '../pages/Dashboard/Dashboard';
+import MyGroups from '../pages/MyGroups/MyGroups';
 import GroupDetails from '../pages/GroupDetails/GroupDetails';
 import OAuthCallback from '../pages/OAuthCallback/OAuthCallback';
 import Wishlist from '../pages/Wishlist/Wishlist';
@@ -12,24 +13,24 @@ const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* MainLayout decide se renderiza apenas o Outlet publico ou o chrome autenticado. */}
         <Route element={<MainLayout />}>
           {/* Rotas Públicas */}
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Register />} />
           <Route path="/oauth2/callback" element={<OAuthCallback />} />
 
-          {/* Rotas Privadas */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/wishlist" element={<Wishlist />} />
-            <Route path="/groups/:groupId" element={<GroupDetails />} />
-          </Route>
+          {/* Rotas Privadas (Protegidas Individualmente) */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/my-groups" element={<ProtectedRoute><MyGroups /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
+          <Route path="/groups/:groupId" element={<ProtectedRoute><GroupDetails /></ProtectedRoute>} />
 
-          {/* Redirecionamentos */}
+          {/* Redirecionamento de Root */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
         </Route>
+
+        {/* Catch-all fora do Layout para evitar conflitos de renderização */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
   );
