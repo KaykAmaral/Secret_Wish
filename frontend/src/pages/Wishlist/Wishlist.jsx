@@ -36,6 +36,7 @@ const Wishlist = () => {
     fetchWishlist();
   }, [fetchWishlist]);
 
+
   // Limpa o formulario e devolve o foco visual para a lista.
   const resetForm = () => {
     setNomeProduto('');
@@ -241,6 +242,7 @@ const Wishlist = () => {
               </button>
             )}
           </aside>
+
         </div>
       </main>
     </div>

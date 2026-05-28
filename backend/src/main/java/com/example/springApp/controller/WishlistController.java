@@ -120,6 +120,24 @@ public class WishlistController {
         wishlistService.removeItemFromWishlist(itemId, userId);
     }
 
+    @PostMapping("/wishlist/ai-suggestion")
+    @Operation(
+            summary = "Gerar sugestao por IA para minha própria wishlist",
+            description = "Gera uma sugestao textual baseada nos itens presentes na própria wishlist do usuário."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sugestao gerada"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "429", description = "Limite de uso por hora atingido")
+    })
+    public AiSuggestionResponse generateMyAiSuggestion(Authentication authentication) {
+        Long userId = authenticatedUser.id(authentication);
+        WishList wishlist = wishlistService.getOrCreateWishlist(userId);
+        String suggestion = aiSuggestionService.generateSuggestion(wishlist, userId);
+        return new AiSuggestionResponse(wishlist.getId(), suggestion);
+    }
+
     @GetMapping("/groups/{groupId}/users/{ownerId}/wishlist")
     @Operation(
             summary = "Consultar wishlist visivel",

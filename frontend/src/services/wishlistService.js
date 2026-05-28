@@ -38,14 +38,6 @@ const wishlistService = {
   getVisibleWishlist: async (groupId, ownerId) => {
     const response = await api.get(`/api/groups/${groupId}/users/${ownerId}/wishlist`);
     return response.data;
-  },
-
-  /**
-   * Solicita sugestao de IA baseada somente nos itens da wishlist visivel.
-   */
-  generateAiSuggestion: async (groupId, ownerId) => {
-    const response = await api.post(`/api/groups/${groupId}/users/${ownerId}/wishlist/ai-suggestion`);
-    return response.data;
   }
 };
 

@@ -18,7 +18,7 @@ Backend da plataforma Secret Wish, uma aplicacao para organizar amigo secreto co
 | Login social | Google OAuth2 |
 | Tempo real | Spring WebSocket, STOMP, SockJS |
 | Email | Spring Mail, SMTP Gmail |
-| IA | Spring AI, OpenAI |
+| IA | Spring AI, Groq |
 | Documentacao | Springdoc OpenAPI, Swagger UI |
 | Validacao | Jakarta Bean Validation |
 | Boilerplate | Lombok |
@@ -56,7 +56,7 @@ src/main/java/com/example/springApp
 - **Mensagens**: chat anonimo permitido apenas entre pares do sorteio.
 - **Notificacoes**: eventos persistidos para dashboard e contadores.
 - **Tempo real**: mensagens, contadores e updates via STOMP.
-- **IA**: sugestoes de presente com OpenAI usando apenas os itens reais da wishlist.
+- **IA**: sugestoes de presente com Groq usando apenas os itens reais da wishlist.
 - **Email**: notificacoes de resultado de sorteio via SMTP quando habilitado.
 
 ## Requisitos
@@ -65,7 +65,7 @@ src/main/java/com/example/springApp
 - Maven Wrapper incluso no projeto
 - MySQL 8+ para uso com profile local/prod
 - Google OAuth2 configurado, se login social for usado
-- Chave OpenAI, se `AI_ENABLED=true`
+- Chave Groq, se `AI_ENABLED=true`
 - SMTP Gmail com senha de app, se `MAIL_ENABLED=true`
 
 ## Execucao Rapida em Desenvolvimento
@@ -150,7 +150,9 @@ MAIL_ENABLED=false
 MAIL_USERNAME=
 MAIL_PASSWORD=
 AI_ENABLED=false
-OPENAI_API_KEY=
+GROQ_API_KEY=
+GROQ_BASE_URL=https://api.groq.com/openai
+GROQ_AI_MODEL=llama-3.3-70b-versatile
 AUTH_COOKIE_SAME_SITE=Lax
 ```
 

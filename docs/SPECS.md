@@ -11,7 +11,7 @@
 - Documentacao: Springdoc OpenAPI/Swagger
 - Tempo real: WebSocket/STOMPlk
 - Email: SMTP Gmail
-- IA: Spring AI/OpenAI, quando habilitado
+- IA: Spring AI/Groq, quando habilitado
 
 ## Perfis e Configuracao
 
@@ -77,7 +77,9 @@ MAIL_USERNAME=
 MAIL_PASSWORD=
 
 AI_ENABLED=true
-OPENAI_API_KEY=
+GROQ_API_KEY=
+GROQ_BASE_URL=https://api.groq.com/openai
+GROQ_AI_MODEL=llama-3.3-70b-versatile
 ```
 
 Defaults de producao:
