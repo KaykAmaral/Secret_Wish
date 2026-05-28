@@ -12,6 +12,7 @@ const Auth = () => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
+  // Delega a criacao da sessao ao AuthProvider para manter usuario e rotas sincronizados.
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setLoading(true);

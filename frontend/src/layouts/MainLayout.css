@@ -1,9 +1,11 @@
 .app-layout {
+  /* Fundo escuro persistente para todas as rotas autenticadas. */
   min-height: 100vh;
   background-color: #0a0a0a;
 }
 
 .dashboard-header {
+  /* Header fixo com blur para manter navegacao visivel durante a rolagem. */
   background: rgba(10, 10, 10, 0.8);
   backdrop-filter: blur(15px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -46,6 +48,7 @@
 }
 
 .user-nav-container {
+  /* Ancora o dropdown de perfil no canto direito do header. */
   position: relative;
 }
 
@@ -186,5 +189,6 @@
 }
 
 .app-content {
+  /* Entrada sutil do conteudo depois que o layout autenticado carrega. */
   animation: fadeIn 0.8s ease-out;
 }

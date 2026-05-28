@@ -2,6 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: 'http://localhost:8080',
+  // O backend autentica principalmente por cookie HTTP-only, entao cada chamada precisa enviar credenciais.
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -12,7 +13,7 @@ const api = axios.create({
   },
 });
 
-// Interceptor para lidar com erros globais, especialmente 401
+// Mantem o tratamento global de 401 centralizado sem redirecionar agressivamente fora do AuthProvider.
 api.interceptors.response.use(
   (response) => response,
   (error) => {

@@ -15,12 +15,14 @@
 .wishlist-overlay {
   align-items: flex-start;
   padding: 20px;
+  /* A lista pode crescer bastante; o overlay precisa rolar sem cortar acoes do modal. */
   overflow-y: auto;
 }
 
 .wishlist-modal {
   width: 90%;
   max-width: 500px;
+  /* Limita o card para que o corpo da wishlist assuma a rolagem. */
   max-height: calc(100vh - 40px);
   background: #121216;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -48,6 +50,7 @@
 
 .wishlist-modal-body {
   padding: 2rem;
+  /* Mantem header fixo no topo do card enquanto a lista/formulario rola. */
   overflow-y: auto;
 }
 

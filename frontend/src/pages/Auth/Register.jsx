@@ -14,6 +14,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
+  // Valida confirmacao de senha no cliente antes de criar a conta no backend.
   const handleRegister = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {

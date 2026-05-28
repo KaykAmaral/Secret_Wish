@@ -2,7 +2,7 @@ import api from '../api/axios';
 
 const wishlistService = {
   /**
-   * Consulta a wishlist do usuário autenticado.
+   * Consulta a wishlist do usuario autenticado; o backend cria uma lista vazia quando necessario.
    */
   getMyWishlist: async () => {
     const response = await api.get('/api/wishlist');
@@ -10,8 +10,7 @@ const wishlistService = {
   },
 
   /**
-   * Adiciona um item à wishlist.
-   * @param {Object} item { nomeProduto, link }
+   * Adiciona item visivel para quem tirar este usuario apos o sorteio.
    */
   addItem: async (item) => {
     const response = await api.post('/api/wishlist/items', item);
@@ -19,9 +18,7 @@ const wishlistService = {
   },
 
   /**
-   * Atualiza um item da wishlist.
-   * @param {number} itemId 
-   * @param {Object} item { nomeProduto, link }
+   * Atualiza item da propria wishlist mantendo validacao de propriedade no backend.
    */
   updateItem: async (itemId, item) => {
     const response = await api.put(`/api/wishlist/items/${itemId}`, item);
@@ -29,14 +26,14 @@ const wishlistService = {
   },
 
   /**
-   * Remove um item da wishlist.
+   * Remove item da propria wishlist.
    */
   removeItem: async (itemId) => {
     await api.delete(`/api/wishlist/items/${itemId}`);
   },
 
   /**
-   * Consulta a wishlist visível de outro usuário em um grupo.
+   * Consulta a wishlist de outro usuario quando a regra do sorteio permite visualizacao.
    */
   getVisibleWishlist: async (groupId, ownerId) => {
     const response = await api.get(`/api/groups/${groupId}/users/${ownerId}/wishlist`);
@@ -44,7 +41,7 @@ const wishlistService = {
   },
 
   /**
-   * Gera sugestão de IA para uma wishlist visível.
+   * Solicita sugestao de IA baseada somente nos itens da wishlist visivel.
    */
   generateAiSuggestion: async (groupId, ownerId) => {
     const response = await api.post(`/api/groups/${groupId}/users/${ownerId}/wishlist/ai-suggestion`);

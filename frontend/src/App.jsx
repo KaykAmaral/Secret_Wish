@@ -4,6 +4,7 @@ import './App.css';
 
 function App() {
   return (
+    // AuthProvider deixa o estado de sessao disponivel para rotas, layout e telas protegidas.
     <AuthProvider>
       <AppRoutes />
     </AuthProvider>

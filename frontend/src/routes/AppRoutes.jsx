@@ -11,6 +11,7 @@ const AppRoutes = () => {
   return (
     <BrowserRouter>
       <Routes>
+        {/* MainLayout decide se renderiza apenas o Outlet publico ou o chrome autenticado. */}
         <Route element={<MainLayout />}>
           {/* Rotas Públicas */}
           <Route path="/login" element={<Auth />} />

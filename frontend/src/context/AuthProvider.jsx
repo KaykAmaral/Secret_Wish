@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const isChecking = useRef(false);
 
+  // Evita chamadas concorrentes para /auth/status quando varias telas pedem revalidacao ao mesmo tempo.
   const checkAuth = useCallback(async (isInitial = false) => {
     if (isChecking.current) return;
     isChecking.current = true;
@@ -36,6 +37,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // A primeira validacao roda depois do mount para deixar o React finalizar a renderizacao inicial.
   useEffect(() => {
     const timer = setTimeout(() => {
       checkAuth(true);
@@ -43,11 +45,13 @@ export const AuthProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [checkAuth]);
 
+  // OAuth precisa sair da SPA para iniciar o fluxo controlado pelo backend.
   const loginGoogle = () => {
     console.log('[AuthDebug] Iniciando login Google...');
     window.location.href = authService.getGoogleLoginUrl();
   };
 
+  // Login por email atualiza o contexto imediatamente quando o backend confirma a sessao.
   const loginWithEmail = async (email, password) => {
     setLoading(true);
     try {
@@ -64,6 +68,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Cadastro bem-sucedido tambem cria sessao, entao usa o mesmo estado de usuario autenticado.
   const registerWithEmail = async (nome, email, password) => {
     setLoading(true);
     try {
@@ -80,6 +85,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // O backend remove o cookie; o redirecionamento limpa qualquer estado visual remanescente.
   const logout = async () => {
     console.log('[AuthDebug] Executando logout...');
     setLoading(true);

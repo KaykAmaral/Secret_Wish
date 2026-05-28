@@ -2,7 +2,7 @@ import api from '../api/axios';
 
 const groupService = {
   /**
-   * Lista todos os grupos que o usuário participa.
+   * Lista todos os grupos em que o usuario autenticado participa.
    */
   getMyGroups: async () => {
     const response = await api.get('/api/groups');
@@ -10,7 +10,7 @@ const groupService = {
   },
 
   /**
-   * Busca detalhes de um grupo específico.
+   * Busca detalhes de um grupo apenas se o backend reconhecer o usuario como participante.
    */
   getGroupById: async (groupId) => {
     const response = await api.get(`/api/groups/${groupId}`);
@@ -18,8 +18,8 @@ const groupService = {
   },
 
   /**
-   * Cria um novo grupo.
-   * @param {Object} data { nome, dataEvento }
+   * Cria um novo grupo com o usuario autenticado como dono e primeiro membro.
+   * @param {Object} data { nome, descricao, dataEvento }
    */
   createGroup: async (data) => {
     const response = await api.post('/api/groups', data);
@@ -27,8 +27,7 @@ const groupService = {
   },
 
   /**
-   * Entra em um grupo usando o código único (XXXX-XXXX).
-   * @param {string} codigoUnico 
+   * Entra em um grupo usando o codigo publico no formato XXXX-XXXX.
    */
   joinGroup: async (codigoUnico) => {
     const response = await api.post('/api/groups/join', { codigoUnico });
@@ -36,14 +35,14 @@ const groupService = {
   },
 
   /**
-   * Sai de um grupo.
+   * Sai de um grupo antes do sorteio; o backend bloqueia a saida do dono.
    */
   leaveGroup: async (groupId) => {
     await api.delete(`/api/groups/${groupId}/leave`);
   },
 
   /**
-   * Exclui um grupo (apenas dono).
+   * Exclui um grupo e dados relacionados; permitido apenas para o dono.
    */
   deleteGroup: async (groupId) => {
     await api.delete(`/api/groups/${groupId}`);

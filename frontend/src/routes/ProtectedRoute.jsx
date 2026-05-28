@@ -6,6 +6,7 @@ const ProtectedRoute = () => {
 
   console.log('[AuthDebug] ProtectedRoute - Autenticado:', isAuthenticated, 'Carregando:', loading);
 
+  // Espera o AuthProvider confirmar o cookie antes de decidir redirecionar.
   if (loading) {
     return (
       <div className="loading-container">
@@ -15,6 +16,7 @@ const ProtectedRoute = () => {
     );
   }
 
+  // Outlet preserva a hierarquia de rotas protegidas; Navigate evita historico de tela proibida.
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 };
 

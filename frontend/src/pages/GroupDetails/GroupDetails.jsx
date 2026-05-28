@@ -38,6 +38,7 @@ const GroupDetails = () => {
   const [isFriendChatOpen, setIsFriendChatOpen] = useState(false);
   const [isGifterChatOpen, setIsGifterChatOpen] = useState(false);
 
+  // Carrega o grupo e, quando ja houve sorteio, tambem os dados necessarios para os chats.
   const fetchGroupDetails = useCallback(async () => {
     try {
       setLoading(true);
@@ -46,9 +47,11 @@ const GroupDetails = () => {
 
       if (data.dataSorteio) {
         try {
+          // Quem eu tirei alimenta o card roxo e o chat com wishlist visivel.
           const drawData = await drawService.getWhoITook(groupId);
           setWhoITook(drawData);
 
+          // O chat inverso preserva o anonimato de quem tirou o usuario.
           const summaries = await messageService.getChatSummaries(groupId);
           const anonymousGifter = summaries.find(c => c.anonimoParaUsuario);
           setGifterChat(anonymousGifter);
@@ -66,6 +69,7 @@ const GroupDetails = () => {
 
   useEffect(() => {
     fetchGroupDetails();
+    // A tela de grupo precisa receber mensagens e atualizacoes de wishlist em tempo real.
     webSocketService.connect();
 
     return () => webSocketService.disconnect();
@@ -74,6 +78,7 @@ const GroupDetails = () => {
   const handlePerformDraw = async () => {
     if (!window.confirm('Tem certeza que deseja realizar o sorteio agora? Ninguem mais podera entrar no grupo.')) return;
 
+    // Depois do sorteio, recarrega o grupo para habilitar cards de resultado e chats.
     setActionLoading(true);
     setError('');
     try {
@@ -116,6 +121,8 @@ const GroupDetails = () => {
   }
 
   const isDono = group.dono.id === user.id;
+
+  // Calcula dias restantes pelo dia civil do evento, nao pelo horario atual.
   const getDaysUntilEvent = (dateValue) => {
     if (!dateValue) return null;
 
@@ -127,6 +134,8 @@ const GroupDetails = () => {
 
     return Math.ceil((eventDate - todayOnly) / millisecondsPerDay);
   };
+
+  // Mantem a mesma linguagem para a contagem exibida no cabecalho.
   const formatDaysUntilEvent = (dateValue) => {
     const days = getDaysUntilEvent(dateValue);
     if (days === null) return 'A definir';

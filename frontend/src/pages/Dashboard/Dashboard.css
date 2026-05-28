@@ -132,6 +132,7 @@
 }
 
 .actions-bar button {
+  /* Largura fixa evita desalinhamento visual causado por textos de tamanhos diferentes. */
   width: 180px;
   min-height: 44px;
   padding: 12px 24px;
@@ -416,12 +417,14 @@
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  /* Permite navegar pelo modal quando zoom ou viewport pequena fazem o card passar da tela. */
   overflow-y: auto;
 }
 
 .modal-card {
   width: 100%;
   max-width: 450px;
+  /* Mantem o card dentro da viewport e delega excesso ao scroll interno. */
   max-height: calc(100vh - 40px);
   padding: 32px;
   overflow-y: auto;

@@ -15,6 +15,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
+  // Busca a wishlist atualizada sempre que o modal abre ou uma operacao altera itens.
   const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
@@ -29,6 +30,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
+      // Cada abertura comeca no modo lista para evitar manter formulario antigo na tela.
       setIsAdding(false);
       setEditingItem(null);
       setError('');
@@ -41,6 +43,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen, fetchWishlist]);
 
+  // Limpa o formulario de criacao/edicao e volta para a lista.
   const resetForm = () => {
     setNomeProduto('');
     setLink('');
@@ -50,11 +53,13 @@ const WishlistModal = ({ isOpen, onClose }) => {
     setAlertType('error');
   };
 
+  // Inicia criacao garantindo que nenhum item anterior permaneça em edicao.
   const handleStartAdd = () => {
     resetForm();
     setIsAdding(true);
   };
 
+  // Preenche o formulario com os dados do item selecionado para edicao.
   const handleStartEdit = (item) => {
     setEditingItem(item);
     setNomeProduto(item.nomeProduto);
@@ -66,6 +71,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Usa validacao propria para exibir alerta visual consistente com o restante da app.
     if (!nomeProduto.trim() || !link.trim()) {
       setAlertType('warning');
       setError('Preencha nome do produto e link.');
@@ -82,6 +88,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       };
 
       if (editingItem) {
+        // O mesmo formulario atende criacao e edicao para manter as regras centralizadas.
         await wishlistService.updateItem(editingItem.id, payload);
       } else {
         await wishlistService.addItem(payload);
@@ -96,6 +103,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
     }
   };
 
+  // Remove item somente apos confirmacao explicita por ser uma acao destrutiva.
   const handleDelete = async (itemId) => {
     if (!window.confirm('Tem certeza que deseja remover este item?')) return;
     try {

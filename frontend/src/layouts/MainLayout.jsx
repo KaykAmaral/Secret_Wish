@@ -10,6 +10,7 @@ const MainLayout = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Fecha o menu de perfil ao clicar fora sem registrar listener enquanto ele esta fechado.
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -25,17 +26,20 @@ const MainLayout = () => {
     };
   }, [showDropdown]);
 
+  // Telas publicas usam apenas o Outlet, sem chrome autenticado.
   if (!isAuthenticated) {
     return <Outlet />;
   }
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
+  // Abre o modal e fecha o dropdown para manter apenas uma superficie ativa.
   const handleOpenProfile = () => {
     setShowProfileModal(true);
     setShowDropdown(false);
   };
 
+  // Usa ate duas iniciais para manter avatar legivel quando nao ha imagem.
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);

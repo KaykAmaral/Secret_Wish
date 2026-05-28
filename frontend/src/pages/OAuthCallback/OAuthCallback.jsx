@@ -7,6 +7,7 @@ const OAuthCallback = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // O callback precisa revalidar a sessao depois que o backend define o cookie JWT.
     const validateSession = async () => {
       // Pequeno delay para garantir que o cookie foi processado pelo browser
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -17,6 +18,7 @@ const OAuthCallback = () => {
   }, [checkAuth]);
 
   useEffect(() => {
+    // Navega somente apos o contexto refletir a autenticacao confirmada.
     if (isAuthenticated) {
       navigate('/dashboard');
     }

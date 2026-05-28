@@ -27,6 +27,8 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
   const hasCreatedGroup = groups.some(group => group.dono?.id === user?.id);
+
+  // Usa formato yyyy-MM-dd para comparar com o input date sem depender de locale.
   const formatInputDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -34,6 +36,8 @@ const Dashboard = () => {
     return `${year}-${month}-${day}`;
   };
   const todayDate = formatInputDate(new Date());
+
+  // A regra de negocio limita eventos a no maximo 24 meses no futuro.
   const maxEventDateValue = (() => {
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 24);
@@ -46,6 +50,8 @@ const Dashboard = () => {
     }
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
   };
+
+  // Calcula dias usando datas locais zeradas para evitar diferenca por horario/fuso.
   const getDaysUntilEvent = (dateValue) => {
     if (!dateValue) return null;
 
@@ -57,6 +63,8 @@ const Dashboard = () => {
 
     return Math.ceil((eventDate - todayOnly) / millisecondsPerDay);
   };
+
+  // Centraliza os textos de contagem para cards e detalhes do grupo.
   const formatDaysUntilEvent = (dateValue) => {
     const days = getDaysUntilEvent(dateValue);
     if (days === null) return 'Data nao definida';
@@ -66,6 +74,7 @@ const Dashboard = () => {
     return `Faltam ${days} dias`;
   };
 
+  // Carrega grupos e notificacoes em paralelo para reduzir o tempo inicial do dashboard.
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,6 +100,7 @@ const Dashboard = () => {
 
   const handleCreateGroup = async (e) => {
     e.preventDefault();
+    // Valida no cliente para exibir alertas amigaveis antes de chamar a API.
     if (hasCreatedGroup) {
       setAlertType('warning');
       setError('Voce ja possui um grupo criado.');
@@ -114,6 +124,7 @@ const Dashboard = () => {
     setError('');
     try {
       const dateOnly = `${newGroupDate}T00:00:00`;
+      // O backend espera data/hora, mas a UI captura somente o dia do evento.
       const createdGroup = await groupService.createGroup({ 
         nome: newGroupName.trim(), 
         descricao: newGroupDesc.trim(),
@@ -135,6 +146,7 @@ const Dashboard = () => {
 
   const handleJoinGroup = async (e) => {
     e.preventDefault();
+    // Evita chamada desnecessaria quando o usuario ainda nao informou o codigo.
     if (!joinCode.trim()) {
       setAlertType('warning');
       setError('Informe o codigo do grupo.');
@@ -157,6 +169,7 @@ const Dashboard = () => {
     }
   };
 
+  // Atualiza o estado local para a notificacao sumir como pendente sem recarregar tudo.
   const markAsRead = async (id) => {
     try {
       await notificationService.markAsRead(id);
@@ -166,6 +179,7 @@ const Dashboard = () => {
     }
   };
 
+  // Remove a notificacao da lista atual imediatamente apos confirmacao do backend.
   const deleteNotification = async (id) => {
     try {
       await notificationService.deleteNotification(id);

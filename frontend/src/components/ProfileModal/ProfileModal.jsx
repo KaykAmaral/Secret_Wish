@@ -11,6 +11,7 @@ const ProfileModal = ({ isOpen, onClose, onUpdate }) => {
   const [error, setError] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Atualiza o perfil e delega ao layout a revalidacao do usuario exibido no header.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -26,6 +27,7 @@ const ProfileModal = ({ isOpen, onClose, onUpdate }) => {
     }
   };
 
+  // Depois da exclusao, logout limpa cookie e estado local antes de voltar ao login.
   const handleDeleteAccount = async () => {
     setLoading(true);
     try {

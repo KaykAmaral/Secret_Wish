@@ -2,7 +2,7 @@ import api from '../api/axios';
 
 const userService = {
   /**
-   * Consulta os dados do usuário autenticado.
+   * Consulta o perfil do usuario autenticado para sincronizar dados do header e modal.
    */
   getMe: async () => {
     const response = await api.get('/api/me');
@@ -10,8 +10,7 @@ const userService = {
   },
 
   /**
-   * Atualiza os dados do perfil (nome e imagem).
-   * @param {Object} data { nome, imagemUrl }
+   * Atualiza somente campos editaveis pelo usuario; email permanece controlado pelo backend.
    */
   updateProfile: async (data) => {
     const response = await api.put('/api/me', data);
@@ -19,7 +18,7 @@ const userService = {
   },
 
   /**
-   * Exclui a conta do usuário autenticado.
+   * Solicita exclusao permanente da conta autenticada.
    */
   deleteAccount: async () => {
     await api.delete('/api/me');

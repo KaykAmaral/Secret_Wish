@@ -2,8 +2,7 @@ import api from '../api/axios';
 
 const authService = {
   /**
-   * Consulta o status atual da sessão.
-   * Retorna { authenticated: boolean, user: { id, nome, email } | null }
+   * Consulta a sessao atual usando o cookie HTTP-only enviado pelo browser.
    */
   getStatus: async () => {
     const response = await api.get('/api/auth/status');
@@ -11,7 +10,7 @@ const authService = {
   },
 
   /**
-   * Login com e-mail e senha.
+   * Realiza login local e deixa o backend definir o cookie de autenticacao.
    */
   login: async (email, password) => {
     const response = await api.post('/api/auth/login', { email, password });
@@ -19,7 +18,7 @@ const authService = {
   },
 
   /**
-   * Cadastro com e-mail e senha.
+   * Cria conta por email/senha e retorna a sessao ja autenticada.
    */
   register: async (nome, email, password) => {
     const response = await api.post('/api/auth/register', { nome, email, password });
@@ -27,14 +26,14 @@ const authService = {
   },
 
   /**
-   * Inicia o fluxo de logout no backend.
+   * Encerra a sessao no backend, removendo o cookie HTTP-only.
    */
   logout: async () => {
     await api.post('/api/logout');
   },
 
   /**
-   * Retorna a URL para o redirecionamento do OAuth2 Google.
+   * Retorna a URL externa que inicia o fluxo OAuth2 Google no backend.
    */
   getGoogleLoginUrl: () => {
     return 'http://localhost:8080/oauth2/authorization/google';

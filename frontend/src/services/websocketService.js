@@ -8,6 +8,7 @@ class WebSocketService {
     this.onConnectCallbacks = [];
   }
 
+  // Reutiliza a conexao ativa para evitar multiplas sessoes STOMP por usuario.
   connect(token = null) {
     if (this.client && this.client.connected) return;
 
@@ -27,7 +28,7 @@ class WebSocketService {
     this.client.onConnect = (frame) => {
       console.log('STOMP Connected: ' + frame);
       this.onConnectCallbacks.forEach(callback => callback());
-      // Re-subscribe to all active subscriptions
+      // Reinscreve topicos apos reconexao automatica para nao perder notificacoes em tempo real.
       this.subscriptions.forEach((callback, topic) => {
         this._doSubscribe(topic, callback);
       });
@@ -40,12 +41,14 @@ class WebSocketService {
     this.client.activate();
   }
 
+  // Fecha a conexao quando a tela protegida sai do ciclo de vida.
   disconnect() {
     if (this.client) {
       this.client.deactivate();
     }
   }
 
+  // Guarda a inscricao desejada mesmo antes da conexao estar pronta.
   subscribe(topic, callback) {
     this.subscriptions.set(topic, callback);
     if (this.client && this.client.connected) {
@@ -53,12 +56,14 @@ class WebSocketService {
     }
   }
 
+  // Normaliza o payload STOMP para objetos JavaScript usados pelos componentes.
   _doSubscribe(topic, callback) {
     return this.client.subscribe(topic, (message) => {
       callback(JSON.parse(message.body));
     });
   }
 
+  // Permite registrar efeitos que dependem de uma conexao STOMP ja aberta.
   onConnect(callback) {
     this.onConnectCallbacks.push(callback);
     if (this.client && this.client.connected) {

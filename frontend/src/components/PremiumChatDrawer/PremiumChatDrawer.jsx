@@ -14,12 +14,14 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef(null);
 
+  // Mantem a conversa posicionada na mensagem mais recente apos novas mensagens.
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     if (isOpen) {
+      // Abrir o drawer sempre sincroniza conversa e inscricoes relevantes.
       fetchData();
       subscribeToMessages();
     }
@@ -28,8 +30,10 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
     };
   }, [isOpen, otherUserId]);
 
+  // Mensagens novas, inclusive via WebSocket, devem puxar o scroll para o fim.
   useEffect(scrollToBottom, [messages]);
 
+  // Carrega conversa e, quando o usuario e o presenteador, a wishlist da pessoa sorteada.
   const fetchData = async () => {
     setLoading(true);
     setWishlistLoaded(false);
@@ -58,6 +62,7 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
     }
   };
 
+  // Assina eventos privados que podem alterar a conversa ou o card de wishlist.
   const subscribeToMessages = () => {
     webSocketService.subscribe('/user/queue/messages', (notification) => {
       if (notification.groupId === parseInt(groupId)) {
@@ -77,6 +82,7 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
+    // Evita mensagens vazias e preserva o input se o envio falhar.
     if (!newMessage.trim()) return;
 
     try {

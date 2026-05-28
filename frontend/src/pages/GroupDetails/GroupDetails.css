@@ -91,6 +91,7 @@
 
 .header-stats {
   display: grid;
+  /* Quatro indicadores mantem codigo, evento, membros e contagem no mesmo nivel visual. */
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
   padding: 0 2rem 2rem;
@@ -146,6 +147,7 @@
 }
 
 .stat-helper {
+  /* Diferencia a contagem de dias da data principal sem competir com o valor. */
   margin-top: 0.25rem;
   color: #d8b4fe;
   font-size: 0.78rem;
@@ -327,6 +329,7 @@
 
 .messages-list {
   flex: 1;
+  /* O input do chat fica fixo enquanto apenas o historico de mensagens rola. */
   overflow-y: auto;
   padding-right: 0.5rem;
   display: flex;

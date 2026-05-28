@@ -2,7 +2,7 @@ import api from '../api/axios';
 
 const notificationService = {
   /**
-   * Lista todas as notificações do usuário.
+   * Lista notificacoes do usuario em ordem definida pelo backend para exibicao no dashboard.
    */
   getNotifications: async () => {
     const response = await api.get('/api/notifications');
@@ -10,7 +10,7 @@ const notificationService = {
   },
 
   /**
-   * Marca uma notificação como lida.
+   * Marca uma notificacao especifica como lida mantendo a checagem de propriedade no backend.
    */
   markAsRead: async (notificationId) => {
     const response = await api.patch(`/api/notifications/${notificationId}/read`);
@@ -18,14 +18,14 @@ const notificationService = {
   },
 
   /**
-   * Exclui uma notificação.
+   * Exclui uma notificacao individual do usuario autenticado.
    */
   deleteNotification: async (notificationId) => {
     await api.delete(`/api/notifications/${notificationId}`);
   },
 
   /**
-   * Exclui todas as notificações do usuário.
+   * Limpa todo o historico de notificacoes do usuario.
    */
   deleteAllNotifications: async () => {
     await api.delete('/api/notifications');
