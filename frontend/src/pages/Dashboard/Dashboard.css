@@ -3,6 +3,95 @@
   background-color: #0a0a0a;
   color: #fff;
   font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-background-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.dashboard-background-decor .decor-gift,
+.dashboard-background-decor .decor-person,
+.dashboard-background-decor .decor-square {
+  position: absolute;
+  user-select: none;
+  opacity: 0.14;
+}
+
+.dashboard-background-decor .decor-gift,
+.dashboard-background-decor .decor-person {
+  font-size: clamp(44px, 5vw, 78px);
+  filter: drop-shadow(0 0 18px rgba(124, 58, 237, 0.22));
+}
+
+.dashboard-background-decor .decor-person {
+  opacity: 0.1;
+  filter: drop-shadow(0 0 18px rgba(16, 185, 129, 0.2));
+}
+
+.dashboard-background-decor .decor-square {
+  width: clamp(74px, 8vw, 132px);
+  aspect-ratio: 1;
+  border: 2px dashed rgba(168, 85, 247, 0.42);
+  border-radius: 16px;
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.1);
+}
+
+.dashboard-background-decor .gift-one {
+  top: 15%;
+  left: 6%;
+  transform: rotate(-14deg);
+}
+
+.dashboard-background-decor .gift-two {
+  right: 9%;
+  bottom: 14%;
+  transform: rotate(12deg);
+}
+
+.dashboard-background-decor .person-one {
+  top: 33%;
+  right: 17%;
+  transform: rotate(-6deg);
+}
+
+.dashboard-background-decor .person-two {
+  left: 12%;
+  bottom: 18%;
+  transform: rotate(8deg);
+}
+
+.dashboard-background-decor .square-one {
+  top: 11%;
+  right: 32%;
+  border-color: rgba(16, 185, 129, 0.36);
+  transform: rotate(14deg);
+}
+
+.dashboard-background-decor .square-two {
+  top: 58%;
+  left: 4%;
+  transform: rotate(-9deg);
+}
+
+.dashboard-background-decor .square-three {
+  right: 5%;
+  top: 45%;
+  border-color: rgba(59, 130, 246, 0.32);
+  transform: rotate(20deg);
+}
+
+.dashboard-background-decor .square-four {
+  left: 43%;
+  bottom: 7%;
+  width: clamp(52px, 6vw, 98px);
+  border-color: rgba(16, 185, 129, 0.28);
+  transform: rotate(-18deg);
 }
 
 /* Header */
@@ -105,6 +194,8 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 40px;
+  position: relative;
+  z-index: 1;
 }
 
 .welcome-section {

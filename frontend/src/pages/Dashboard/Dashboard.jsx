@@ -198,6 +198,16 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-page">
+      <div className="dashboard-background-decor" aria-hidden="true">
+        <span className="decor-gift gift-one">🎁</span>
+        <span className="decor-gift gift-two">🎁</span>
+        <span className="decor-person person-one">👤</span>
+        <span className="decor-person person-two">👥</span>
+        <span className="decor-square square-one"></span>
+        <span className="decor-square square-two"></span>
+        <span className="decor-square square-three"></span>
+        <span className="decor-square square-four"></span>
+      </div>
       <main className="dashboard-main">
         <section className="welcome-section">
           <div className="welcome-text">
