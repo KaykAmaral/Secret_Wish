@@ -16,6 +16,31 @@
   position: sticky;
   top: 0;
   z-index: 1000;
+  overflow: hidden;
+}
+
+.dashboard-header::after {
+  content: "";
+  position: absolute;
+  left: -38%;
+  bottom: 0;
+  width: 38%;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(16, 185, 129, 0.08) 12%,
+    rgba(16, 185, 129, 0.65) 34%,
+    rgba(59, 130, 246, 0.45) 58%,
+    rgba(124, 58, 237, 0.72) 82%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 8px rgba(16, 185, 129, 0.28),
+    0 0 14px rgba(124, 58, 237, 0.24);
+  opacity: 0.72;
+  animation: navbarNeonSweep 5.8s linear infinite;
 }
 
 .header-content {
@@ -227,6 +252,16 @@
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(10px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes navbarNeonSweep {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(365%);
+  }
 }
 
 .app-content {
