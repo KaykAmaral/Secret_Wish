@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import groupService from '../../services/groupService';
 import notificationService from '../../services/notificationService';
-import WishlistModal from '../../components/WishlistModal/WishlistModal';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -16,7 +15,6 @@ const Dashboard = () => {
   // Modals visibility
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [showWishlistModal, setShowWishlistModal] = useState(false);
   
   // States para formulários
   const [newGroupName, setNewGroupName] = useState('');
@@ -218,7 +216,7 @@ const Dashboard = () => {
             <button className="btn-secondary" onClick={() => setShowJoinModal(true)}>
               <span>#</span> Entrar via Código
             </button>
-            <button className="btn-wishlist" onClick={() => setShowWishlistModal(true)}>
+            <button className="btn-wishlist" onClick={() => navigate('/wishlist')}>
               <span>♥</span> Lista de Desejos
             </button>
           </div>
@@ -367,7 +365,6 @@ const Dashboard = () => {
         </div>
       )}
 
-      <WishlistModal isOpen={showWishlistModal} onClose={() => setShowWishlistModal(false)} />
     </div>
   );
 };

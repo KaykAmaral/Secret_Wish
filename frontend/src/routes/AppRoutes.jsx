@@ -5,6 +5,7 @@ import Register from '../pages/Auth/Register';
 import Dashboard from '../pages/Dashboard/Dashboard';
 import GroupDetails from '../pages/GroupDetails/GroupDetails';
 import OAuthCallback from '../pages/OAuthCallback/OAuthCallback';
+import Wishlist from '../pages/Wishlist/Wishlist';
 import ProtectedRoute from './ProtectedRoute';
 
 const AppRoutes = () => {
@@ -21,6 +22,7 @@ const AppRoutes = () => {
           {/* Rotas Privadas */}
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/groups/:groupId" element={<GroupDetails />} />
           </Route>
 
