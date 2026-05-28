@@ -321,7 +321,13 @@ const GroupDetails = () => {
         <div className="members-list">
           {group.membros.map(membro => (
             <div key={membro.id} className="member-item">
-              <div className="member-avatar">{membro.nome.charAt(0)}</div>
+              <div className="member-avatar">
+                {membro.imagemUrl ? (
+                  <img src={membro.imagemUrl} alt={membro.nome} className="avatar-img" />
+                ) : (
+                  membro.nome.charAt(0).toUpperCase()
+                )}
+              </div>
               <div className="member-info">
                 <span className="member-name">
                   {membro.nome}
