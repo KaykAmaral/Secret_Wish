@@ -10,6 +10,7 @@ import com.example.springApp.service.AuthService;
 import com.example.springApp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -60,6 +61,11 @@ public class AuthController {
 
     @PostMapping("/auth/register")
     @Operation(summary = "Criar conta com email e senha")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Conta criada e sessao iniciada"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "409", ref = "#/components/responses/ErroPadrao")
+    })
     public AuthStatusResponse register(
             @Valid @RequestBody RegisterRequest request,
             HttpServletRequest httpRequest,
@@ -75,6 +81,11 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     @Operation(summary = "Entrar com email e senha")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Login realizado e cookie de sessao definido"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public AuthStatusResponse login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest,
@@ -93,6 +104,7 @@ public class AuthController {
             summary = "Consultar status da sessao",
             description = "Retorna authenticated=false quando nao houver JWT valido e dados do usuario quando houver."
     )
+    @ApiResponse(responseCode = "200", description = "Status da sessao retornado")
     public ResponseEntity<AuthStatusResponse> status(Authentication authentication) {
         AuthStatusResponse body;
         if (authentication == null || !(authentication.getPrincipal() instanceof Long userId)) {

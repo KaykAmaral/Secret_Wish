@@ -8,6 +8,7 @@ import com.example.springApp.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -42,6 +43,10 @@ public class NotificationController {
 
     @GetMapping
     @Operation(summary = "Listar notificacoes")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Notificacoes retornadas"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public List<NotificationResponse> list(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return notificationService.getUserNotifications(userId).stream()
@@ -51,6 +56,10 @@ public class NotificationController {
 
     @GetMapping("/unread-count")
     @Operation(summary = "Contar notificacoes nao lidas")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Contagem retornada"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public UnreadCountResponse unreadCount(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return new UnreadCountResponse(notificationService.countUnreadNotifications(userId));
@@ -58,6 +67,12 @@ public class NotificationController {
 
     @PatchMapping("/{notificationId}/read")
     @Operation(summary = "Marcar notificacao como lida")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Notificacao marcada como lida"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public NotificationResponse markAsRead(
             @Parameter(description = "ID da notificacao") @PathVariable Long notificationId,
             Authentication authentication
@@ -69,7 +84,10 @@ public class NotificationController {
     @PatchMapping("/read-all")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Marcar todas como lidas")
-    @ApiResponse(responseCode = "204", description = "Notificacoes marcadas como lidas")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Notificacoes marcadas como lidas"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public void markAllAsRead(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         notificationService.markAllAsRead(userId);
@@ -78,7 +96,12 @@ public class NotificationController {
     @DeleteMapping("/{notificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Excluir notificacao")
-    @ApiResponse(responseCode = "204", description = "Notificacao excluida")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Notificacao excluida"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public void delete(
             @Parameter(description = "ID da notificacao") @PathVariable Long notificationId,
             Authentication authentication
@@ -90,7 +113,10 @@ public class NotificationController {
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Excluir todas as notificacoes")
-    @ApiResponse(responseCode = "204", description = "Notificacoes excluidas")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Notificacoes excluidas"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public void deleteAll(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         notificationService.deleteUserNotifications(userId);

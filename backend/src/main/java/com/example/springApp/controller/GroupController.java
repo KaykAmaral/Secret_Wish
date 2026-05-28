@@ -10,6 +10,7 @@ import com.example.springApp.service.GroupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,10 @@ public class GroupController {
 
     @GetMapping
     @Operation(summary = "Listar meus grupos", description = "Retorna todos os grupos que o usuario autenticado criou ou participa.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Grupos retornados"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public List<GroupResponse> myGroups(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return groupService.getUserGroups(userId).stream()
@@ -55,6 +60,11 @@ public class GroupController {
 
     @GetMapping("/{groupId}")
     @Operation(summary = "Consultar grupo", description = "Retorna os dados de um grupo em que o usuario autenticado participa.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Grupo retornado"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public GroupResponse getById(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             Authentication authentication
@@ -66,8 +76,12 @@ public class GroupController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Criar grupo", description = "Cria um novo grupo. Cada usuario pode ser dono de apenas um grupo.")
-    @ApiResponse(responseCode = "201", description = "Grupo criado")
-    @ApiResponse(responseCode = "400", description = "Dados invalidos ou regra de negocio violada")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Grupo criado"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "409", ref = "#/components/responses/ErroPadrao")
+    })
     public GroupResponse create(
             @Valid @RequestBody CreateGroupRequest request,
             Authentication authentication
@@ -84,6 +98,13 @@ public class GroupController {
 
     @PostMapping("/join")
     @Operation(summary = "Entrar em grupo", description = "Adiciona o usuario autenticado a um grupo usando o codigo unico.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Usuario adicionado ao grupo"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado"),
+            @ApiResponse(responseCode = "409", ref = "#/components/responses/ErroPadrao")
+    })
     public GroupResponse join(
             @Valid @RequestBody JoinGroupRequest request,
             Authentication authentication
@@ -94,6 +115,13 @@ public class GroupController {
 
     @DeleteMapping("/{groupId}/members/{memberId}")
     @Operation(summary = "Remover membro", description = "Remove um membro do grupo. Apenas o dono pode executar esta acao.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Membro removido"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public GroupResponse removeMember(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             @Parameter(description = "ID do membro a remover") @PathVariable Long memberId,
@@ -106,7 +134,12 @@ public class GroupController {
     @DeleteMapping("/{groupId}/leave")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Sair do grupo", description = "Permite sair do grupo antes do sorteio.")
-    @ApiResponse(responseCode = "204", description = "Usuario saiu do grupo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Usuario saiu do grupo"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public void leave(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             Authentication authentication
@@ -118,7 +151,12 @@ public class GroupController {
     @DeleteMapping("/{groupId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Excluir grupo", description = "Exclui o grupo e seus dados relacionados. Apenas o dono pode executar esta acao.")
-    @ApiResponse(responseCode = "204", description = "Grupo excluido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Grupo excluido"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public void delete(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             Authentication authentication

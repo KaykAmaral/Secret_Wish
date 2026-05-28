@@ -10,6 +10,7 @@ import com.example.springApp.service.WishlistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,8 +48,13 @@ public class DrawController {
             summary = "Realizar sorteio",
             description = "Executa ou refaz o sorteio do grupo. Requer no minimo 3 participantes e permissao de dono."
     )
-    @ApiResponse(responseCode = "200", description = "Sorteio realizado")
-    @ApiResponse(responseCode = "400", description = "Grupo sem participantes suficientes ou regra de negocio violada")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sorteio realizado"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public PerformDrawResponse perform(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             Authentication authentication
@@ -67,6 +73,12 @@ public class DrawController {
             summary = "Consultar meu amigo secreto",
             description = "Retorna somente a pessoa sorteada para o usuario autenticado e a wishlist visivel dela."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Amigo secreto retornado"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public SecretFriendResponse mySecretFriend(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             Authentication authentication

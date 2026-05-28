@@ -13,6 +13,7 @@ import com.example.springApp.service.WishlistService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,10 @@ public class WishlistController {
 
     @GetMapping("/wishlist")
     @Operation(summary = "Consultar minha wishlist", description = "Retorna a wishlist do usuario autenticado, criando uma vazia se ainda nao existir.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Wishlist retornada"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public WishlistResponse myWishlist(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
         return responseMapper.toWishlistResponse(wishlistService.getOrCreateWishlist(userId));
@@ -59,7 +64,11 @@ public class WishlistController {
     @PostMapping("/wishlist/items")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Adicionar item na wishlist", description = "Adiciona um item simples com nome e link.")
-    @ApiResponse(responseCode = "201", description = "Item criado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Item criado"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
+    })
     public WishlistItemResponse addItem(
             @Valid @RequestBody WishlistItemRequest request,
             Authentication authentication
@@ -74,6 +83,13 @@ public class WishlistController {
 
     @PutMapping("/wishlist/items/{itemId}")
     @Operation(summary = "Atualizar item da wishlist", description = "Atualiza nome e link de um item da wishlist do usuario autenticado.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Item atualizado"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public WishlistItemResponse updateItem(
             @Parameter(description = "ID do item") @PathVariable Long itemId,
             @Valid @RequestBody WishlistItemRequest request,
@@ -90,7 +106,12 @@ public class WishlistController {
     @DeleteMapping("/wishlist/items/{itemId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remover item da wishlist")
-    @ApiResponse(responseCode = "204", description = "Item removido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Item removido"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "404", ref = "#/components/responses/NaoEncontrado")
+    })
     public void removeItem(
             @Parameter(description = "ID do item") @PathVariable Long itemId,
             Authentication authentication
@@ -104,6 +125,11 @@ public class WishlistController {
             summary = "Consultar wishlist visivel",
             description = "Retorna a wishlist de outro usuario apenas quando a regra do sorteio permitir a visualizacao."
     )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Wishlist visivel retornada"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido")
+    })
     public WishlistResponse visibleWishlist(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             @Parameter(description = "ID do usuario dono da wishlist") @PathVariable Long ownerId,
@@ -118,7 +144,13 @@ public class WishlistController {
             summary = "Gerar sugestao por IA",
             description = "Gera uma sugestao textual baseada apenas nos itens presentes na wishlist visivel."
     )
-    @ApiResponse(responseCode = "429", description = "Limite de uso por hora atingido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Sugestao gerada"),
+            @ApiResponse(responseCode = "400", ref = "#/components/responses/ErroPadrao"),
+            @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado"),
+            @ApiResponse(responseCode = "403", ref = "#/components/responses/Proibido"),
+            @ApiResponse(responseCode = "429", description = "Limite de uso por hora atingido")
+    })
     public AiSuggestionResponse generateAiSuggestion(
             @Parameter(description = "ID do grupo") @PathVariable Long groupId,
             @Parameter(description = "ID do usuario dono da wishlist") @PathVariable Long ownerId,
