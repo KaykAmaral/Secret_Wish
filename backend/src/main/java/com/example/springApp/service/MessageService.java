@@ -125,6 +125,7 @@ public class MessageService {
         List<Long> otherUserIds = draws.stream()
                 .map(draw -> otherUser(draw, userId).getId())
                 .toList();
+        // Busca todos os badges em uma unica agregacao para evitar N+1 ao montar os cards de chat.
         Map<Long, Long> unreadByOtherUser = otherUserIds.isEmpty()
                 ? Map.of()
                 : messageRepository.countUnreadByConversationPartners(groupId, userId, otherUserIds).stream()
@@ -147,6 +148,7 @@ public class MessageService {
             throw new ForbiddenException("Voce nao pode acessar esta conversa");
         }
 
+        // Atualizacao em lote evita carregar e salvar todo o historico apenas para mudar flag de leitura.
         messageRepository.markConversationReceivedMessagesAsRead(groupId, userId, otherUserId);
         Long unreadCount = countUnreadMessages(userId);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

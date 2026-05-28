@@ -66,6 +66,7 @@ class MessageServiceTest {
 
         when(groupRepository.existsByIdAndMembros_Id(10L, 1L)).thenReturn(true);
         when(drawRepository.findUserDrawRelations(10L, 1L)).thenReturn(List.of(draw));
+        // O teste valida a otimizacao: contadores de nao lidas chegam em lote, nao uma query por chat.
         when(messageRepository.countUnreadByConversationPartners(10L, 1L, List.of(2L)))
                 .thenReturn(List.of(unreadCount(2L, 3L)));
 
@@ -124,6 +125,7 @@ class MessageServiceTest {
     }
 
     private UnreadConversationCount unreadCount(Long otherUserId, Long unreadCount) {
+        // Projecao simples equivalente ao retorno parcial do Spring Data na query agregada.
         return new UnreadConversationCount() {
             @Override
             public Long getOtherUserId() {

@@ -16,6 +16,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     /**
      * Lista notificacoes recentes primeiro para o painel do usuario.
      */
+    // O mapper serializa o usuario; EntityGraph evita uma consulta extra por notificacao.
     @EntityGraph(attributePaths = "usuario")
     List<Notification> findByUsuarioIdOrderByDataCriacaoDesc(Long userId);
 

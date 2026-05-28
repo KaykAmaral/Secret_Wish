@@ -36,6 +36,7 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
     /**
      * Retorna conversa bilateral em ordem cronologica.
      */
+    // Fetch joins evitam consultas extras no ResponseMapper ao acessar grupo/remetente/destinatario.
     @Query("""
             select m from Message m
             join fetch m.grupo

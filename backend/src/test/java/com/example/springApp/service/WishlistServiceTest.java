@@ -84,6 +84,7 @@ class WishlistServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(wishlistRepository.findByUsuarioIdWithItems(1L)).thenReturn(Optional.of(wishlist));
+        // Simula a borda do limite para garantir que o 11o item nao chega ao banco.
         when(wishlistItemRepository.countByWishlistUsuarioId(1L)).thenReturn(10L);
 
         assertThatThrownBy(() -> wishlistService.addItemToWishlist(1L, item))
@@ -120,6 +121,7 @@ class WishlistServiceTest {
     }
 
     private User user(Long id) {
+        // Builders pequenos mantem os testes focados na regra e nao na montagem de fixture.
         return User.builder()
                 .id(id)
                 .nome("User " + id)

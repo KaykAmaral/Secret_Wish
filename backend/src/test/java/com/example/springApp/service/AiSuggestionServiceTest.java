@@ -39,6 +39,7 @@ class AiSuggestionServiceTest {
 
     @Test
     void generateSuggestionRejectsEmptyWishlistBeforeConsumingUsage() {
+        // Validacoes baratas devem acontecer antes de consumir cota ou chamar o cliente de IA.
         AiSuggestionService service = new AiSuggestionService(
                 chatClientBuilderProvider,
                 wishlistRepository,
@@ -77,6 +78,7 @@ class AiSuggestionServiceTest {
 
     @Test
     void generateSuggestionConsumesUsageAndThenRateLimitsUser() {
+        // Mesmo quando a IA esta indisponivel, a tentativa conta para evitar retry agressivo.
         AiSuggestionService service = new AiSuggestionService(
                 chatClientBuilderProvider,
                 wishlistRepository,

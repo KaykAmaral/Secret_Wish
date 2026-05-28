@@ -87,6 +87,7 @@ class NotificationServiceTest {
     void markAllAsReadUsesBulkUpdate() {
         notificationService.markAllAsRead(1L);
 
+        // Garante que a operacao continua em lote e nao volta a carregar todas as notificacoes.
         verify(notificationRepository).markAllUnreadAsRead(1L);
         verify(notificationRepository, never()).saveAll(any());
     }
