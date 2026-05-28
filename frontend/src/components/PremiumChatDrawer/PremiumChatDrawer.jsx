@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send, Gift, ExternalLink, Sparkles } from 'lucide-react';
+import { X, Send, Gift, ExternalLink, Sparkles, Smile } from 'lucide-react';
+import EmojiPicker, { Theme } from 'emoji-picker-react';
 import messageService from '../../services/messageService';
 import wishlistService from '../../services/wishlistService';
 import webSocketService from '../../services/websocketService';
@@ -12,7 +13,9 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
   const [wishlistLoaded, setWishlistLoaded] = useState(false);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
+  const emojiPickerRef = useRef(null);
 
   // Mantem a conversa posicionada na mensagem mais recente apos novas mensagens.
   const scrollToBottom = () => {
@@ -20,10 +23,27 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
   };
 
   useEffect(() => {
+    // Fecha o seletor de emojis se clicar fora dele
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojiPicker]);
+
+  useEffect(() => {
     if (isOpen) {
       // Abrir o drawer sempre sincroniza conversa e inscricoes relevantes.
       fetchData();
       subscribeToMessages();
+      setShowEmojiPicker(false);
     }
     return () => {
       // Unsubscribe logic could be added to webSocketService if needed
@@ -81,7 +101,7 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
   };
 
   const handleSendMessage = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     // Evita mensagens vazias e preserva o input se o envio falhar.
     if (!newMessage.trim()) return;
 
@@ -89,9 +109,14 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
       const sentMsg = await messageService.sendMessage(groupId, otherUserId, newMessage);
       setMessages(prev => [...prev, sentMsg]);
       setNewMessage('');
+      setShowEmojiPicker(false);
     } catch (err) {
       console.error('Erro ao enviar mensagem:', err);
     }
+  };
+
+  const onEmojiClick = (emojiData) => {
+    setNewMessage(prev => prev + emojiData.emoji);
   };
 
   if (!isOpen) return null;
@@ -170,18 +195,52 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
               <div ref={messagesEndRef} />
             </div>
 
-            <form className="chat-input-area" onSubmit={handleSendMessage}>
-              <input 
-                type="text" 
-                placeholder="Envie uma mensagem anônima..." 
-                value={newMessage}
-                onChange={e => setNewMessage(e.target.value)}
-                className="chat-input"
-              />
-              <button type="submit" className="send-btn">
-                <Send size={20} />
-              </button>
-            </form>
+            <div className="chat-input-wrapper">
+              <AnimatePresence>
+                {showEmojiPicker && (
+                  <motion.div 
+                    className="emoji-picker-container"
+                    ref={emojiPickerRef}
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <EmojiPicker 
+                      onEmojiClick={onEmojiClick}
+                      theme={Theme.DARK}
+                      lazyLoadEmojis={true}
+                      searchPlaceHolder="Buscar emoji..."
+                      width="100%"
+                      height="350px"
+                      skinTonesDisabled={true}
+                      previewConfig={{ showPreview: false }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <form className="chat-input-area" onSubmit={handleSendMessage}>
+                <button 
+                  type="button" 
+                  className={`emoji-toggle-btn ${showEmojiPicker ? 'active' : ''}`}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                >
+                  <Smile size={22} />
+                </button>
+                <input 
+                  type="text" 
+                  placeholder="Envie uma mensagem anônima..." 
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  className="chat-input"
+                  onFocus={() => setShowEmojiPicker(false)}
+                />
+                <button type="submit" className="send-btn" disabled={!newMessage.trim()}>
+                  <Send size={20} />
+                </button>
+              </form>
+            </div>
           </div>
         </motion.div>
       </div>
