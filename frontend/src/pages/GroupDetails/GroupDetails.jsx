@@ -21,22 +21,27 @@ import drawService from '../../services/drawService';
 import messageService from '../../services/messageService';
 import webSocketService from '../../services/websocketService';
 import PremiumChatDrawer from '../../components/PremiumChatDrawer/PremiumChatDrawer';
+import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationModal';
 import './GroupDetails.css';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-
   const [group, setGroup] = useState(null);
   const [whoITook, setWhoITook] = useState(null);
   const [gifterChat, setGifterChat] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [isFriendChatOpen, setIsFriendChatOpen] = useState(false);
   const [isGifterChatOpen, setIsGifterChatOpen] = useState(false);
+
+  // States para modais de confirmação
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDrawModal, setShowDrawModal] = useState(false);
+
 
   // Carrega o grupo e, quando ja houve sorteio, tambem os dados necessarios para os chats.
   const fetchGroupDetails = useCallback(async () => {
@@ -75,9 +80,12 @@ const GroupDetails = () => {
     return () => webSocketService.disconnect();
   }, [fetchGroupDetails]);
 
-  const handlePerformDraw = async () => {
-    if (!window.confirm('Tem certeza que deseja realizar o sorteio agora? Ninguem mais podera entrar no grupo.')) return;
+  const handlePerformDraw = () => {
+    setShowDrawModal(true);
+  };
 
+  const confirmPerformDraw = async () => {
+    setShowDrawModal(false);
     // Depois do sorteio, recarrega o grupo para habilitar cards de resultado e chats.
     setActionLoading(true);
     setError('');
@@ -91,23 +99,31 @@ const GroupDetails = () => {
     }
   };
 
-  const handleLeaveGroup = async () => {
-    if (!window.confirm('Tem certeza que deseja sair do grupo?')) return;
+  const handleLeaveGroup = () => {
+    setShowLeaveModal(true);
+  };
+
+  const confirmLeaveGroup = async () => {
+    setShowLeaveModal(false);
     try {
       await groupService.leaveGroup(groupId);
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.message || 'Erro ao sair do grupo.');
+      setError(err.response?.data?.message || 'Erro ao sair do grupo.');
     }
   };
 
-  const handleDeleteGroup = async () => {
-    if (!window.confirm('ATENCAO: Esta acao e irreversivel.')) return;
+  const handleDeleteGroup = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteGroup = async () => {
+    setShowDeleteModal(false);
     try {
       await groupService.deleteGroup(groupId);
       navigate('/dashboard');
     } catch (err) {
-      alert(err.response?.data?.message || 'Erro ao excluir grupo.');
+      setError(err.response?.data?.message || 'Erro ao excluir grupo.');
     }
   };
 
@@ -340,6 +356,37 @@ const GroupDetails = () => {
           isAnonymousChat={true}
         />
       )}
+
+      {/* Modais de Confirmação */}
+      <ConfirmationModal
+        isOpen={showLeaveModal}
+        onClose={() => setShowLeaveModal(false)}
+        onConfirm={confirmLeaveGroup}
+        title="Sair do Grupo?"
+        message="Você tem certeza que deseja sair deste grupo? Esta ação não pode ser desfeita se o sorteio já tiver ocorrido."
+        confirmText="Sair do Grupo"
+        variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteGroup}
+        title="Excluir Grupo?"
+        message="ATENÇÃO: Esta ação é irreversível. Todos os dados do grupo, sorteios e mensagens serão apagados permanentemente."
+        confirmText="Excluir Permanentemente"
+        variant="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={showDrawModal}
+        onClose={() => setShowDrawModal(false)}
+        onConfirm={confirmPerformDraw}
+        title="Realizar Sorteio?"
+        message="Tem certeza que deseja realizar o sorteio agora? Ninguém mais poderá entrar no grupo e os pares serão revelados para cada participante."
+        confirmText="Realizar Sorteio"
+        variant="info"
+      />
     </div>
   );
 };
