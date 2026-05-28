@@ -20,6 +20,7 @@ public class JwtService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final Base64.Encoder BASE64_URL_ENCODER = Base64.getUrlEncoder().withoutPadding();
     private static final Base64.Decoder BASE64_URL_DECODER = Base64.getUrlDecoder();
+    private static final int MAX_TOKEN_LENGTH = 4096;
 
     private final String secret;
     private final long expirationSeconds;
@@ -58,8 +59,21 @@ public class JwtService {
      */
     public Long validateAndGetUserId(String token) {
         try {
+            if (token.length() > MAX_TOKEN_LENGTH) {
+                return null;
+            }
+
             String[] parts = token.split("\\.");
             if (parts.length != 3) {
+                return null;
+            }
+
+            Map<String, Object> header = OBJECT_MAPPER.readValue(
+                    BASE64_URL_DECODER.decode(parts[0]),
+                    new TypeReference<>() {
+                    }
+            );
+            if (!"HS256".equals(header.get("alg")) || !"JWT".equals(header.get("typ"))) {
                 return null;
             }
 

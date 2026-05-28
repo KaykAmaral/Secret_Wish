@@ -28,11 +28,6 @@ const MainLayout = () => {
     };
   }, [showDropdown]);
 
-  // Telas publicas usam apenas o Outlet, sem chrome autenticado.
-  if (!isAuthenticated) {
-    return <Outlet />;
-  }
-
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
   // Abre o modal e fecha o dropdown para manter apenas uma superficie ativa.
@@ -59,6 +54,11 @@ const MainLayout = () => {
       return () => clearTimeout(timer);
     }
   }, [location]);
+
+  // Telas publicas usam apenas o Outlet, sem chrome autenticado.
+  if (!isAuthenticated) {
+    return <Outlet />;
+  }
 
   // Usa ate duas iniciais para manter avatar legivel quando nao ha imagem.
   const getInitials = (name) => {

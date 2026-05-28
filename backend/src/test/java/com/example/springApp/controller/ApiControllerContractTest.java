@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockCookie;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -128,6 +129,52 @@ class ApiControllerContractTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.message").value("A lista de desejos pode ter no maximo 10 itens"));
+    }
+
+    @Test
+    void cookieAuthenticatedMutationRequiresTrustedOrigin() throws Exception {
+        User user = createUser("Cookie Origin User");
+        MockCookie authCookie = new MockCookie("secret_wish_token", jwtService.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getNome()
+        ));
+
+        mockMvc.perform(post("/api/wishlist/items")
+                        .cookie(authCookie)
+                        .header(HttpHeaders.REFERER, "http://malicious.localhost/wishlist")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nomeProduto": "Caneca",
+                                  "link": "https://example.com/caneca"
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Origem nao permitida"));
+    }
+
+    @Test
+    void cookieAuthenticatedMutationAllowsConfiguredFrontendOrigin() throws Exception {
+        User user = createUser("Cookie Valid Origin User");
+        MockCookie authCookie = new MockCookie("secret_wish_token", jwtService.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getNome()
+        ));
+
+        mockMvc.perform(post("/api/wishlist/items")
+                        .cookie(authCookie)
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "nomeProduto": "Caneca",
+                                  "link": "https://example.com/caneca"
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.nomeProduto").value("Caneca"));
     }
 
     private User createUser(String name) {

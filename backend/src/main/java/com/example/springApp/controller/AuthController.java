@@ -5,6 +5,7 @@ import com.example.springApp.dto.LoginRequest;
 import com.example.springApp.dto.RegisterRequest;
 import com.example.springApp.mapper.ResponseMapper;
 import com.example.springApp.model.User;
+import com.example.springApp.security.AuthRateLimitService;
 import com.example.springApp.security.JwtAuthenticationFilter;
 import com.example.springApp.service.AuthService;
 import com.example.springApp.service.UserService;
@@ -38,6 +39,7 @@ public class AuthController {
 
     private final UserService userService;
     private final AuthService authService;
+    private final AuthRateLimitService authRateLimitService;
     private final com.example.springApp.security.JwtService jwtService;
     private final ResponseMapper responseMapper;
     private final boolean authCookieSecure;
@@ -46,6 +48,7 @@ public class AuthController {
     public AuthController(
             UserService userService,
             AuthService authService,
+            AuthRateLimitService authRateLimitService,
             com.example.springApp.security.JwtService jwtService,
             ResponseMapper responseMapper,
             @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure,
@@ -53,6 +56,7 @@ public class AuthController {
     ) {
         this.userService = userService;
         this.authService = authService;
+        this.authRateLimitService = authRateLimitService;
         this.jwtService = jwtService;
         this.responseMapper = responseMapper;
         this.authCookieSecure = authCookieSecure;
@@ -72,6 +76,7 @@ public class AuthController {
             HttpServletResponse httpResponse
     ) {
         log.info("Tentativa de registro para email: {}", request.email());
+        authRateLimitService.checkRegisterAllowed(request.email(), clientAddress(httpRequest));
         User user = authService.register(request);
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
         setAuthCookie(httpRequest, httpResponse, token);
@@ -92,6 +97,7 @@ public class AuthController {
             HttpServletResponse httpResponse
     ) {
         log.info("Tentativa de login para email: {}", request.email());
+        authRateLimitService.checkLoginAllowed(request.email(), clientAddress(httpRequest));
         String token = authService.login(request);
         User user = userService.getUserByEmail(request.email());
         setAuthCookie(httpRequest, httpResponse, token);
@@ -157,5 +163,9 @@ public class AuthController {
                 .maxAge(Duration.ofHours(1))
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, authCookie.toString());
+    }
+
+    private String clientAddress(HttpServletRequest request) {
+        return request.getRemoteAddr();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.springApp.config;
 
 import com.example.springApp.dto.ApiErrorResponse;
+import com.example.springApp.security.CookieCsrfProtectionFilter;
 import com.example.springApp.security.GoogleOAuth2SuccessHandler;
 import com.example.springApp.security.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -34,6 +36,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CookieCsrfProtectionFilter cookieCsrfProtectionFilter;
     private final GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler;
     private final FrontendOriginsProperties frontendOrigins;
     private final ClientRegistrationRepository clientRegistrationRepository;
@@ -43,6 +46,7 @@ public class SecurityConfig {
 
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            CookieCsrfProtectionFilter cookieCsrfProtectionFilter,
             GoogleOAuth2SuccessHandler googleOAuth2SuccessHandler,
             FrontendOriginsProperties frontendOrigins,
             ClientRegistrationRepository clientRegistrationRepository,
@@ -51,6 +55,7 @@ public class SecurityConfig {
             ObjectMapper objectMapper
     ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.cookieCsrfProtectionFilter = cookieCsrfProtectionFilter;
         this.googleOAuth2SuccessHandler = googleOAuth2SuccessHandler;
         this.frontendOrigins = frontendOrigins;
         this.clientRegistrationRepository = clientRegistrationRepository;
@@ -75,6 +80,13 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .headers(headers -> headers
+                        .contentTypeOptions(contentTypeOptions -> {
+                        })
+                        .frameOptions(frameOptions -> frameOptions.deny())
+                        .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER))
+                        .permissionsPolicyHeader(permissions -> permissions.policy("geolocation=(), microphone=(), camera=()"))
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
                         apiAuthenticationEntryPoint(),
@@ -103,6 +115,7 @@ public class SecurityConfig {
                                 .authorizationRequestResolver(authorizationRequestResolver())
                         )
                 )
+                .addFilterBefore(cookieCsrfProtectionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
