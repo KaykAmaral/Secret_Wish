@@ -536,6 +536,12 @@
   }
 }
 
+@media (max-width: 1200px) {
+  .header-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 900px) {
   .group-details-page {
     padding: 1rem 1rem 2rem;
@@ -559,5 +565,23 @@
 
   .header-stats {
     padding: 0 1rem 1rem;
+  }
+
+  .title-area h1 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .members-list {
+    grid-template-columns: 1fr;
+  }
+
+  .premium-card {
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
   }
 }

@@ -219,14 +219,14 @@
 
 .actions-bar {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
 
 .actions-bar button {
-  /* Largura fixa evita desalinhamento visual causado por textos de tamanhos diferentes. */
-  width: 180px;
-  min-height: 44px;
-  padding: 12px 24px;
+  flex: 1;
+  min-width: 160px;
+  min-height: 48px;
+  padding: 12px 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -297,7 +297,7 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 350px;
-  gap: 40px;
+  gap: 32px;
 }
 
 .section-title {
@@ -312,7 +312,7 @@
 /* Group Cards */
 .groups-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
 }
 
@@ -608,6 +608,13 @@
   border: 1px solid rgba(239, 68, 68, 0.32);
 }
 
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 300px;
+    gap: 24px;
+  }
+}
+
 @media (max-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -615,15 +622,67 @@
   
   .welcome-section {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 24px;
+    align-items: stretch;
+    text-align: center;
+    gap: 28px;
   }
   
   .actions-bar {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-main {
+    padding: 32px 24px;
+  }
+
+  .welcome-text h1 {
+    font-size: 28px;
+  }
+
+  .actions-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .actions-bar button {
+    min-width: 0;
     width: 100%;
   }
-  
-  .actions-bar button {
-    flex: 1;
+
+  .btn-wishlist {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-main {
+    padding: 24px 16px;
+  }
+
+  .welcome-text h1 {
+    font-size: 24px;
+  }
+
+  .welcome-text p {
+    font-size: 15px;
+  }
+
+  .actions-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-wishlist {
+    grid-column: span 1;
+  }
+
+  .groups-list {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 18px;
   }
 }

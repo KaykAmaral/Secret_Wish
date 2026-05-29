@@ -160,3 +160,23 @@
   transform: scale(1.05);
   box-shadow: 0 0 15px var(--primary-glow);
 }
+
+@media (max-width: 600px) {
+  .drawer-content {
+    padding: 1.5rem;
+  }
+
+  .message-bubble {
+    max-width: 90%;
+  }
+
+  .drawer-header h2 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .drawer-content {
+    max-width: 100%;
+  }
+}

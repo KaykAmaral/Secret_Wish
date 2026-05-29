@@ -339,20 +339,45 @@
 }
 
 /* Responsividade */
-@media (max-width: 1024px) {
-  .auth-container {
-    flex-direction: column;
-    overflow: auto;
+@media (max-width: 1100px) {
+  .hero-title {
+    font-size: 38px;
   }
   
   .auth-info-side {
-    padding: 60px 40px;
+    padding: 40px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .auth-container {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .auth-info-side {
+    padding: 60px 24px;
     flex: none;
+    text-align: center;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
+  .info-content {
+    max-width: 100%;
   }
   
   .auth-form-side {
-    padding: 20px 20px 60px;
+    padding: 0 20px 60px;
     flex: none;
+    background: transparent;
+  }
+
+  .auth-card {
+    margin-top: -40px;
+    box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.4);
   }
   
   .hero-title {
@@ -361,5 +386,21 @@
   
   .feature-cards {
     grid-template-columns: 1fr;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .auth-card {
+    padding: 24px;
+  }
+
+  .section-title {
+    font-size: 20px;
   }
 }

@@ -207,7 +207,7 @@
 
 .groups-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
@@ -220,14 +220,20 @@
   gap: 16px;
   transition: all 0.3s ease;
   border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.group-manage-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-4px);
 }
 
 .group-manage-card.is-owner {
-  border-color: #fbbf24; /* Amarelo/Dourado */
+  border-color: rgba(251, 191, 36, 0.3);
 }
 
 .group-manage-card.is-member {
-  border-color: var(--accent-purple); /* Roxo */
+  border-color: rgba(124, 58, 237, 0.3);
 }
 
 .card-badge-row {
@@ -335,15 +341,48 @@
 
 .empty-icon { font-size: 48px; }
 
+@media (max-width: 1024px) {
+  .groups-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+}
+
 @media (max-width: 900px) {
   .my-groups-main { padding: 24px 20px; }
-  .my-groups-header { flex-direction: column; align-items: stretch; }
-  .header-actions { flex-direction: column; }
-  .header-actions button { width: 100%; }
+  .my-groups-header { flex-direction: column; align-items: stretch; text-align: center; }
+  .header-actions { flex-direction: column; margin-top: 16px; }
+  .header-actions button { width: 100%; min-width: 0; }
   
+  .controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-box {
+    width: 100%;
+  }
+
+  .filter-box select {
+    flex: 1;
+  }
+
   .gift-one, .gift-three, .square-two, .square-four { display: none; }
   .gift-two { top: 140px; right: 18px; font-size: 34px; }
   .gift-four { bottom: 70px; right: 24px; font-size: 40px; }
   .square-one { width: 92px; height: 92px; top: 90px; right: 60px; }
   .square-three { width: 110px; height: 110px; bottom: 40px; right: -24px; }
+}
+
+@media (max-width: 600px) {
+  .groups-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .my-groups-header h1 {
+    font-size: 28px;
+  }
+  
+  .groups-list-panel {
+    padding: 16px;
+  }
 }
