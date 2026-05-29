@@ -1,7 +1,7 @@
 # 🎁 Secret Wish - Frontend
 
 <div align="center">
-  <img src="./src/assets/hero.png" alt="Secret Wish Banner" width="800">
+  <img src="./src/assets/Frontend.png" alt="Secret Wish Banner" width="800">
   <p align="center">
     <strong>A plataforma inteligente de Amigo Secreto potenciada por IA e interações em tempo real.</strong>
   </p>

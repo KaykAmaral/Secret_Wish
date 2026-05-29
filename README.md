@@ -2,7 +2,7 @@
 
 <div align="center">
   <p align="center">
-    <img src="./frontend/src/assets/hero.png" alt="Secret Wish Logo" width="600">
+    <img src="./frontend/src/assets/logoprojeto.png" alt="Secret Wish Logo" width="600">
   </p>
   <p align="center">
     <strong>Elevando a tradição do Amigo Secreto ao próximo nível com IA generativa, sincronização em tempo real e arquitetura de segurança de ponta.</strong>
