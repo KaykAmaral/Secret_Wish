@@ -192,21 +192,6 @@ A interface do Secret Wish foi concebida sob os pilares de **profundidade** e **
 - **Responsividade:** Layout adaptável para Mobile, Tablet e Desktop através de CSS Grid e Flexbox.
 
 ---
-
-## 🔮 Futuras Melhorias
-
-- [ ] **Modo Offline:** Suporte a PWA para consulta da wishlist sem internet.
-- [ ] **Temas Customizados:** Seleção de paleta de cores baseada na temática do grupo (Natal, Páscoa, Empresa).
-- [ ] **Upload de Imagens:** Suporte para que o usuário envie fotos reais para o avatar.
-- [ ] **Estatísticas IA:** Dashboard visual das sugestões de presentes geradas pela IA.
-
----
-
-## 👤 Autor
-
-Desenvolvido com ❤️ por [David](https://github.com/David).
-
----
 <div align="center">
   <p>© 2026 Secret Wish. Todos os direitos reservados.</p>
 </div>
