@@ -5,7 +5,7 @@
     <img src="./frontend/src/assets/logoprojeto.png" alt="Secret Wish Logo" width="600">
   </p>
   <p align="center">
-    <strong>Elevando a tradição do Amigo Secreto ao próximo nível com IA generativa, sincronização em tempo real e arquitetura de segurança de ponta.</strong>
+    <strong>Elevando a tradição do Amigo Secreto sincronização em tempo real e arquitetura de segurança de ponta.</strong>
   </p>
 
   <!-- Status & Badges -->
@@ -22,8 +22,7 @@
 
 ## 📖 Sobre o Projeto
 
-O **Secret Wish** é uma solução Fullstack completa para organização de Amigo Secreto. Diferente de ferramentas simples, ele foca na **experiência do usuário** e na **resolução de atritos**:
-- **O dilema do presente:** Resolvido por IA que analisa a wishlist e sugere itens compatíveis.
+O **Secret Wish** é uma solução Fullstack completa para organização de Amigo Secreto. Diferente de ferramentas simples, ele foca na **experiência do usuário** e na **resolução de atritos**
 - **A quebra de segredo:** Evitada por chats anônimos onde o sorteador pode tirar dúvidas sem se revelar.
 - **A falha do sorteio:** Impedida por um algoritmo de cadeia circular que garante que ninguém fique de fora ou tire a si mesmo.
 
@@ -37,7 +36,6 @@ O **Secret Wish** é uma solução Fullstack completa para organização de Amig
 *   **Spring Security + OAuth2:** Fluxo de autenticação híbrido (Local + Google).
 *   **JWT + Cookies HttpOnly:** Sessões seguras protegidas contra ataques XSS e CSRF.
 *   **Spring Data JPA + Hibernate:** Camada de persistência resiliente com suporte a múltiplos dialetos.
-*   **Spring AI:** Integração agnóstica com provedores de IA (configurado com Groq Cloud).
 *   **Flyway:** Controle de versão rigoroso do esquema de banco de dados.
 
 ### 🎨 Frontend (Experiência do Usuário)
@@ -119,9 +117,6 @@ sequenceDiagram
 ---
 
 ## 🌟 Funcionalidades Principais (Deep Dive)
-
-### 🤖 Inteligência Artificial Sugestiva
-O sistema não apenas lista desejos, ele os interpreta. Se você adicionou "Cafeteira" e "Moedor", a IA (Llama 3 via Groq) pode sugerir ao seu amigo secreto marcas específicas de grãos gourmet ou filtros especiais, baseando-se no perfil de itens.
 
 ### 💬 Chat Híbrido: Revelado vs Anônimo
 O backend gerencia o "contexto de visão" de cada mensagem:
