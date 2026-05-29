@@ -6,15 +6,25 @@ import groupService from '../../services/groupService';
 import { useAuth } from '../../hooks/useAuth';
 import './MyGroups.css';
 
+/**
+ * Página "Meus Grupos".
+ * 
+ * Oferece uma interface mais densa e completa para gerenciamento de grupos do que o Dashboard.
+ * Inclui busca textual, filtros de status (dono vs membro, sorteado vs pendente) e cards informativos.
+ */
 const MyGroups = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Estados de dados e carregamento
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estados de Busca e Filtro (Gerenciados no Cliente)
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all'); // 'all' | 'owner' | 'member' | 'drawn' | 'pending'
+  const [filter, setFilter] = useState('all'); // Opções: 'all' | 'owner' | 'member' | 'drawn' | 'pending'
 
-  // States para o modal de entrar em grupo
+  // Estados para Controle de Modais e Ações
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
@@ -25,13 +35,16 @@ const MyGroups = () => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
+  /**
+   * Carrega todos os grupos vinculados ao usuário autenticado.
+   */
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const data = await groupService.getMyGroups();
       setGroups(data);
     } catch (err) {
-      console.error('Erro ao carregar grupos:', err);
+      console.error('[MyGroups] Erro ao carregar grupos:', err);
     } finally {
       setLoading(false);
     }
@@ -41,12 +54,18 @@ const MyGroups = () => {
     fetchData();
   }, [fetchData]);
 
+  /**
+   * Formata a entrada do código do grupo (XXXX-XXXX).
+   */
   const formatGroupCode = (value) => {
     const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
     if (cleaned.length <= 4) return cleaned;
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
   };
 
+  /**
+   * Trata a entrada em um grupo via código de convite.
+   */
   const handleJoinGroup = async (e) => {
     e.preventDefault();
     if (!joinCode.trim()) {
@@ -62,7 +81,7 @@ const MyGroups = () => {
       await groupService.joinGroup(joinCode);
       setShowJoinModal(false);
       setJoinCode('');
-      fetchData();
+      fetchData(); // Atualiza a lista após entrar no grupo
     } catch (err) {
       setAlertType('error');
       setError(err.response?.data?.message || 'Código inválido ou grupo já sorteado.');
@@ -71,7 +90,9 @@ const MyGroups = () => {
     }
   };
 
+  // Verifica se o usuário já atingiu o limite de criação (1 grupo por dono)
   const hasCreatedGroup = groups.some(group => group.dono?.id === user?.id);
+  
   const todayDate = new Date().toISOString().split('T')[0];
   const maxEventDateValue = (() => {
     const maxDate = new Date();
@@ -79,6 +100,9 @@ const MyGroups = () => {
     return maxDate.toISOString().split('T')[0];
   })();
 
+  /**
+   * Trata a criação de um novo grupo.
+   */
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     if (hasCreatedGroup) {
@@ -116,12 +140,17 @@ const MyGroups = () => {
     }
   };
 
+  /**
+   * Lógica de filtragem e busca no cliente.
+   * Filtra a lista 'groups' original baseada no searchTerm e no filter selecionado.
+   */
   const filteredGroups = groups.filter(group => {
     const matchesSearch = group.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           group.codigoUnico.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
 
+    // Aplica o filtro de categoria
     if (filter === 'owner') return group.dono?.id === user?.id;
     if (filter === 'member') return group.dono?.id !== user?.id;
     if (filter === 'drawn') return !!group.dataSorteio;
@@ -130,6 +159,9 @@ const MyGroups = () => {
     return true;
   });
 
+  /**
+   * Calcula quantos dias faltam para o evento.
+   */
   const getDaysUntilEvent = (dateValue) => {
     if (!dateValue) return null;
     const [year, month, day] = dateValue.split('T')[0].split('-').map(Number);
@@ -150,16 +182,12 @@ const MyGroups = () => {
 
   return (
     <div className="my-groups-page">
-      {/* Background Decorativo da Lista de Desejos */}
+      {/* Background Decorativo */}
       <div className="wishlist-background-decor" aria-hidden="true">
         <span className="gift gift-one">🎁</span>
         <span className="gift gift-two">🎁</span>
         <span className="gift gift-three">🎁</span>
         <span className="gift gift-four">🎁</span>
-        <span className="dashed-square square-one"></span>
-        <span className="dashed-square square-two"></span>
-        <span className="dashed-square square-three"></span>
-        <span className="dashed-square square-four"></span>
       </div>
 
       <main className="my-groups-main">
@@ -189,6 +217,7 @@ const MyGroups = () => {
 
         <div className="my-groups-layout">
           <section className="groups-list-panel">
+            {/* Barra de Controles (Busca e Filtros) */}
             <div className="controls-bar glass">
               <div className="search-box">
                 <Search size={18} />
@@ -211,6 +240,7 @@ const MyGroups = () => {
               </div>
             </div>
 
+            {/* Renderização da Grade de Grupos */}
             {filteredGroups.length === 0 ? (
               <div className="empty-state glass">
                 <div className="empty-icon">🎄</div>
@@ -275,7 +305,7 @@ const MyGroups = () => {
         </div>
       </main>
 
-      {/* Modais de Criar e Entrar */}
+      {/* --- Modais Reutilizados --- */}
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-card glass">

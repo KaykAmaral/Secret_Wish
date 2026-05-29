@@ -2,23 +2,36 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import authService from '../services/authService';
 import { AuthContext } from './AuthContext';
 
+/**
+ * Provedor de Autenticação (AuthProvider).
+ * 
+ * Este componente é o "cérebro" da sessão no frontend. Ele gerencia o estado do usuário,
+ * valida a autenticação junto ao backend e fornece métodos de login/logout para a aplicação.
+ * 
+ * @param {Object} props.children Elementos filhos que terão acesso ao contexto.
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // useRef é usado para evitar loops de checagem quando múltiplos componentes montam simultaneamente.
   const isChecking = useRef(false);
 
-  // Evita chamadas concorrentes para /auth/status quando varias telas pedem revalidacao ao mesmo tempo.
+  /**
+   * Verifica o status da sessão no servidor.
+   * 
+   * @param {boolean} isInitial Indica se é a primeira checagem após o carregamento da página.
+   */
   const checkAuth = useCallback(async (isInitial = false) => {
     if (isChecking.current) return;
     isChecking.current = true;
     
     try {
+      // Evita "piscar" a tela de loading em revalidações silenciosas de fundo.
       if (!isInitial) setLoading(true);
       
       const data = await authService.getStatus();
-      
-      console.log('[AuthDebug] Status da sessão:', data);
       
       if (data.authenticated) {
         setUser(data.user);
@@ -28,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('[AuthDebug] Erro ao validar sessão:', error);
+      console.error('[AuthContext] Falha na validação da sessão:', error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -37,7 +50,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // A primeira validacao roda depois do mount para deixar o React finalizar a renderizacao inicial.
+  // Realiza a checagem automática ao montar o provider (entrada no app).
   useEffect(() => {
     const timer = setTimeout(() => {
       checkAuth(true);
@@ -45,18 +58,21 @@ export const AuthProvider = ({ children }) => {
     return () => clearTimeout(timer);
   }, [checkAuth]);
 
-  // OAuth precisa sair da SPA para iniciar o fluxo controlado pelo backend.
+  /**
+   * Inicia o fluxo de login via Google.
+   * Redireciona a janela atual para o endpoint de autorização do backend.
+   */
   const loginGoogle = () => {
-    console.log('[AuthDebug] Iniciando login Google...');
     window.location.href = authService.getGoogleLoginUrl();
   };
 
-  // Login por email atualiza o contexto imediatamente quando o backend confirma a sessao.
+  /**
+   * Executa login via credenciais locais (e-mail/senha).
+   */
   const loginWithEmail = async (email, password) => {
     setLoading(true);
     try {
       const data = await authService.login(email, password);
-      console.log('[AuthDebug] Login email sucesso:', data);
       if (data.authenticated) {
         setUser(data.user);
         setIsAuthenticated(true);
@@ -68,12 +84,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Cadastro bem-sucedido tambem cria sessao, entao usa o mesmo estado de usuario autenticado.
+  /**
+   * Cadastra um novo usuário e já estabelece a sessão.
+   */
   const registerWithEmail = async (nome, email, password) => {
     setLoading(true);
     try {
       const data = await authService.register(nome, email, password);
-      console.log('[AuthDebug] Registro email sucesso:', data);
       if (data.authenticated) {
         setUser(data.user);
         setIsAuthenticated(true);
@@ -85,17 +102,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // O backend remove o cookie; o redirecionamento limpa qualquer estado visual remanescente.
+  /**
+   * Encerra a sessão e limpa os estados locais.
+   * Redireciona para a tela de login após a limpeza.
+   */
   const logout = async () => {
-    console.log('[AuthDebug] Executando logout...');
     setLoading(true);
     try {
       await authService.logout();
       setUser(null);
       setIsAuthenticated(false);
+      // O query param 'logout=success' pode ser usado pela tela de login para exibir um feedback.
       window.location.href = '/login?logout=success';
     } catch (error) {
-      console.error('[AuthDebug] Erro no logout:', error);
+      console.error('[AuthContext] Erro ao deslogar:', error);
       window.location.href = '/login';
     } finally {
       setLoading(false);

@@ -1,16 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import './MainLayout.css';
 
+/**
+ * Layout Principal da Aplicação (MainLayout).
+ * 
+ * Este componente define a estrutura global da interface, incluindo o Header (cabeçalho)
+ * fixo e a área de conteúdo dinâmico (Outlet). Ele gerencia a exibição de elementos
+ * baseada no estado de autenticação e provê o menu de perfil do usuário.
+ */
 const MainLayout = () => {
   const { isAuthenticated, logout, user, loading } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
+  
+  // Estado para controlar a visibilidade do menu suspenso (dropdown) de perfil
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Fecha o menu de perfil ao clicar fora sem registrar listener enquanto ele esta fechado.
+  /**
+   * Efeito para fechar o dropdown ao clicar em qualquer lugar fora dele.
+   * Melhora a experiência de uso (UX) e evita menus órfãos na tela.
+   */
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -28,12 +39,18 @@ const MainLayout = () => {
 
   const toggleDropdown = () => setShowDropdown(!showDropdown);
 
+  /**
+   * Redireciona para a página de perfil e fecha o menu.
+   */
   const handleGoToProfile = () => {
     setShowDropdown(false);
     navigate('/profile');
   };
 
-  // Se estiver carregando o status inicial, mostra um spinner global para evitar saltos de layout.
+  /**
+   * Exibe uma tela de carregamento global enquanto o status inicial de autenticação
+   * está sendo verificado pelo AuthProvider.
+   */
   if (loading) {
     return (
       <div className="loading-container">
@@ -43,7 +60,9 @@ const MainLayout = () => {
     );
   }
 
-  // Usa ate duas iniciais para manter avatar legivel quando nao ha imagem.
+  /**
+   * Gera as iniciais do usuário para exibição no avatar caso não haja imagemUrl.
+   */
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
@@ -51,30 +70,33 @@ const MainLayout = () => {
 
   return (
     <div className="app-layout">
-      {/* O header so aparece se o usuario estiver autenticado */}
+      {/* O Header só é renderizado se o usuário estiver logado */}
       {isAuthenticated && (
         <header className="dashboard-header">
           <div className="header-content">
+            {/* Logo e Link para Home */}
             <Link to="/dashboard" className="logo">
               <span className="logo-icon">🎁</span>
               <span className="logo-text">Secret Wish</span>
             </Link>
 
-            <nav className="main-nav" aria-label="Navegacao principal">
+            {/* Navegação Principal */}
+            <nav className="main-nav" aria-label="Navegação principal">
               <NavLink to="/dashboard" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                Pagina principal
+                Dashboard
               </NavLink>
               <NavLink to="/my-groups" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                Meus grupos
+                Meus Grupos
               </NavLink>
               <NavLink to="/wishlist" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                Lista de desejos
+                Lista de Desejos
               </NavLink>
               <NavLink to="/profile" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-                Meu perfil
+                Perfil
               </NavLink>
             </nav>
 
+            {/* Menu do Usuário (Avatar e Dropdown) */}
             <div className="user-nav-container" ref={dropdownRef}>
               <div className="user-profile-trigger" onClick={toggleDropdown}>
                 <div className="user-text">
@@ -91,6 +113,7 @@ const MainLayout = () => {
                 </div>
               </div>
 
+              {/* Menu Suspenso Animado */}
               {showDropdown && (
                 <div className="profile-dropdown glass animate-in">
                   <div className="dropdown-header">
@@ -103,9 +126,6 @@ const MainLayout = () => {
                   <button className="dropdown-item" onClick={() => setShowDropdown(false)}>
                     <span className="item-icon">⚙️</span> Configurações
                   </button>
-                  <button className="dropdown-item" onClick={() => setShowDropdown(false)}>
-                    <span className="item-icon">🔒</span> Privacidade
-                  </button>
                   <div className="dropdown-divider"></div>
                   <button className="dropdown-item logout" onClick={logout}>
                     <span className="item-icon">🚪</span> Sair
@@ -117,7 +137,9 @@ const MainLayout = () => {
         </header>
       )}
 
+      {/* Área de Conteúdo Principal */}
       <main className={isAuthenticated ? "app-content" : "auth-content-wrapper"}>
+        {/* O Outlet renderiza o componente da rota ativa definida em AppRoutes.jsx */}
         <Outlet />
       </main>
     </div>

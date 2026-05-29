@@ -3,9 +3,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import './Auth.css';
 
+/**
+ * Página de Cadastro de Usuário (Register).
+ * 
+ * Permite a criação de uma nova conta utilizando e-mail, nome e senha.
+ * Também oferece integração com o cadastro rápido via Google.
+ */
 const Register = () => {
   const { login: loginGoogle, registerWithEmail } = useAuth();
   const navigate = useNavigate();
+  
+  // Estados locais para o formulário de cadastro
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,9 +22,13 @@ const Register = () => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
-  // Valida confirmacao de senha no cliente antes de criar a conta no backend.
+  /**
+   * Trata o envio do formulário de registro por e-mail.
+   */
   const handleRegister = async (e) => {
     e.preventDefault();
+    
+    // Validação de confirmação de senha no lado do cliente
     if (password !== confirmPassword) {
       setAlertType('warning');
       setError('As senhas não coincidem.');
@@ -27,29 +39,18 @@ const Register = () => {
     setAlertType('error');
     setError('');
     
-    console.log('[AuthDebug] Tentando registrar:', email);
-    
     try {
+      // O registerWithEmail realiza o cadastro e já deixa o usuário logado no backend.
       const success = await registerWithEmail(nome, email, password);
-      console.log('[AuthDebug] Sucesso do registro:', success);
       if (success) {
         navigate('/dashboard');
       } else {
-        setAlertType('error');
-        setError('Falha ao cadastrar.');
+        setError('Falha ao processar o cadastro.');
       }
     } catch (err) {
-      console.error('[AuthDebug] Erro capturado no componente Register:', err);
+      console.error('[Register] Erro ao cadastrar usuário:', err);
       const backendMessage = err.response?.data?.message;
-      const backendError = err.response?.data?.error;
-      
-      if (backendMessage) {
-        setError(backendMessage);
-      } else if (backendError) {
-        setError(backendError);
-      } else {
-        setError('Erro de conexão com o servidor. Verifique se o backend está rodando.');
-      }
+      setError(backendMessage || 'Erro de conexão com o servidor.');
     } finally {
       setLoading(false);
     }
@@ -72,31 +73,24 @@ const Register = () => {
 
           <div className="feature-cards">
             <div className="feature-item">
-              <div className="feature-icon">👥</div>
-              <div className="feature-text">
-                <h3>Grupos Inteligentes</h3>
-                <p>Crie e gerencie grupos com códigos de acesso únicos.</p>
-              </div>
-            </div>
-            <div className="feature-item">
               <div className="feature-icon">✨</div>
               <div className="feature-text">
-                <h3>Wishlist Dinâmica</h3>
-                <p>Adicione links e deixe que seus amigos saibam o que você quer.</p>
+                <h3>Totalmente Grátis</h3>
+                <p>Organize quantos grupos quiser sem custos adicionais.</p>
               </div>
             </div>
             <div className="feature-item">
               <div className="feature-icon">🕵️</div>
               <div className="feature-text">
-                <h3>Chat Anônimo</h3>
-                <p>Tire dúvidas com seu amigo secreto sem revelar sua identidade.</p>
+                <h3>Privacidade Garantida</h3>
+                <p>Seus dados e sorteios são protegidos com criptografia.</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Lado Direito - Autenticação */}
+      {/* Lado Direito - Formulário de Cadastro */}
       <div className="auth-form-side">
         <div className="auth-card glass">
           <section className="auth-section">

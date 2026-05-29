@@ -5,22 +5,37 @@ import ConfirmationModal from '../../components/ConfirmationModal/ConfirmationMo
 import wishlistService from '../../services/wishlistService';
 import './Wishlist.css';
 
+// Limite máximo de itens por wishlist definido pela regra de negócio.
 const MAX_WISHLIST_ITEMS = 10;
 
+/**
+ * Página de Lista de Desejos (Wishlist).
+ * 
+ * Permite ao usuário cadastrar produtos que deseja ganhar no Amigo Secreto.
+ * A lista é essencial para ajudar o "amigo" que o tirou a escolher o presente ideal.
+ */
 const Wishlist = () => {
   const navigate = useNavigate();
+  
+  // Estados de Dados
   const [wishlist, setWishlist] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // Estados de Gerenciamento do Formulário
   const [isAdding, setIsAdding] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [nomeProduto, setNomeProduto] = useState('');
   const [link, setLink] = useState('');
+  
+  // Estados de Feedback e Ações
   const [actionLoading, setActionLoading] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
-  // Mantem a pagina sincronizada com a lista persistida no backend.
+  /**
+   * Recupera a wishlist do usuário autenticado.
+   */
   const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
@@ -38,8 +53,9 @@ const Wishlist = () => {
     fetchWishlist();
   }, [fetchWishlist]);
 
-
-  // Limpa o formulario e devolve o foco visual para a lista.
+  /**
+   * Reseta o estado do formulário de adição/edição.
+   */
   const resetForm = () => {
     setNomeProduto('');
     setLink('');
@@ -49,18 +65,24 @@ const Wishlist = () => {
     setAlertType('error');
   };
 
+  /**
+   * Inicia o fluxo de adição de um novo item.
+   */
   const handleStartAdd = () => {
     if (wishlistItems.length >= MAX_WISHLIST_ITEMS) {
       setAlertType('warning');
-      setError('Sua lista de desejos ja possui o limite de 10 itens.');
+      setError('Sua lista de desejos já possui o limite de 10 itens.');
       return;
     }
-
     resetForm();
     setIsAdding(true);
   };
 
-  // Reaproveita o mesmo formulario para criacao e edicao.
+  /**
+   * Inicia o fluxo de edição de um item existente.
+   * 
+   * @param {Object} item Dados do item a ser editado.
+   */
   const handleStartEdit = (item) => {
     setEditingItem(item);
     setNomeProduto(item.nomeProduto);
@@ -70,17 +92,23 @@ const Wishlist = () => {
     setAlertType('error');
   };
 
+  /**
+   * Trata o salvamento (criação ou atualização) de um item.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validação básica de campos
     if (!nomeProduto.trim() || !link.trim()) {
       setAlertType('warning');
-      setError('Preencha nome do produto e link.');
+      setError('Preencha o nome do produto e o link.');
       return;
     }
 
+    // Verifica limite antes de salvar um NOVO item
     if (!editingItem && wishlistItems.length >= MAX_WISHLIST_ITEMS) {
       setAlertType('warning');
-      setError('Sua lista de desejos ja possui o limite de 10 itens.');
+      setError('Sua lista de desejos já possui o limite de 10 itens.');
       return;
     }
 
@@ -100,7 +128,7 @@ const Wishlist = () => {
       }
 
       resetForm();
-      await fetchWishlist();
+      await fetchWishlist(); // Recarrega a lista para refletir as mudanças
     } catch (err) {
       setAlertType('error');
       setError(err.response?.data?.message || 'Erro ao salvar item.');
@@ -109,10 +137,16 @@ const Wishlist = () => {
     }
   };
 
+  /**
+   * Abre o modal de confirmação para exclusão de um item.
+   */
   const handleDelete = (itemId) => {
     setItemToDelete(itemId);
   };
 
+  /**
+   * Executa a exclusão definitiva do item após confirmação no modal.
+   */
   const confirmDelete = async () => {
     if (!itemToDelete) return;
     try {
@@ -130,16 +164,13 @@ const Wishlist = () => {
 
   return (
     <div className="wishlist-page">
+      {/* Background Decorativo */}
       <div className="wishlist-background-decor" aria-hidden="true">
         <span className="gift gift-one">🎁</span>
         <span className="gift gift-two">🎁</span>
-        <span className="gift gift-three">🎁</span>
-        <span className="gift gift-four">🎁</span>
         <span className="dashed-square square-one"></span>
-        <span className="dashed-square square-two"></span>
-        <span className="dashed-square square-three"></span>
-        <span className="dashed-square square-four"></span>
       </div>
+
       <main className="wishlist-main">
         <nav className="wishlist-breadcrumb">
           <button onClick={() => navigate('/dashboard')}>
@@ -151,13 +182,14 @@ const Wishlist = () => {
           <div>
             <span className="wishlist-kicker">Lista pessoal</span>
             <h1>Lista de Desejos</h1>
-            <p>Gerencie os presentes que ficarao visiveis para seu amigo secreto depois do sorteio.</p>
+            <p>Gerencie os presentes que ficarão visíveis para seu amigo secreto após o sorteio.</p>
           </div>
         </header>
 
         {error && <p className={`form-alert ${alertType}`}>{error}</p>}
 
         <div className="wishlist-layout">
+          {/* Painel de Visualização da Lista */}
           <section className="wishlist-list-panel">
             <div className="wishlist-section-header">
               <h2>Seus presentes</h2>
@@ -172,8 +204,8 @@ const Wishlist = () => {
             ) : wishlistItems.length === 0 ? (
               <div className="wishlist-empty">
                 <div className="wishlist-empty-icon">🎁</div>
-                <h3>Hmm... parece que sua lista está vazia</h3>
-                <p>Adicione alguns presentes para dar uma ajuda para quem tirou voce no amigo secreto.</p>
+                <h3>Sua lista está vazia</h3>
+                <p>Adicione alguns presentes para ajudar quem tirou você!</p>
                 <button className="btn-primary" onClick={handleStartAdd}>
                   <Plus size={18} /> Adicionar primeiro presente
                 </button>
@@ -191,10 +223,10 @@ const Wishlist = () => {
                       )}
                     </div>
                     <div className="wishlist-item-actions">
-                      <button onClick={() => handleStartEdit(item)} title="Editar item" aria-label="Editar item">
+                      <button onClick={() => handleStartEdit(item)} title="Editar item">
                         <Pencil size={17} />
                       </button>
-                      <button className="delete" onClick={() => handleDelete(item.id)} title="Remover item" aria-label="Remover item">
+                      <button className="delete" onClick={() => handleDelete(item.id)} title="Remover item">
                         <Trash2 size={17} />
                       </button>
                     </div>
@@ -204,11 +236,12 @@ const Wishlist = () => {
             )}
           </section>
 
+          {/* Painel Lateral de Formulário */}
           <aside className="wishlist-form-panel">
             <h2>{editingItem ? 'Editar presente' : 'Novo presente'}</h2>
             <p>
               {hasReachedWishlistLimit && !editingItem
-                ? 'Sua lista ja chegou ao limite de 10 itens. Remova um presente para adicionar outro.'
+                ? 'Sua lista atingiu o limite. Remova um item para adicionar um novo.'
                 : 'Informe um nome claro e um link direto para o produto.'}
             </p>
 
@@ -218,7 +251,7 @@ const Wishlist = () => {
                   <label>Nome do Produto</label>
                   <input
                     type="text"
-                    placeholder="Ex: Caneca Gamer"
+                    placeholder="Ex: Fone Bluetooth"
                     value={nomeProduto}
                     onChange={(e) => setNomeProduto(e.target.value)}
                     required
@@ -226,10 +259,10 @@ const Wishlist = () => {
                   />
                 </div>
                 <div className="input-group">
-                  <label>Link</label>
+                  <label>Link do Produto</label>
                   <input
                     type="url"
-                    placeholder="https://amazon.com/..."
+                    placeholder="https://..."
                     value={link}
                     onChange={(e) => setLink(e.target.value)}
                     required
@@ -248,16 +281,17 @@ const Wishlist = () => {
               </button>
             )}
           </aside>
-
         </div>
       </main>
+
+      {/* Modal de Confirmação de Exclusão */}
       <ConfirmationModal
         isOpen={Boolean(itemToDelete)}
         onClose={() => setItemToDelete(null)}
         onConfirm={confirmDelete}
         title="Remover item?"
-        message="Tem certeza que deseja remover este item?"
-        confirmText="Remover item"
+        message="Tem certeza que deseja remover este item da sua lista?"
+        confirmText="Remover"
         variant="danger"
       />
     </div>

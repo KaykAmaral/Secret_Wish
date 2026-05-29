@@ -3,45 +3,46 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import './Auth.css';
 
+/**
+ * Página de Autenticação (Login).
+ * 
+ * Oferece as opções de entrada no sistema: via credenciais locais (e-mail/senha)
+ * ou através do provedor externo Google OAuth2.
+ */
 const Auth = () => {
   const { login: loginGoogle, loginWithEmail } = useAuth();
   const navigate = useNavigate();
+  
+  // Estados locais para controle do formulário
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
-  // Delega a criacao da sessao ao AuthProvider para manter usuario e rotas sincronizados.
+  /**
+   * Trata o envio do formulário de login por e-mail.
+   */
   const handleEmailLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setAlertType('error');
     setError('');
     
-    console.log('[AuthDebug] Tentando login com:', email);
-    
     try {
+      // O AuthProvider gerencia a persistência do cookie e atualização do estado global.
       const success = await loginWithEmail(email, password);
-      console.log('[AuthDebug] Sucesso do login:', success);
       if (success) {
+        // Redireciona para o Dashboard após autenticação bem-sucedida.
         navigate('/dashboard');
       } else {
-        setAlertType('error');
-        setError('Falha ao autenticar.');
+        setError('E-mail ou senha incorretos.');
       }
     } catch (err) {
-      console.error('[AuthDebug] Erro capturado no componente Login:', err);
+      console.error('[Auth] Falha na tentativa de login:', err);
+      // Extrai mensagem amigável do backend se disponível.
       const backendMessage = err.response?.data?.message;
-      const backendError = err.response?.data?.error;
-      
-      if (backendMessage) {
-        setError(backendMessage);
-      } else if (backendError) {
-        setError(backendError);
-      } else {
-        setError('Erro de conexão com o servidor. Verifique se o backend está rodando.');
-      }
+      setError(backendMessage || 'Erro de conexão. Verifique se o servidor está ativo.');
     } finally {
       setLoading(false);
     }
@@ -49,7 +50,7 @@ const Auth = () => {
 
   return (
     <div className="auth-container">
-      {/* Lado Esquerdo - Institucional */}
+      {/* Coluna Informativa (Lado Esquerdo) */}
       <div className="auth-info-side">
         <div className="info-content">
           <div className="brand">
@@ -89,7 +90,7 @@ const Auth = () => {
         </div>
       </div>
 
-      {/* Lado Direito - Autenticação */}
+      {/* Coluna do Formulário (Lado Direito) */}
       <div className="auth-form-side">
         <div className="auth-card glass">
           <section className="auth-section">
@@ -131,6 +132,7 @@ const Auth = () => {
               <span>OU</span>
             </div>
             
+            {/* Login via Google - Inicia fluxo OAuth2 */}
             <button className="btn-google" onClick={loginGoogle} disabled={loading}>
               <img src="https://authjs.dev/img/providers/google.svg" alt="Google" width="20" height="20" />
               <span>Entrar com Google</span>

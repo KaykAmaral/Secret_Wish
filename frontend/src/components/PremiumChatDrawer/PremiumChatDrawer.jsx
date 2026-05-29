@@ -7,23 +7,39 @@ import wishlistService from '../../services/wishlistService';
 import webSocketService from '../../services/websocketService';
 import './PremiumChatDrawer.css';
 
+/**
+ * Gaveta de Chat Premium (PremiumChatDrawer).
+ * 
+ * Este componente gerencia a interface de chat anônimo e privado. 
+ * Ele é "Premium" por integrar a exibição dinâmica da wishlist do amigo secreto
+ * e suporte a emojis, além de lidar com atualizações em tempo real via WebSockets.
+ */
 const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAnonymousChat }) => {
+  // Estados de Dados da Conversa
   const [messages, setMessages] = useState([]);
   const [wishlist, setWishlist] = useState(null);
   const [wishlistLoaded, setWishlistLoaded] = useState(false);
+  
+  // Estados de UI e Formulário
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+  // Referências para manipulação direta de DOM (Scroll e Clique Externo)
   const messagesEndRef = useRef(null);
   const emojiPickerRef = useRef(null);
 
-  // Mantem a conversa posicionada na mensagem mais recente apos novas mensagens.
+  /**
+   * Mantém o chat sempre focado na mensagem mais recente (autoscroll).
+   */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  /**
+   * Gerencia o fechamento do seletor de emojis ao clicar fora da sua área.
+   */
   useEffect(() => {
-    // Fecha o seletor de emojis se clicar fora dele
     const handleClickOutside = (event) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
         setShowEmojiPicker(false);
@@ -38,22 +54,23 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
     };
   }, [showEmojiPicker]);
 
+  /**
+   * Sincroniza dados e inscrições de rede sempre que o chat é aberto ou o interlocutor muda.
+   */
   useEffect(() => {
     if (isOpen) {
-      // Abrir o drawer sempre sincroniza conversa e inscricoes relevantes.
       fetchData();
       subscribeToMessages();
       setShowEmojiPicker(false);
     }
-    return () => {
-      // Unsubscribe logic could be added to webSocketService if needed
-    };
   }, [isOpen, otherUserId]);
 
-  // Mensagens novas, inclusive via WebSocket, devem puxar o scroll para o fim.
+  // Dispara o scroll automático sempre que a lista de mensagens é atualizada.
   useEffect(scrollToBottom, [messages]);
 
-  // Carrega conversa e, quando o usuario e o presenteador, a wishlist da pessoa sorteada.
+  /**
+   * Busca o histórico da conversa e a wishlist (se o usuário for o presenteador).
+   */
   const fetchData = async () => {
     setLoading(true);
     setWishlistLoaded(false);
@@ -61,13 +78,14 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
       const msgs = await messageService.getConversation(groupId, otherUserId);
       setMessages(msgs);
 
-      // Se for o chat com quem eu tirei, mostrar a wishlist dela
+      // Se NÃO for anônimo para o usuário logado, significa que ele está vendo seu "Amigo Tirado"
+      // e, portanto, tem permissão para ver a wishlist desta pessoa.
       if (!isAnonymousChat) {
         try {
           const wl = await wishlistService.getVisibleWishlist(groupId, otherUserId);
           setWishlist(wl);
         } catch (wishlistErr) {
-          console.error('Erro ao carregar wishlist do chat:', wishlistErr);
+          console.error('[Chat] Erro ao carregar wishlist:', wishlistErr);
           setWishlist({ itens: [] });
         } finally {
           setWishlistLoaded(true);
@@ -76,33 +94,36 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
         setWishlist(null);
       }
     } catch (err) {
-      console.error('Erro ao carregar dados do chat:', err);
+      console.error('[Chat] Erro ao carregar dados:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Assina eventos privados que podem alterar a conversa ou o card de wishlist.
+  /**
+   * Assina os tópicos do WebSocket para receber notificações em tempo real.
+   */
   const subscribeToMessages = () => {
+    // Escuta novas mensagens para atualizar o histórico instantaneamente.
     webSocketService.subscribe('/user/queue/messages', (notification) => {
       if (notification.groupId === parseInt(groupId)) {
         fetchData(); 
       }
     });
 
+    // Escuta mudanças na wishlist para manter o card de presentes atualizado.
     webSocketService.subscribe('/user/queue/wishlist-update', (notification) => {
-      if (notification.groupId === parseInt(groupId)) {
-        // Recarrega a wishlist se for o chat com quem eu tirei
-        if (!isAnonymousChat) {
-          fetchData();
-        }
+      if (notification.groupId === parseInt(groupId) && !isAnonymousChat) {
+        fetchData();
       }
     });
   };
 
+  /**
+   * Trata o envio de uma nova mensagem.
+   */
   const handleSendMessage = async (e) => {
     if (e) e.preventDefault();
-    // Evita mensagens vazias e preserva o input se o envio falhar.
     if (!newMessage.trim()) return;
 
     try {
@@ -111,10 +132,13 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
       setNewMessage('');
       setShowEmojiPicker(false);
     } catch (err) {
-      console.error('Erro ao enviar mensagem:', err);
+      console.error('[Chat] Erro ao enviar mensagem:', err);
     }
   };
 
+  /**
+   * Insere o emoji selecionado no campo de texto da mensagem.
+   */
   const onEmojiClick = (emojiData) => {
     setNewMessage(prev => prev + emojiData.emoji);
   };
@@ -134,17 +158,18 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           onClick={e => e.stopPropagation()}
         >
+          {/* Cabeçalho do Chat */}
           <header className="drawer-header">
             <div className="header-info">
               <div className="status-indicator online" />
               <h2>{title}</h2>
             </div>
-            <button className="close-btn" onClick={onClose}><X /></button>
+            <button className="close-btn" onClick={onClose} aria-label="Fechar"><X /></button>
           </header>
 
           <div className="chat-container">
             <div className="messages-list">
-              {/* Mensagem Especial do Sistema com Wishlist */}
+              {/* Exibição da Wishlist (Apenas se permitido e carregado) */}
               {!isAnonymousChat && wishlistLoaded && (
                 <div className="wishlist-system-card">
                   <div className="system-card-header">
@@ -158,7 +183,7 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
                           <div key={item.id} className="wishlist-item-mini glass">
                             <span className="item-name">{item.nomeProduto}</span>
                             {item.link && (
-                              <a href={item.link} target="_blank" rel="noopener noreferrer" className="item-link">
+                              <a href={item.link} target="_blank" rel="noopener noreferrer" className="item-link" title="Ver produto">
                                 <ExternalLink size={14} />
                               </a>
                             )}
@@ -167,17 +192,18 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
                       </div>
                       <div className="system-card-footer">
                         <Sparkles size={14} />
-                        <span>IA analisou e recomenda foco nestes itens!</span>
+                        <span>Dica: Escolha algo que combine com o perfil!</span>
                       </div>
                     </>
                   ) : (
                     <div className="wishlist-empty-notice">
-                      <p><strong>{title}</strong> ainda nao adicionou itens a lista de desejos.</p>
+                      <p><strong>{title}</strong> ainda não adicionou itens à lista.</p>
                     </div>
                   )}
                 </div>
               )}
 
+              {/* Lista de Mensagens Dinâmica */}
               {loading ? (
                 <div className="loading-chat">
                   {[1, 2, 3].map(i => <div key={i} className="skeleton-bubble" />)}
@@ -195,6 +221,7 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
               <div ref={messagesEndRef} />
             </div>
 
+            {/* Rodapé: Input de Mensagem e Emoji Picker */}
             <div className="chat-input-wrapper">
               <AnimatePresence>
                 {showEmojiPicker && (
@@ -225,18 +252,19 @@ const PremiumChatDrawer = ({ isOpen, onClose, groupId, otherUserId, title, isAno
                   type="button" 
                   className={`emoji-toggle-btn ${showEmojiPicker ? 'active' : ''}`}
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  aria-label="Emojis"
                 >
                   <Smile size={22} />
                 </button>
                 <input 
                   type="text" 
-                  placeholder="Envie uma mensagem anônima..." 
+                  placeholder="Envie uma mensagem..." 
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   className="chat-input"
                   onFocus={() => setShowEmojiPicker(false)}
                 />
-                <button type="submit" className="send-btn" disabled={!newMessage.trim()}>
+                <button type="submit" className="send-btn" disabled={!newMessage.trim()} aria-label="Enviar">
                   <Send size={20} />
                 </button>
               </form>

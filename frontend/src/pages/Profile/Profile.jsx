@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Mail, Shield, Camera, Check, ArrowLeft, Save, Trash2, LogOut } from 'lucide-react';
@@ -6,20 +6,32 @@ import { useAuth } from '../../hooks/useAuth';
 import userService from '../../services/userService';
 import './Profile.css';
 
+/**
+ * Página de Perfil do Usuário.
+ * 
+ * Permite que o usuário visualize seus dados, altere seu nome de exibição
+ * e escolha um avatar da galeria pré-definida. Centraliza também ações de conta.
+ */
 const Profile = () => {
   const { user, checkAuth, logout } = useAuth();
   const navigate = useNavigate();
   
+  // Estados locais para edição
   const [nome, setNome] = useState(user?.nome || '');
-  const [email, setEmail] = useState(user?.email || '');
+  const [email] = useState(user?.email || ''); // E-mail é apenas leitura para este fluxo
   const [selectedAvatar, setSelectedAvatar] = useState(user?.imagemUrl || '');
+  
+  // Estados de feedback
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  // Lista de avatares locais (atualizada com os novos arquivos 1.png a 10.png)
+  // Lista de avatares disponíveis na pasta public/avatars/
   const availableAvatars = Array.from({ length: 10 }, (_, i) => `/avatars/${i + 1}.png`);
 
+  /**
+   * Trata o salvamento das alterações do perfil.
+   */
   const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -31,8 +43,10 @@ const Profile = () => {
         nome: nome.trim(),
         imagemUrl: selectedAvatar
       });
-      await checkAuth(); // Atualiza o contexto do usuário
+      // Revalida a sessão no AuthContext para atualizar o nome no Header e outros componentes.
+      await checkAuth(); 
       setSuccess(true);
+      // Remove a mensagem de sucesso após 3 segundos
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
       setError(err.response?.data?.message || 'Erro ao atualizar perfil.');
@@ -41,6 +55,9 @@ const Profile = () => {
     }
   };
 
+  /**
+   * Gera iniciais do nome para o caso de o usuário não possuir avatar selecionado.
+   */
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
@@ -51,13 +68,7 @@ const Profile = () => {
       {/* Background Decorativo */}
       <div className="wishlist-background-decor" aria-hidden="true">
         <span className="gift gift-one">🎁</span>
-        <span className="gift gift-two">🎁</span>
-        <span className="gift gift-three">🎁</span>
-        <span className="gift gift-four">🎁</span>
         <span className="dashed-square square-one"></span>
-        <span className="dashed-square square-two"></span>
-        <span className="dashed-square square-three"></span>
-        <span className="dashed-square square-four"></span>
       </div>
 
       <main className="profile-main">
@@ -76,7 +87,7 @@ const Profile = () => {
         </header>
 
         <div className="profile-layout">
-          {/* Lado Esquerdo - Formulário */}
+          {/* Coluna da Esquerda: Formulário de Dados */}
           <section className="profile-card glass main-form-card">
             <form onSubmit={handleSave} className="profile-form">
               <div className="section-title-group">
@@ -122,7 +133,7 @@ const Profile = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <img src={avatar} alt="Avatar Option" />
+                    <img src={avatar} alt="Opção de Avatar" />
                     {selectedAvatar === avatar && (
                       <div className="check-badge">
                         <Check size={12} />
@@ -164,12 +175,13 @@ const Profile = () => {
             </form>
           </section>
 
-          {/* Lado Direito - Preview e Conta */}
+          {/* Coluna da Direita: Preview e Segurança */}
           <aside className="profile-sidebar">
+            {/* Cartão de Preview Visual */}
             <section className="profile-card glass preview-card">
               <div className="preview-avatar-container">
                 {selectedAvatar ? (
-                  <img src={selectedAvatar} alt="Profile Preview" className="preview-avatar" />
+                  <img src={selectedAvatar} alt="Preview" className="preview-avatar" />
                 ) : (
                   <div className="preview-avatar-initials">{getInitials(nome)}</div>
                 )}
@@ -181,6 +193,7 @@ const Profile = () => {
               </div>
             </section>
 
+            {/* Ações de Segurança */}
             <section className="profile-card glass account-actions-card">
               <div className="section-title-group">
                 <Shield size={20} className="text-purple" />

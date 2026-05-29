@@ -6,6 +6,12 @@ import './WishlistModal.css';
 
 const MAX_WISHLIST_ITEMS = 10;
 
+/**
+ * Modal de Gerenciamento de Wishlist.
+ * 
+ * Uma versão compacta e em modal da página de Wishlist, permitindo que o usuário
+ * atualize seus desejos sem sair do contexto atual (ex: Dashboard ou GroupDetails).
+ */
 const WishlistModal = ({ isOpen, onClose }) => {
   const [wishlist, setWishlist] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -19,36 +25,39 @@ const WishlistModal = ({ isOpen, onClose }) => {
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
 
-  // Busca a wishlist atualizada sempre que o modal abre ou uma operacao altera itens.
+  /**
+   * Busca os itens da wishlist do usuário.
+   */
   const fetchWishlist = useCallback(async () => {
     try {
       setLoading(true);
       const data = await wishlistService.getMyWishlist();
       setWishlist(data);
     } catch (err) {
-      console.error('Erro ao carregar wishlist:', err);
+      console.error('[WishlistModal] Erro ao carregar dados:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  /**
+   * Efeito para carregar dados e resetar estados sempre que o modal é aberto.
+   */
   useEffect(() => {
     if (isOpen) {
-      // Cada abertura comeca no modo lista para evitar manter formulario antigo na tela.
       setIsAdding(false);
       setEditingItem(null);
       setError('');
       setAlertType('error');
       setActionLoading(false);
       setItemToDelete(null);
-      const timer = setTimeout(() => {
-        fetchWishlist();
-      }, 0);
-      return () => clearTimeout(timer);
+      fetchWishlist();
     }
   }, [isOpen, fetchWishlist]);
 
-  // Limpa o formulario de criacao/edicao e volta para a lista.
+  /**
+   * Reseta o formulário interno.
+   */
   const resetForm = () => {
     setNomeProduto('');
     setLink('');
@@ -58,19 +67,22 @@ const WishlistModal = ({ isOpen, onClose }) => {
     setAlertType('error');
   };
 
-  // Inicia criacao garantindo que nenhum item anterior permaneça em edicao.
+  /**
+   * Inicia o fluxo de adição de item.
+   */
   const handleStartAdd = () => {
     if ((wishlist?.itens?.length || 0) >= MAX_WISHLIST_ITEMS) {
       setAlertType('warning');
-      setError('Sua lista de desejos ja possui o limite de 10 itens.');
+      setError('Sua lista já possui o limite de 10 itens.');
       return;
     }
-
     resetForm();
     setIsAdding(true);
   };
 
-  // Preenche o formulario com os dados do item selecionado para edicao.
+  /**
+   * Inicia o fluxo de edição de um item.
+   */
   const handleStartEdit = (item) => {
     setEditingItem(item);
     setNomeProduto(item.nomeProduto);
@@ -80,18 +92,20 @@ const WishlistModal = ({ isOpen, onClose }) => {
     setAlertType('error');
   };
 
+  /**
+   * Trata o salvamento das alterações.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Usa validacao propria para exibir alerta visual consistente com o restante da app.
     if (!nomeProduto.trim() || !link.trim()) {
       setAlertType('warning');
-      setError('Preencha nome do produto e link.');
+      setError('Preencha o nome do produto e o link.');
       return;
     }
 
     if (!editingItem && (wishlist?.itens?.length || 0) >= MAX_WISHLIST_ITEMS) {
       setAlertType('warning');
-      setError('Sua lista de desejos ja possui o limite de 10 itens.');
+      setError('Sua lista já possui o limite de 10 itens.');
       return;
     }
 
@@ -99,13 +113,9 @@ const WishlistModal = ({ isOpen, onClose }) => {
     setAlertType('error');
     setError('');
     try {
-      const payload = {
-        nomeProduto: nomeProduto.trim(),
-        link: link.trim(),
-      };
+      const payload = { nomeProduto: nomeProduto.trim(), link: link.trim() };
 
       if (editingItem) {
-        // O mesmo formulario atende criacao e edicao para manter as regras centralizadas.
         await wishlistService.updateItem(editingItem.id, payload);
       } else {
         await wishlistService.addItem(payload);
@@ -120,11 +130,16 @@ const WishlistModal = ({ isOpen, onClose }) => {
     }
   };
 
-  // Remove item somente apos confirmacao explicita por ser uma acao destrutiva.
+  /**
+   * Prepara a exclusão de um item.
+   */
   const handleDelete = (itemId) => {
     setItemToDelete(itemId);
   };
 
+  /**
+   * Confirma a exclusão definitiva.
+   */
   const confirmDelete = async () => {
     if (!itemToDelete) return;
     try {
@@ -132,7 +147,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       setItemToDelete(null);
       fetchWishlist();
     } catch (err) {
-      console.error('Erro ao remover item:', err);
+      console.error('[WishlistModal] Erro ao remover item:', err);
     }
   };
 
@@ -143,7 +158,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
       <div className="modal-card glass wishlist-modal">
         <div className="modal-header">
           <h2>Minha Lista de Desejos</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+          <button className="close-btn" onClick={onClose} aria-label="Fechar">&times;</button>
         </div>
 
         <div className="wishlist-modal-body">
@@ -165,7 +180,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                 <label>Link</label>
                 <input
                   type="url"
-                  placeholder="https://amazon.com/..."
+                  placeholder="https://..."
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
                   required
@@ -195,7 +210,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
                 <div className="wish-list-compact">
                   {wishlist?.itens?.length === 0 ? (
                     <div className="empty-wishlist">
-                      <p>Sua lista de desejos está vazia</p>
+                      <p>Sua lista de desejos está vazia.</p>
                     </div>
                   ) : (
                     wishlist?.itens?.map(item => (
@@ -209,10 +224,10 @@ const WishlistModal = ({ isOpen, onClose }) => {
                           )}
                         </div>
                         <div className="wish-item-actions">
-                          <button onClick={() => handleStartEdit(item)} title="Editar item" aria-label="Editar item">
+                          <button onClick={() => handleStartEdit(item)} title="Editar item">
                             <Pencil size={16} />
                           </button>
-                          <button className="delete" onClick={() => handleDelete(item.id)} title="Remover item" aria-label="Remover item">
+                          <button className="delete" onClick={() => handleDelete(item.id)} title="Remover item">
                             <Trash2 size={16} />
                           </button>
                         </div>
@@ -231,7 +246,7 @@ const WishlistModal = ({ isOpen, onClose }) => {
         onConfirm={confirmDelete}
         title="Remover item?"
         message="Tem certeza que deseja remover este item?"
-        confirmText="Remover item"
+        confirmText="Remover"
         variant="danger"
       />
     </div>

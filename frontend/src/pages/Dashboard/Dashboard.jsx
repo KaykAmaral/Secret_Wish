@@ -5,74 +5,100 @@ import groupService from '../../services/groupService';
 import notificationService from '../../services/notificationService';
 import './Dashboard.css';
 
+/**
+ * Página de Dashboard.
+ * 
+ * É a página principal após o login, oferecendo uma visão geral dos grupos do usuário,
+ * notificações recentes e acesso rápido às funcionalidades essenciais como criar ou entrar em grupos.
+ */
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  // Estados de dados
   const [groups, setGroups] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Modals visibility
+  // Estados de controle de UI (Modais)
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   
-  // States para formulários
+  // Estados de formulário para novos grupos
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
   const [newGroupDate, setNewGroupDate] = useState('');
+  
+  // Estados para entrada em grupo via código
   const [joinCode, setJoinCode] = useState('');
+  
+  // Estados de feedback e carregamento de ações
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [alertType, setAlertType] = useState('error');
+
+  // Verifica se o usuário já é dono de um grupo (Regra de negócio: 1 grupo por dono)
   const hasCreatedGroup = groups.some(group => group.dono?.id === user?.id);
 
-  // Usa formato yyyy-MM-dd para comparar com o input date sem depender de locale.
+  /**
+   * Formata um objeto Date para string yyyy-MM-dd, compatível com inputs HTML5.
+   */
   const formatInputDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
   const todayDate = formatInputDate(new Date());
 
-  // A regra de negocio limita eventos a no maximo 24 meses no futuro.
+  /**
+   * Calcula a data máxima permitida para eventos (hoje + 24 meses).
+   */
   const maxEventDateValue = (() => {
     const maxDate = new Date();
     maxDate.setMonth(maxDate.getMonth() + 24);
     return formatInputDate(maxDate);
   })();
+
+  /**
+   * Formata e limpa a entrada do código do grupo enquanto o usuário digita.
+   * Garante o formato XXXX-XXXX.
+   */
   const formatGroupCode = (value) => {
     const cleaned = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8);
-    if (cleaned.length <= 4) {
-      return cleaned;
-    }
+    if (cleaned.length <= 4) return cleaned;
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
   };
 
-  // Calcula dias usando datas locais zeradas para evitar diferenca por horario/fuso.
+  /**
+   * Calcula a diferença em dias entre hoje e a data do evento.
+   */
   const getDaysUntilEvent = (dateValue) => {
     if (!dateValue) return null;
-
     const [year, month, day] = dateValue.split('T')[0].split('-').map(Number);
     const eventDate = new Date(year, month - 1, day);
     const today = new Date();
     const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const millisecondsPerDay = 1000 * 60 * 60 * 24;
-
     return Math.ceil((eventDate - todayOnly) / millisecondsPerDay);
   };
 
-  // Centraliza os textos de contagem para cards e detalhes do grupo.
+  /**
+   * Gera uma string descritiva para a contagem regressiva do evento.
+   */
   const formatDaysUntilEvent = (dateValue) => {
     const days = getDaysUntilEvent(dateValue);
-    if (days === null) return 'Data nao definida';
-    if (days < 0) return 'Data ja passou';
-    if (days === 0) return 'E hoje';
+    if (days === null) return 'Data não definida';
+    if (days < 0) return 'Data já passou';
+    if (days === 0) return 'É hoje! 🎊';
     if (days === 1) return 'Falta 1 dia';
     return `Faltam ${days} dias`;
   };
 
-  // Carrega grupos e notificacoes em paralelo para reduzir o tempo inicial do dashboard.
+  /**
+   * Busca os dados iniciais do dashboard (grupos e notificações).
+   */
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -83,57 +109,58 @@ const Dashboard = () => {
       setGroups(groupsData);
       setNotifications(notificationsData);
     } catch (err) {
-      console.error('Erro ao carregar dados do dashboard:', err);
+      console.error('[Dashboard] Erro ao carregar dados:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchData();
-    }, 0);
-    return () => clearTimeout(timer);
+    fetchData();
   }, [fetchData]);
 
+  /**
+   * Trata o envio do formulário de criação de grupo.
+   */
   const handleCreateGroup = async (e) => {
     e.preventDefault();
-    // Valida no cliente para exibir alertas amigaveis antes de chamar a API.
+    
+    // Validações prévias no cliente
     if (hasCreatedGroup) {
       setAlertType('warning');
-      setError('Voce ja possui um grupo criado.');
+      setError('Você já possui um grupo criado.');
       return;
     }
 
     if (!newGroupName.trim() || !newGroupDesc.trim() || !newGroupDate) {
       setAlertType('warning');
-      setError('Preencha nome, descricao e data do evento.');
+      setError('Preencha nome, descrição e data do evento.');
       return;
     }
 
     if (newGroupDate && (newGroupDate < todayDate || newGroupDate > maxEventDateValue)) {
       setAlertType('warning');
-      setError('A data do evento deve ser entre hoje e 24 meses a partir de hoje.');
+      setError('A data do evento deve ser entre hoje e 24 meses.');
       return;
     }
 
     setActionLoading(true);
     setAlertType('error');
     setError('');
+    
     try {
       const dateOnly = `${newGroupDate}T00:00:00`;
-      // O backend espera data/hora, mas a UI captura somente o dia do evento.
       const createdGroup = await groupService.createGroup({ 
         nome: newGroupName.trim(), 
         descricao: newGroupDesc.trim(),
         dataEvento: dateOnly 
       });
-      setGroups(previousGroups => [createdGroup, ...previousGroups]);
+      setGroups(prev => [createdGroup, ...prev]);
       setShowCreateModal(false);
+      // Limpa formulário após sucesso
       setNewGroupName('');
       setNewGroupDesc('');
       setNewGroupDate('');
-      await fetchData();
     } catch (err) {
       setAlertType('error');
       setError(err.response?.data?.message || 'Erro ao criar grupo.');
@@ -142,12 +169,14 @@ const Dashboard = () => {
     }
   };
 
+  /**
+   * Trata o envio do formulário para entrar em um grupo via código.
+   */
   const handleJoinGroup = async (e) => {
     e.preventDefault();
-    // Evita chamada desnecessaria quando o usuario ainda nao informou o codigo.
     if (!joinCode.trim()) {
       setAlertType('warning');
-      setError('Informe o codigo do grupo.');
+      setError('Informe o código do grupo.');
       return;
     }
 
@@ -158,7 +187,7 @@ const Dashboard = () => {
       await groupService.joinGroup(joinCode);
       setShowJoinModal(false);
       setJoinCode('');
-      fetchData();
+      fetchData(); // Recarrega a lista de grupos
     } catch (err) {
       setAlertType('error');
       setError(err.response?.data?.message || 'Código inválido ou grupo já sorteado.');
@@ -167,23 +196,27 @@ const Dashboard = () => {
     }
   };
 
-  // Atualiza o estado local para a notificacao sumir como pendente sem recarregar tudo.
+  /**
+   * Marca uma notificação individual como lida.
+   */
   const markAsRead = async (id) => {
     try {
       await notificationService.markAsRead(id);
       setNotifications(notifications.map(n => n.id === id ? { ...n, lida: true } : n));
     } catch (err) {
-      console.error('Erro ao marcar como lida:', err);
+      console.error('[Dashboard] Erro ao marcar notificação:', err);
     }
   };
 
-  // Remove a notificacao da lista atual imediatamente apos confirmacao do backend.
+  /**
+   * Exclui uma notificação do histórico do usuário.
+   */
   const deleteNotification = async (id) => {
     try {
       await notificationService.deleteNotification(id);
       setNotifications(notifications.filter(n => n.id !== id));
     } catch (err) {
-      console.error('Erro ao excluir notificação:', err);
+      console.error('[Dashboard] Erro ao excluir notificação:', err);
     }
   };
 
@@ -198,17 +231,16 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard-page">
+      {/* Elementos decorativos animados por CSS */}
       <div className="dashboard-background-decor" aria-hidden="true">
         <span className="decor-gift gift-one">🎁</span>
         <span className="decor-gift gift-two">🎁</span>
         <span className="decor-person person-one">👤</span>
         <span className="decor-person person-two">👥</span>
-        <span className="decor-square square-one"></span>
-        <span className="decor-square square-two"></span>
-        <span className="decor-square square-three"></span>
-        <span className="decor-square square-four"></span>
       </div>
+
       <main className="dashboard-main">
+        {/* Boas-vindas e Ações Rápidas */}
         <section className="welcome-section">
           <div className="welcome-text">
             <h1>Olá, {user?.nome?.split(' ')[0]}! 👋</h1>
@@ -219,7 +251,7 @@ const Dashboard = () => {
               className="btn-primary"
               onClick={() => setShowCreateModal(true)}
               disabled={hasCreatedGroup}
-              title={hasCreatedGroup ? 'Voce ja possui um grupo criado' : 'Criar grupo'}
+              title={hasCreatedGroup ? 'Você já possui um grupo criado' : 'Criar grupo'}
             >
               <span>+</span> Criar Grupo
             </button>
@@ -233,6 +265,7 @@ const Dashboard = () => {
         </section>
 
         <div className="dashboard-grid">
+          {/* Listagem de Grupos Ativos */}
           <div className="grid-main" id="meus-grupos">
             <h2 className="section-title">Seus Grupos</h2>
             {groups.length === 0 ? (
@@ -266,6 +299,7 @@ const Dashboard = () => {
             )}
           </div>
 
+          {/* Sidebar de Notificações */}
           <aside className="grid-side">
             <div className="side-header">
               <h2 className="section-title">Notificações</h2>
@@ -298,7 +332,9 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Modais */}
+      {/* --- Modais --- */}
+
+      {/* Modal de Criação de Grupo */}
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="modal-card glass">
@@ -346,6 +382,7 @@ const Dashboard = () => {
         </div>
       )}
 
+      {/* Modal de Entrada em Grupo via Código */}
       {showJoinModal && (
         <div className="modal-overlay">
           <div className="modal-card glass">
@@ -374,7 +411,6 @@ const Dashboard = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
