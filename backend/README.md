@@ -321,6 +321,48 @@ Coberturas relevantes:
 - validacoes de producao
 - endpoints REST com MockMvc
 
+## Teste Bruto de Performance Local
+
+Foi executado um teste bruto local contra o backend em `http://127.0.0.1:8080`, usando H2 file-based e configuracao de desenvolvimento. O objetivo foi validar rapidamente latencia e throughput dos endpoints de leitura mais sensiveis apos as otimizacoes de paginacao, listagem leve de grupos e contadores.
+
+Endpoints testados:
+
+- `GET /api/auth/status`
+- `GET /api/groups`
+- `GET /api/notifications?page=0&size=50`
+- `GET /api/notifications/unread-count`
+- `GET /api/messages/unread-count`
+
+Resultado com `Invoke-WebRequest`, 500 requisicoes concorrentes e concorrencia 25:
+
+| Metrica | Resultado |
+| --- | ---: |
+| Requisicoes | 500 |
+| Erros | 0 |
+| Tempo total | 1.47 s |
+| Throughput | 339.67 req/s |
+| Latencia media | 4.75 ms |
+| P95 | 10.04 ms |
+| Maxima | 34.25 ms |
+
+Resultado com `HttpClient`, 2.000 requisicoes concorrentes e concorrencia 50:
+
+| Metrica | Resultado |
+| --- | ---: |
+| Requisicoes | 2.000 |
+| Erros | 0 |
+| Tempo total | 5.33 s |
+| Throughput | 375.5 req/s |
+| Latencia media | 5.02 ms |
+| P50 | 4.14 ms |
+| P95 | 10.11 ms |
+| P99 | 14.15 ms |
+| Maxima | 28.89 ms |
+
+Os logs nao registraram erros durante a carga. O log SQL confirmou que `GET /api/groups` usa a query otimizada com `count`, e que notificacoes paginadas usam `fetch first ? rows only`.
+
+Observacao: esses numeros nao representam producao. O teste foi local, com H2 e `spring.jpa.show-sql=true`; em producao, use MySQL, massa de dados realista, profile `prod`, logs SQL desabilitados e uma ferramenta dedicada como k6, JMeter ou Gatling.
+
 ## Documentacao OpenAPI
 
 Em desenvolvimento:

@@ -1,6 +1,7 @@
 package com.example.springApp.repository;
 
 import com.example.springApp.model.Notification;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,6 +20,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // O mapper serializa o usuario; EntityGraph evita uma consulta extra por notificacao.
     @EntityGraph(attributePaths = "usuario")
     List<Notification> findByUsuarioIdOrderByDataCriacaoDesc(Long userId);
+
+    /**
+     * Lista notificacoes com limite para evitar payloads e listas sem controle.
+     */
+    @EntityGraph(attributePaths = "usuario")
+    List<Notification> findByUsuarioIdOrderByDataCriacaoDesc(Long userId, Pageable pageable);
 
     /**
      * Carrega apenas notificacoes pendentes para marcacao em lote.

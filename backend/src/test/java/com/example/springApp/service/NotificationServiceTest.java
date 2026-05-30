@@ -10,12 +10,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -90,6 +93,30 @@ class NotificationServiceTest {
         // Garante que a operacao continua em lote e nao volta a carregar todas as notificacoes.
         verify(notificationRepository).markAllUnreadAsRead(1L);
         verify(notificationRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void getUserNotificationsUsesDefaultLimitWhenRequestedSizeIsInvalid() {
+        when(notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(eq(1L), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        notificationService.getUserNotifications(1L, -3, 0);
+
+        verify(notificationRepository).findByUsuarioIdOrderByDataCriacaoDesc(eq(1L), org.mockito.ArgumentMatchers.argThat(pageable ->
+                pageable.getPageNumber() == 0 && pageable.getPageSize() == 50
+        ));
+    }
+
+    @Test
+    void getUserNotificationsCapsRequestedSizeAtMaximumLimit() {
+        when(notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(eq(1L), any(Pageable.class)))
+                .thenReturn(List.of());
+
+        notificationService.getUserNotifications(1L, 4, 500);
+
+        verify(notificationRepository).findByUsuarioIdOrderByDataCriacaoDesc(eq(1L), org.mockito.ArgumentMatchers.argThat(pageable ->
+                pageable.getPageNumber() == 4 && pageable.getPageSize() == 100
+        ));
     }
 
     private User user(Long id) {

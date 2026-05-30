@@ -2,6 +2,7 @@ package com.example.springApp.repository;
 
 import com.example.springApp.dto.UnreadConversationCount;
 import com.example.springApp.model.Message;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -51,6 +52,27 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             @Param("groupId") Long groupId,
             @Param("userId") Long userId,
             @Param("otherUserId") Long otherUserId
+    );
+
+    /**
+     * Versao limitada para API publica; evita carregar historico completo em memoria.
+     */
+    // Pageable limita a janela carregada mesmo mantendo ordenacao cronologica.
+    @Query("""
+            select m from Message m
+            join fetch m.grupo
+            join fetch m.remetente
+            join fetch m.destinatario
+            where m.grupo.id = :groupId
+              and ((m.remetente.id = :userId and m.destinatario.id = :otherUserId)
+                or (m.remetente.id = :otherUserId and m.destinatario.id = :userId))
+            order by m.dataEnvio asc
+            """)
+    List<Message> findConversation(
+            @Param("groupId") Long groupId,
+            @Param("userId") Long userId,
+            @Param("otherUserId") Long otherUserId,
+            Pageable pageable
     );
 
     /**

@@ -286,7 +286,8 @@ const Dashboard = () => {
                     </div>
                     <div className="group-info">
                       <p><strong>Código:</strong> <code>{group.codigoUnico}</code></p>
-                      <p><strong>Participantes:</strong> {group.membros?.length || 0}</p>
+                      {/* A listagem do backend envia totalMembros para evitar carregar todos os usuarios. */}
+                      <p><strong>Participantes:</strong> {group.totalMembros ?? group.membros?.length ?? 0}</p>
                       <p><strong>Evento:</strong> {group.dataEvento ? new Date(group.dataEvento).toLocaleDateString() : 'Não definida'}</p>
                       <p><strong>Contagem:</strong> {formatDaysUntilEvent(group.dataEvento)}</p>
                     </div>

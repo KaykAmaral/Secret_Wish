@@ -44,6 +44,18 @@ public class ResponseMapper {
                 .map(this::toUserResponse)
                 .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
 
+        return toGroupResponse(group, members, members.size());
+    }
+
+    /**
+     * Retorna dados de grupo para listagens sem carregar todos os membros.
+     */
+    public GroupResponse toGroupSummaryResponse(Group group, long memberCount) {
+        // Lista vazia reduz payload; totalMembros preserva a informacao visual dos cards.
+        return toGroupResponse(group, Set.of(), memberCount);
+    }
+
+    private GroupResponse toGroupResponse(Group group, Set<UserResponse> members, long memberCount) {
         return new GroupResponse(
                 group.getId(),
                 group.getNome(),
@@ -51,6 +63,7 @@ public class ResponseMapper {
                 group.getCodigoUnico(),
                 toUserResponse(group.getDono()),
                 members,
+                memberCount,
                 group.getDataCriacao(),
                 group.getDataSorteio(),
                 group.getDataEvento()

@@ -24,6 +24,9 @@ public record GroupResponse(
         @Schema(description = "Participantes do grupo")
         Set<UserResponse> membros,
 
+        @Schema(description = "Quantidade de participantes do grupo", example = "8")
+        long totalMembros,
+
         @Schema(example = "2026-05-28T01:00:00")
         LocalDateTime dataCriacao,
 

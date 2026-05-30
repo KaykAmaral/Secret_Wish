@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 public class AuthService {
@@ -25,6 +27,9 @@ public class AuthService {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private EmailService emailService;
 
     /**
      * Cadastra usuario por email/senha garantindo unicidade de email e armazenando senha criptografada.
@@ -44,6 +49,8 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        // Dispara boas-vindas depois do commit para nao avisar usuario caso o cadastro falhe no banco.
+        sendWelcomeEmailAfterCommit(savedUser);
         log.info("Usuario salvo com sucesso. ID: {}, Email: {}", savedUser.getId(), savedUser.getEmail());
         return savedUser;
     }
@@ -71,5 +78,25 @@ public class AuthService {
 
         log.info("Credenciais validas para usuario: {}. Gerando token...", request.email());
         return jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
+    }
+
+    /**
+     * Garante que o email de boas-vindas so saia depois que a conta estiver persistida.
+     */
+    private void sendWelcomeEmailAfterCommit(User user) {
+        Runnable sendEmail = () -> emailService.sendWelcomeEmail(user.getNome(), user.getEmail());
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            // Facilita testes unitarios e usos futuros fora de transacao Spring.
+            sendEmail.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // O envio real ainda e assincrono dentro do EmailService.
+                sendEmail.run();
+            }
+        });
     }
 }

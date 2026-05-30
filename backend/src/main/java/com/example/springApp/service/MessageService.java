@@ -14,6 +14,8 @@ import com.example.springApp.repository.GroupRepository;
 import com.example.springApp.repository.MessageRepository;
 import com.example.springApp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -26,6 +28,9 @@ import java.util.stream.Collectors;
 
 @Service
 public class MessageService {
+
+    private static final int DEFAULT_CONVERSATION_LIMIT = 50;
+    private static final int MAX_CONVERSATION_LIMIT = 100;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -56,11 +61,13 @@ public class MessageService {
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Destinatario nao encontrado"));
 
-        if (!isMember(group, senderId)) {
+        // exists evita inicializar group.membros apenas para validar participacao.
+        if (!groupRepository.existsByIdAndMembros_Id(groupId, senderId)) {
             throw new ForbiddenException("Voce nao faz parte deste grupo");
         }
 
-        if (!isMember(group, receiverId)) {
+        // A mesma checagem pontual protege o destinatario sem carregar a colecao inteira.
+        if (!groupRepository.existsByIdAndMembros_Id(groupId, receiverId)) {
             throw new ForbiddenException("Destinatario nao faz parte deste grupo");
         }
 
@@ -102,11 +109,20 @@ public class MessageService {
      * Recupera a conversa entre duas pontas do sorteio quando o usuario tem permissao para acessa-la.
      */
     public List<Message> getConversation(Long groupId, Long userId, Long otherUserId) {
+        return getConversation(groupId, userId, otherUserId, 0, DEFAULT_CONVERSATION_LIMIT);
+    }
+
+    /**
+     * Recupera uma pagina limitada da conversa entre duas pontas do sorteio.
+     */
+    public List<Message> getConversation(Long groupId, Long userId, Long otherUserId, int page, int size) {
         if (!canExchangeMessages(groupId, userId, otherUserId)) {
             throw new ForbiddenException("Voce nao pode acessar esta conversa");
         }
 
-        return messageRepository.findConversation(groupId, userId, otherUserId);
+        // O teto de size protege banco, memoria e payload contra historicos muito grandes.
+        Pageable pageable = PageRequest.of(safePage(page), safeSize(size, MAX_CONVERSATION_LIMIT));
+        return messageRepository.findConversation(groupId, userId, otherUserId, pageable);
     }
 
     /**
@@ -170,16 +186,8 @@ public class MessageService {
      * Confirma que os dois usuarios formam um par direto do sorteio em qualquer direcao.
      */
     private boolean canExchangeMessages(Long groupId, Long userId, Long otherUserId) {
-        return drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, userId, otherUserId)
-                || drawRepository.existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(groupId, otherUserId, userId);
-    }
-
-    /**
-     * Valida participacao pelo id para nao depender do estado da entidade JPA.
-     */
-    private boolean isMember(Group group, Long userId) {
-        return group.getMembros().stream()
-                .anyMatch(member -> member.getId().equals(userId));
+        // Consulta bidirecional unica substitui duas chamadas exists separadas.
+        return drawRepository.existsDirectPairInEitherDirection(groupId, userId, otherUserId);
     }
 
     /**
@@ -202,6 +210,17 @@ public class MessageService {
     private User otherUser(Draw draw, Long userId) {
         boolean userIsGiver = draw.getRemetente().getId().equals(userId);
         return userIsGiver ? draw.getDestinatario() : draw.getRemetente();
+    }
+
+    private int safePage(int page) {
+        return Math.max(0, page);
+    }
+
+    private int safeSize(int size, int maxSize) {
+        if (size <= 0) {
+            return DEFAULT_CONVERSATION_LIMIT;
+        }
+        return Math.min(size, maxSize);
     }
 
 }

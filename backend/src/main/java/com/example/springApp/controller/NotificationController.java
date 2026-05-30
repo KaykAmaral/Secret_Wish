@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,9 +48,14 @@ public class NotificationController {
             @ApiResponse(responseCode = "200", description = "Notificacoes retornadas"),
             @ApiResponse(responseCode = "401", ref = "#/components/responses/NaoAutorizado")
     })
-    public List<NotificationResponse> list(Authentication authentication) {
+    public List<NotificationResponse> list(
+            // Evita carregar todo o historico de notificacoes em uma unica resposta.
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size,
+            Authentication authentication
+    ) {
         Long userId = authenticatedUser.id(authentication);
-        return notificationService.getUserNotifications(userId).stream()
+        return notificationService.getUserNotifications(userId, page, size).stream()
                 .map(responseMapper::toNotificationResponse)
                 .toList();
     }

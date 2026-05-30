@@ -285,7 +285,8 @@ const MyGroups = () => {
                     <div className="card-stats-row">
                       <div className="stat">
                         <Users size={14} />
-                        <span>{group.membros?.length || 0} membros</span>
+                        {/* totalMembros vem da listagem leve; membros.length fica como fallback do contrato antigo. */}
+                        <span>{group.totalMembros ?? group.membros?.length ?? 0} membros</span>
                       </div>
                       <div className="stat">
                         <Clock size={14} />

@@ -71,4 +71,20 @@ public interface DrawRepository extends JpaRepository<Draw, Long> {
      */
     boolean existsByGrupo_IdAndRemetente_IdAndDestinatario_Id(Long groupId, Long giverId, Long receiverId);
 
+    /**
+     * Verifica o par direto em qualquer direcao com uma unica ida ao banco.
+     */
+    // Uma unica consulta cobre os dois sentidos do par e evita duas idas ao banco.
+    @Query("""
+            select count(draw) > 0 from Draw draw
+            where draw.grupo.id = :groupId
+              and ((draw.remetente.id = :userId and draw.destinatario.id = :otherUserId)
+                or (draw.remetente.id = :otherUserId and draw.destinatario.id = :userId))
+            """)
+    boolean existsDirectPairInEitherDirection(
+            @Param("groupId") Long groupId,
+            @Param("userId") Long userId,
+            @Param("otherUserId") Long otherUserId
+    );
+
 }

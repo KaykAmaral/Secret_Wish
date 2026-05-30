@@ -6,6 +6,8 @@ import com.example.springApp.model.User;
 import com.example.springApp.repository.NotificationRepository;
 import com.example.springApp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,9 @@ import java.util.List;
 
 @Service
 public class NotificationService {
+
+    private static final int DEFAULT_NOTIFICATION_LIMIT = 50;
+    private static final int MAX_NOTIFICATION_LIMIT = 100;
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -43,6 +48,15 @@ public class NotificationService {
      */
     public List<Notification> getUserNotifications(Long userId) {
         return notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(userId);
+    }
+
+    /**
+     * Lista uma pagina limitada de notificacoes para manter memoria e payload previsiveis.
+     */
+    public List<Notification> getUserNotifications(Long userId, int page, int size) {
+        // Limite defensivo: cliente pode pedir menos, mas nao pode forcar carga excessiva.
+        Pageable pageable = PageRequest.of(Math.max(0, page), safeSize(size));
+        return notificationRepository.findByUsuarioIdOrderByDataCriacaoDesc(userId, pageable);
     }
 
     /**
@@ -87,6 +101,13 @@ public class NotificationService {
     @Transactional
     public void deleteUserNotifications(Long userId) {
         notificationRepository.deleteByUsuarioId(userId);
+    }
+
+    private int safeSize(int size) {
+        if (size <= 0) {
+            return DEFAULT_NOTIFICATION_LIMIT;
+        }
+        return Math.min(size, MAX_NOTIFICATION_LIMIT);
     }
 
 }

@@ -3,6 +3,7 @@ package com.example.springApp.security;
 import com.example.springApp.config.FrontendOriginsProperties;
 import com.example.springApp.model.User;
 import com.example.springApp.repository.UserRepository;
+import com.example.springApp.service.EmailService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,10 +15,13 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 
 @Component
 public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler {
@@ -25,6 +29,7 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final FrontendOriginsProperties frontendOrigins;
+    private final EmailService emailService;
     private final boolean authCookieSecure;
     private final String authCookieSameSite;
 
@@ -32,12 +37,14 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
             UserRepository userRepository,
             JwtService jwtService,
             FrontendOriginsProperties frontendOrigins,
+            EmailService emailService,
             @Value("${app.auth.cookie-secure:false}") boolean authCookieSecure,
             @Value("${app.auth.cookie-same-site:Lax}") String authCookieSameSite
     ) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.frontendOrigins = frontendOrigins;
+        this.emailService = emailService;
         this.authCookieSecure = authCookieSecure;
         this.authCookieSameSite = authCookieSameSite;
     }
@@ -64,10 +71,15 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
             throw new ServletException("Conta Google sem email verificado");
         }
 
-        User user = userRepository.findByOauthId(oauthId)
-                .or(() -> userRepository.findByEmail(email))
-                .map(existingUser -> updateGoogleData(existingUser, oauthId, email, name, picture))
+        Optional<User> existingUser = userRepository.findByOauthId(oauthId)
+                .or(() -> userRepository.findByEmail(email));
+        // Conta existente apenas atualiza dados do Google; boas-vindas ficam restritas a criacao real.
+        User user = existingUser
+                .map(currentUser -> updateGoogleData(currentUser, oauthId, email, name, picture))
                 .orElseGet(() -> createUser(oauthId, email, name, picture));
+        if (existingUser.isEmpty()) {
+            sendWelcomeEmailAfterCommit(user);
+        }
 
         String token = jwtService.generateToken(user.getId(), user.getEmail(), user.getNome());
         ResponseCookie authCookie = ResponseCookie.from(JwtAuthenticationFilter.AUTH_COOKIE_NAME, token)
@@ -111,5 +123,25 @@ public class GoogleOAuth2SuccessHandler implements AuthenticationSuccessHandler 
             user.setImagemUrl(picture);
         }
         return userRepository.save(user);
+    }
+
+    /**
+     * Evita enviar boas-vindas para uma conta Google que ainda possa falhar no commit.
+     */
+    private void sendWelcomeEmailAfterCommit(User user) {
+        Runnable sendEmail = () -> emailService.sendWelcomeEmail(user.getNome(), user.getEmail());
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            // Mantem o metodo seguro caso seja reutilizado fora do fluxo transacional do OAuth2.
+            sendEmail.run();
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                // Evita enviar email se a criacao da conta OAuth2 for revertida.
+                sendEmail.run();
+            }
+        });
     }
 }

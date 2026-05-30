@@ -1,5 +1,6 @@
 package com.example.springApp.service;
 
+import com.example.springApp.dto.GroupSummary;
 import com.example.springApp.exception.ConflictException;
 import com.example.springApp.exception.BusinessException;
 import com.example.springApp.exception.ForbiddenException;
@@ -118,6 +119,13 @@ public class GroupService {
      */
     public List<Group> getUserGroups(Long userId) {
         return groupRepository.findByMembros_Id(userId);
+    }
+
+    /**
+     * Lista cards de grupos sem materializar todos os membros de cada grupo.
+     */
+    public List<GroupSummary> getUserGroupSummaries(Long userId) {
+        return groupRepository.findSummariesByMembros_Id(userId);
     }
 
     /**

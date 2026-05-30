@@ -26,6 +26,7 @@ public class AiSuggestionService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AiSuggestionService.class);
     private static final int MAX_GENERATIONS_PER_HOUR = 3;
+    private static final int MAX_TRACKED_USERS = 10_000;
 
     private final ObjectProvider<ChatClient.Builder> chatClientBuilderProvider;
     private final WishlistRepository wishlistRepository;
@@ -102,6 +103,8 @@ public class AiSuggestionService {
      * Informa quantas geracoes de IA ainda estao disponiveis na janela atual do usuario.
      */
     public int remainingGenerations(Long userId) {
+        // Leituras tambem limpam janelas vencidas para nao depender apenas de novas geracoes.
+        cleanupExpiredUsageWindows(Instant.now(clock));
         UsageWindow window = usageByUser.get(userId);
         if (window == null || window.isExpired(Instant.now(clock))) {
             return MAX_GENERATIONS_PER_HOUR;
@@ -114,6 +117,8 @@ public class AiSuggestionService {
      */
     private void consumeUsage(Long userId) {
         Instant now = Instant.now(clock);
+        // Mantem o rate limit em memoria pequeno em execucoes longas da aplicacao.
+        cleanupExpiredUsageWindows(now);
         usageByUser.compute(userId, (id, currentWindow) -> {
             UsageWindow window = currentWindow;
             if (window == null || window.isExpired(now)) {
@@ -124,6 +129,27 @@ public class AiSuggestionService {
             }
             return window.increment();
         });
+        // Evita crescimento sem limite se muitos usuarios distintos acionarem IA.
+        capTrackedUsers();
+    }
+
+    private void cleanupExpiredUsageWindows(Instant now) {
+        usageByUser.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
+    }
+
+    private void capTrackedUsers() {
+        int overflow = usageByUser.size() - MAX_TRACKED_USERS;
+        if (overflow <= 0) {
+            return;
+        }
+
+        for (Long userId : usageByUser.keySet()) {
+            usageByUser.remove(userId);
+            overflow--;
+            if (overflow <= 0) {
+                return;
+            }
+        }
     }
 
     /**

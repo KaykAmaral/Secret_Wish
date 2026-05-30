@@ -53,8 +53,9 @@ public class GroupController {
     })
     public List<GroupResponse> myGroups(Authentication authentication) {
         Long userId = authenticatedUser.id(authentication);
-        return groupService.getUserGroups(userId).stream()
-                .map(responseMapper::toGroupResponse)
+        // A tela de listagem precisa de contagem, nao da lista completa de participantes.
+        return groupService.getUserGroupSummaries(userId).stream()
+                .map(summary -> responseMapper.toGroupSummaryResponse(summary.group(), summary.memberCount()))
                 .toList();
     }
 

@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class AuthRateLimitService {
 
+    private static final int MAX_TRACKED_KEYS = 10_000;
+
     private final int loginMaxAttempts;
     private final int registerMaxAttempts;
     private final Duration window;
@@ -52,6 +54,8 @@ public class AuthRateLimitService {
         String key = action + ":" + normalize(clientAddress) + ":" + normalize(email);
         Instant now = Instant.now(clock);
         Instant oldestAllowed = now.minus(window);
+        // Remove janelas vencidas antes de criar novas chaves, mantendo consumo estavel.
+        cleanupExpiredAttempts(oldestAllowed);
         Deque<Instant> attempts = attemptsByKey.computeIfAbsent(key, ignored -> new ArrayDeque<>());
 
         synchronized (attempts) {
@@ -64,6 +68,35 @@ public class AuthRateLimitService {
             }
 
             attempts.addLast(now);
+        }
+        // Protege contra crescimento indefinido em cenarios de muitos IPs/emails distintos.
+        capTrackedKeys();
+    }
+
+    private void cleanupExpiredAttempts(Instant oldestAllowed) {
+        attemptsByKey.entrySet().removeIf(entry -> {
+            Deque<Instant> attempts = entry.getValue();
+            synchronized (attempts) {
+                while (!attempts.isEmpty() && attempts.peekFirst().isBefore(oldestAllowed)) {
+                    attempts.removeFirst();
+                }
+                return attempts.isEmpty();
+            }
+        });
+    }
+
+    private void capTrackedKeys() {
+        int overflow = attemptsByKey.size() - MAX_TRACKED_KEYS;
+        if (overflow <= 0) {
+            return;
+        }
+
+        for (String key : attemptsByKey.keySet()) {
+            attemptsByKey.remove(key);
+            overflow--;
+            if (overflow <= 0) {
+                return;
+            }
         }
     }
 
